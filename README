@@ -3,3 +3,5 @@ C++ compiler in Python
 plz note python version is 2.7
 
 >> mkvirtualenv -p python2.7 --no-site-packages PyCPP
+
+>> pip install -r requirements.txt
