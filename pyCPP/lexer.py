@@ -13,6 +13,7 @@ class CPPLexer(object):
         filaneme, but the lexer will update it upon #line 
         directives.
     """
+    #def __init__(self,error_func,type_lookup_func):
     def __init__(self):
         """ Create a new Lexer.
 
@@ -49,9 +50,8 @@ class CPPLexer(object):
     ##
     ## All the tokens recognized by the lexer
     ##
-    
-    tokens=('ASSIGN',
-    'COMMA',
+
+    special_characters=('COMMA',
     'COLON',
     'SEMICOLON',
     'LPAREN',
@@ -60,6 +60,17 @@ class CPPLexer(object):
     'RBRACKET',
     'LBRACE',
     'RBRACE',
+    'QUESTION',
+    'TILDE',
+    'POUND',
+    'DOT',    
+    'SINGLE_QUOTE',
+    'DOUBLE_QUOTE',
+    'BACK_SLASH'
+    )
+
+    
+    operators=('ASSIGN',
     'GREATER',
     'LESS',
     'IS_EQ',
@@ -77,146 +88,50 @@ class CPPLexer(object):
     'EXCLAMATION',  'AMPERSAND',
     'PIPE',
     'CARET',
-    'ASTERISK',
-    'QUESTION',
-    'TILDE',
-    'POUND',
-    'DOT',
-    'ELLIPSIS',
-    'ARROW',
-    'ARROW_STAR',
-    'SHIFT_LEFT',
-    'SHIFT_RIGHT',
     'EQ_PLUS',
     'EQ_MINUS',
     'EQ_TIMES',
     'EQ_DIV',
     'EQ_MODULO',
-    'EQ_PIPE',
-    'EQ_AMPERSAND',
-    'EQ_CARET',
-    'EQ_SHIFT_LEFT',
-    'EQ_SHIFT_RIGHT',
-    'ID',
-    'FNUMBER',
+    )
+
+    complex_tokens=('ID',
+    'DNUMBER',
     'INUMBER',
     'LIT_STR',
     'LIT_CHAR',
-    'COMMENT',
-    'SINGLE_QUOTE',
-    'DOUBLE_QUOTE',
-    'BACK_SLASH',
-    'DOUBLE_POUND',
-    'LT_COLON',
-    'GT_COLON',
-    'LT_MODULO',
-    'GT_MODULO',
-    'MODULO_COLON',
-    'DOUBLE_MODULO_COLON',
-    'DOUBLE_COLON',
-    'DOT_STAR'
-    )
-    
-
-    ##
-    ## Operators
-    ##
-    
-    operators={
-        'and' : 'OP_AND',
- 	'and_eq' : 'OP_AND_EQ',
- 	'bitand' : 'OP_BITAND',
- 	'bitor' : 'OP_BITOR',
- 	'compl' : 'OP_COMPL',
- 	'not' : 'OP_NOT',
- 	'not_eq' : 'OP_NOT_EQ',
- 	'or' :'OP_OR',
- 	'or_eq' : 'OP_OR_EQ',
- 	'xor' : 'OP_XOR',
- 	'xor_eq' :'OP_XOR_EQ'
-        }
-
+    'COMMENT')
     
     ##
     ## Reserved keywords
     ##
     
-    keywords={'alignas' : 'ALIGNAS',
-            'alignof' : 'ALIGNOF',
-            'asm' : 'ASM',
-            'auto': 'AUTO',
-            'bool': 'BOOL',
+    keywords={'bool': 'BOOL',
             'break': 'BREAK',
             'case' : 'CASE', 
-            'catch' : 'CATCH',
             'char'  : 'CHAR',
-            'char16_t':'CHAR16_T',    
-            'char32_t': 'CHAR32_T',     
             'class' : 'CLASS',
-            'const' : 'CONST',
-            'constexpr' : 'CONSTEXPR',     
-            'const_cast' : 'CONST_CAST',
             'continue' : 'CONTINUE',
-            'decltype' : 'DECLTYPE',
             'default' : 'DEFAULT',
-            'delete' : 'DELETE',
             'do' : 'DO',
             'double' : 'DOUBLE',
-            'dynamic_cast' : 'DYNAMIC_CAST',
             'else' : 'ELSE',
-            'enum' : 'ENUM',
-            'explicit' : 'EXPLICIT',
-            'export' : 'EXPORT',
-            'extern': 'EXTERN',
             'false' : 'FALSE',
             'float' : 'FLOAT',
             'for' : 'FOR',
-            'friend' : 'FRIEND',
-            'goto' : 'GOTO',
             'if' : 'IF',
             'inline' : 'INLINE',
             'int' : 'INT',
-            'long' : 'LONG',
-            'mutable' : 'MUTABLE',
-            'namespace' : 'NAMESPACE',
-            'new' : 'NEW',
-            'noexcept' : 'NOEXCEPT',
-            'nullptr' : 'NULLPTR',
-            'operator' : 'OPERATOR',
             'private' : 'PRIVATE',
-            'protected' : 'PROTECTED',
             'public' : 'PUBLIC',
-            'register' : 'REGISTER',
-            'reinterpret_cast' : 'REINTERPRET_CAST',
             'return' : 'RETURN',
-            'short' : 'SHORT',
-            'signed' : 'SIGNED',
-            'sizeof' : 'SIZEOF',
-            'static' : 'STATIC',
-            'static_assert' :'STATIC_ASSERT',
-            'static_cast':'STATIC_CAST',
-            'struct':'STRUCT',
-            'switch' : 'SWITCH',
-            'template': 'TEMPLATE',
-            'this': 'THIS',
-            'thread_local' : 'THREAD_LOCAL',
-            'throw' : 'THROW',
+            'switch' :'SWITCH',     
             'true' :'TRUE',
-            'try' : 'TRY',
-            'typedef' : 'TYPEDEF',
-            'typeid' : 'TYPEID',
-            'typename' : 'TYPENAME',
-            'union' : 'UNION',
-            'unsigned' : 'UNSIGNED',
-            'using' : 'USING',
-            'virtual' : 'VIRTUAL',
             'void' : 'VOID',
-            'volatile' : 'VOLATILE',
-            'wchar_t' : 'WCHAR_T',
-            'while' :'WHILE',
+            'while' :'WHILE'
             }
 
-    tokens=tokens+tuple(keywords.values()) + tuple(operators.values())
+    tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 
 
     t_ASSIGN = r'='
@@ -248,49 +163,28 @@ class CPPLexer(object):
     t_AMPERSAND = r'&'
     t_PIPE = r'\|'
     t_CARET = r'\^'
-    t_ASTERISK = r'\*'
     t_QUESTION = r'\?'
     t_TILDE = r'~'
     t_POUND = r'\#'
-    t_ELLIPSIS = r'\.\.\.'
     t_DOT = r'\.'
-    t_ARROW = r'->'
-    t_ARROW_STAR = r'->\*'
-    t_SHIFT_LEFT = r'<<'
-    t_SHIFT_RIGHT = r'>>'
     t_EQ_PLUS = r'\+='
     t_EQ_MINUS = r'-='
     t_EQ_TIMES = r'\*='
     t_EQ_DIV = r'/='
     t_EQ_MODULO = r'%='
-    t_EQ_PIPE = r'\|='
-    t_EQ_AMPERSAND = r'&='
-    t_EQ_CARET = r'\^='
-    t_EQ_SHIFT_LEFT = r'<<='
-    t_EQ_SHIFT_RIGHT = r'>>='
     t_SINGLE_QUOTE = r'\''
     t_DOUBLE_QUOTE= r'\"'
     t_BACK_SLASH = r'\\'
-    t_DOUBLE_POUND = r'\#\#'
-    t_LT_COLON = r'<:'
-    t_GT_COLON = r':>'
-    t_LT_MODULO = r'<%'
-    t_GT_MODULO = r'%>'
-    t_MODULO_COLON = r'%:'
-    t_DOUBLE_MODULO_COLON = r'%:%:'
-    t_DOUBLE_COLON = r'::'
-    t_DOT_STAR = r'\.\*'
+
     
     
     def t_ID(self,t):
         r'[A-Za-z_][\w]*'
         if self.keywords.has_key(t.value):
             t.type=self.keywords[t.value]
-        elif self.operators.has_key(t.value):
-            t.type=self.operators[t.value]
         return t
 
-    def t_FNUMBER(self,t):
+    def t_DNUMBER(self,t):
         r'(\d*)((\.\d*([eE][+-]\d+)?)|([eE][+-]\d+))'
         return t
 
