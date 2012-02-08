@@ -217,7 +217,7 @@ class CPPLexer(object):
     t_ignore = '[ \t\r\f\v]'
 
     def t_error(self,t):
-        print "Illegal character '%s'" % t.value[0]
+        print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
         t.lexer.skip(1)
 
 
