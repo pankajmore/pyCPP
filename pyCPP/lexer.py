@@ -26,6 +26,7 @@ class CPPLexer(object):
                 A type lookup function. Given a string, it must
                 return True IFF this string is a name of a type
                 that was defined with a typedef earlier.
+
         """
         #self.error_func = error_func
         #self.type_lookup_func = type_lookup_func
@@ -125,6 +126,7 @@ class CPPLexer(object):
             'private' : 'PRIVATE',
             'public' : 'PUBLIC',
             'return' : 'RETURN',
+            'struct' : 'STRUCT',
             'switch' :'SWITCH',     
             'true' :'TRUE',
             'void' : 'VOID',
