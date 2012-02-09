@@ -130,10 +130,18 @@ class CPPLexer(object):
             'void' : 'VOID',
             'while' :'WHILE'
             }
-
+    
+    
+    # order of matching tokens is 
+    
+    
     tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 
-
+    # Each token is specified by writing a regular expression rule. 
+    # Each of these rules are are defined by making declarations with a 
+    # special prefix t_ to indicate that it defines a token.
+    
+    
     t_ASSIGN = r'='
     t_COMMA = r','
     t_COLON = r':'
@@ -179,16 +187,22 @@ class CPPLexer(object):
     
     
     def t_ID(self,t):
+        """Match an identifier and check if it is a keyword.
+        This approach greatly reduces the number of regular 
+        expression rules and is likely to make things a little faster.
+        """
         r'[A-Za-z_][\w]*'
         if self.keywords.has_key(t.value):
             t.type=self.keywords[t.value]
         return t
 
     def t_DNUMBER(self,t):
+        """Match a decimal number"""
         r'(\d*)((\.\d*([eE][+-]\d+)?)|([eE][+-]\d+))'
         return t
 
     def t_INUMBER(self,t):
+        """Match an integer"""
         r'\d+'
         return t
 
@@ -206,17 +220,32 @@ class CPPLexer(object):
         return t
     
     def t_COMMENT(self,t):
+        """Match single line and multiline comments and 
+        increase the line number"""
         r'(/\*[\w\W]*?\*/)|(//[\w\W]*?\n)'
         t.lineno += t.value.count('\n')
         pass
 
     def t_newline(self,t):
+        """Increase the lineno by the number of '\n's"""
         r'\n+'
         t.lexer.lineno += len(t.value)
         
+
+    # The use of t_ignore provides substantially better lexing performance 
+    # because it is handled as a special case and is checked in a much more 
+    # efficient manner than the normal regular expression rules.
+
+
     t_ignore = '[ \t\r\f\v]'
 
     def t_error(self,t):
+        """Called when no rule is matched
+        t.value attribute contains the rest of the input string 
+        that has not been tokenized
+        we simply print the offending character and skip ahead 
+        one character by calling t.lexer.skip(1)
+        """
         print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
         t.lexer.skip(1)
 
