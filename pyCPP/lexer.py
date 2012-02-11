@@ -71,7 +71,7 @@ class CPPLexer(object):
     )
 
     
-    operators=('ASSIGN',
+    operators=('ASSIGN','ARROW'
     'GREATER',
     'LESS',
     'IS_EQ',
@@ -111,7 +111,7 @@ class CPPLexer(object):
             'break': 'BREAK',
             'case' : 'CASE', 
             'char'  : 'CHAR',
-            'class' : 'CLASS',
+            'class' : ',CLASS',
             'continue' : 'CONTINUE',
             'default' : 'DEFAULT',
             'do' : 'DO',
@@ -123,8 +123,10 @@ class CPPLexer(object):
             'if' : 'IF',
             'inline' : 'INLINE',
             'int' : 'INT',
+            'operator' : 'OPERATOR',
             'private' : 'PRIVATE',
             'public' : 'PUBLIC',
+            'protected' : 'PROTECTED',
             'return' : 'RETURN',
             'struct' : 'STRUCT',
             'switch' :'SWITCH',     
@@ -143,7 +145,7 @@ class CPPLexer(object):
     # Each of these rules are are defined by making declarations with a 
     # special prefix t_ to indicate that it defines a token.
     
-    
+    t_ARROW = r'->'
     t_ASSIGN = r'='
     t_COMMA = r','
     t_COLON = r':'

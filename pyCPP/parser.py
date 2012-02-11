@@ -19,7 +19,7 @@ class Node:
 
 # define functions for each production rule and their attribute grammer/action
 
-## Start 
+########### Start ################
 
 
 def p_translation_unit(p):
@@ -47,9 +47,6 @@ def p_declaration_seq_opt(p):
 def p_declaration(p):
     ''' declaration : block_declaration 
                     | function_definition 
-                    | template_declaration 
-                    | explicit_instantiation 
-                    | explicit_specialization 
                     | linkage_specialization 
                     | namespace_definition '''
     pass
@@ -65,6 +62,16 @@ def p_block_declaration(p):
     ''' block-declaration : simple_declaration '''
     pass
 
+#################### EXPRESSIONS ###################
+
+####################################################
+
+#################### STATEMENTS ####################
+
+####################################################
+
+
+#################### DECLARATIONS ##################
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
@@ -379,6 +386,29 @@ def p_initializer_list(p):
 
 ##### CLASSES #####     
 
+#class-name:
+    #identifier
+    #template-id
+def p_class_name(p):
+    ''' class_name : identifier '''
+    pass
+
+#class-specifier:
+    #class-head { member-specificationopt }
+def p_class_specifier(p):
+    ''' class_specifier : class_head LBRACE member_specification_opt RBRACE '''
+    pass
+
+#class-head:
+    #class-key identifieropt base-clauseopt
+    #class-key nested-name-specifier identifier base-clauseopt
+    #class-key nested-name-specifier template template-id base-clauseopt
+def p_class_head(p):
+    ''' class_head : class_key base_clause_opt 
+                    | class_key identifier base_clause_opt 
+                    | class_key nested_name_specifier identifier base_clause_opt '''
+    pass 
+
 
 #class-key:
     #class
@@ -388,4 +418,214 @@ def p_initializer_list(p):
 def p_class_key(p):
     ''' class_key : CLASS 
                     | STRUCT '''
+
+#member-specification:
+    #member-declaration member-specificationopt
+    #access-specifier : member-specificationopt
+def p_member_specification_opt(p):
+    '''member_specification_opt : member_declaration member_specification_opt 
+                    | access_specifier COLON member_specification_opt '''
+    pass 
+
+#member-declaration:
+    #decl-specifier-seqopt member-declarator-listopt ;
+    #function-definition ;opt
+    #::opt nested-name-specifier templateopt unqualified-id ;
+    #using-declaration
+    #template-declaration
+def p_member_declaration(p):
+    ''' member_declaration : decl_specifier_seq member_declarator_list_opt SEMICOLON 
+                    | member_declarator_list_opt
+                    | function_definition SEMICOLON
+                    | function_definition 
+                    | double_colon_opt nested_name_specifier unqualified_id SEMICOLON '''
+    pass 
+
+#member-declarator-list:
+    #member-declarator
+    #member-declarator-list , member-declarator
+
+def p_member_declarator_list(p):
+    ''' member_declarator_list : member_declarator 
+                    | member_declarator_list , member_declarator '''
+    pass 
+
+def p_member_declarator_list_opt(p):
+    ''' member_declarator_list_opt : 
+                    | member_declarator_list'''
+    pass 
+
+#member-declarator:
+    #declarator pure-specifieropt
+    #declarator constant-initializeropt
+    #identifieropt : constant-expression
+def p_member_declarator(p):
+    ''' member_declarator : declarator pure_specifier_opt 
+                    | declarator constant_initializer_opt 
+                    | identifier COLON constant_expression
+                    | COLON constant_expression '''
+    pass 
+
+#pure-specifier:
+    #= 0
+def p_pure_specifier_opt(p):
+    ''' pure_specifier_opt : 
+                    | ASSIGN ZERO  '''                                            ### ZERO Not defined .. I want to match it to 0 which is not in the tokens 
+    pass 
+
+#constant-initializer:
+    #= constant-expression
+def p_consatnt_initializer_opt(p):
+    ''' constant_initializer_opt : 
+                    | ASSIGN constant_expression '''
+    pass 
+
+######## DERIVED CLASSES ##############
+
+#base-clause:
+    #: base-specifier-list
+def p_base_clause_opt(p):
+    ''' base_clause_opt : 
+                    | base_specifier_list '''
+    pass 
+
+#base-specifier-list:
+    #base-specifier
+    #base-specifier-list , base-specifier
+def p_base_specifier_list(p):
+    ''' base_specifier_list : base_specifier 
+                    | base_specifier_list , base_specifier '''
+    pass 
+
+#base-specifier:
+    #::opt nested-name-specifieropt class-name
+    #virtual access-specifieropt ::opt nested-name-specifieropt class-name
+    #access-specifier virtualopt ::opt nested-name-specifieropt class-name
+def p_base_specifier(p):
+    ''' base_specifier : double_colon_opt nested_name_specifier class_name 
+                    | double_colon_opt class_name 
+                    | access_specifier double_colon_opt nested_name_specifier class_name 
+                    | access_specifier double_colon_opt class_name ''' 
+    pass 
+
+#access-specifier:
+    #private
+    #protected
+    #public
+def p_access_specifier(p):
+    ''' access_specifier : PUBLIC 
+                    | PRIVATE 
+                    | PROTECTED ''' 
+    pass 
+
+
+############# SPECIAL MEMBER FUNCTIONS ################
+
+#conversion-function-id:
+    #operator conversion-type-id
+def p_conversion_function_id(p):
+    ''' conversion_function_id : OPERATOR conversion_type_id '''
+    pass 
+
+#conversion-type-id:
+    #type-specifier-seq conversion-declaratoropt
+def p_conversion_type_id(p):
+    ''' conversion_type_id : type_specifier_seq conversion_declarator_opt '''
+    pass 
+
+#conversion-declarator:
+    #ptr-operator conversion-declaratoropt
+def p_conversion_declarator_opt(p):
+    ''' conversion_declarator_opt : 
+                    | ptr_operator conversion_declarator_opt '''
+    pass 
+
+#ctor-initializer:
+    #: mem-initializer-list
+def p_ctor_initializer_opt(p):
+    ''' ctor_initializer_opt : 
+                    | mem_initializer_list'''
+    pass 
+
+#mem-initializer-list:
+    #mem-initializer
+    #mem-initializer , mem-initializer-list
+def p_mem_initializer_list(p):
+    ''' mem_initializer_list : mem_initializer
+                    | mem_initializer , mem_initializer_list '''
+    pass 
+
+#mem-initializer:
+    #mem-initializer-id ( expression-listopt )
+def p_mem_initializer(p):
+    ''' mem_initializer : mem_initializer_id LPAREN expression_list RPAREN 
+                    | mem_initializer_id LPAREN RPAREN '''
+    pass 
+
+#mem-initializer-id:
+    #::opt nested-name-specifieropt class-name
+    #identifier
+def p_mem_initializer_id(p):
+    ''' mem_initializer_id : double_colon_opt nested_name_specifier class_name 
+                    | double_colon_opt class_name 
+                    | identifier '''
+    pass 
+
+
+######### OVERLOADING ###########
+#operator-function-id:
+    #operator operator
+def p_operator_function_id : 
+    ''' operator_function_id : OPERATOR operator '''
+    pass 
+
+def p_operator(p):
+    ''' operator : PLUS 
+                | MINUS 
+                | TIMES 
+                | DIV 
+                | MODULO 
+                | CARET 
+                | AMPERSAND 
+                | PIPE 
+                | TILDE 
+                | EXCLAMATION 
+                | ASSIGN 
+                | LESS 
+                | GREATER 
+                | EQ_PLUS
+                | EQ_MINUS 
+                | EQ_TIMES
+                | EQ_DIV 
+                | EQ_MODULO                                             
+                | ARROW 
+                | IS_EQ 
+                | NOT_EQ
+                | LESS_EQ
+                | GREATER_EQ
+                | DOUBLE_AMPERSAND 
+                | DOUBLE_PIPE
+                | PLUS_PLUS 
+                | MINUS_MINUS 
+                | COMMA 
+                | LPAREN RPAREN 
+                | LBRACKET RBRACKET  '''
+    pass 
+
+########### TEMPLATES ################
+
+######################################
+
+########### EXCEPTION HANDLING #######
+
+###################################### 
+
+########### PREPROCESSING DIRECTIVES ###
+
+########################################
+
+
+
+
+
 
