@@ -337,71 +337,219 @@ def p_equality_expression(p):
     ''' equality_expression : relational_expression 
                     | equality_expression IS_EQ relational_expression 
                     | equality_expression NOT_EQ relational_expression '''
-
+    pass 
 
 #and-expression:
     #equality-expression
     #and-expression & equality-expression
+def p_and_expression(p):
+    ''' and_expression : equality_expression 
+                    | and_expression AMPERSAND equality_expression '''
+    pass 
 
 #exclusive-or-expression:
     #and-expression
     #exclusive-or-expression ^ and-expression
+def p_exclusive_or_expression(p):
+    ''' exclusive_or_expression : and_expression 
+                    | exclusive_or_expression CARET and_expression '''
+    pass 
 
 #inclusive-or-expression:
     #exclusive-or-expression
     #inclusive-or-expression | exclusive-or-expression
+def p_inclusive_or_expression(p):
+    ''' inclusive_or_expression : exclusive_or_expression 
+                    | inclusive_or_expression PIPE exclusive_or_expression '''
+    pass 
 
 #logical-and-expression:
     #inclusive-or-expression
     #logical-and-expression && inclusive-or-expression
+def p_logical_and_expression(p):
+    ''' logical_and_expression : inclusive_or_expression 
+                        | logical_and_expression DOUBLE_AMPERSAND inclusive_or_expression '''
+    pass 
 
 #logical-or-expression:
     #logical-and-expression
     #logical-or-expression || logical-and-expression
+def p_logical_or_expression(p):
+    ''' logical_or_expression : logical_and_expression 
+                    | logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
+    pass 
 
 #conditional-expression:
     #logical-or-expression
     #logical-or-expression ? expression : assignment-expression
+def conditional_expression(p):
+    ''' conditional_expression : logical_or_expression 
+                    | logical_or_expression QUESTION expression COLON assignment_expression '''
+    pass 
 
 #assignment-expression:
     #conditional-expression
     #logical-or-expression assignment-operator assignment-expression
     #throw-expression
+def p_assignment_expression(p):
+    ''' assignment_expression : conditional_expression 
+                    | logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
+    pass 
 
 #assignment-operator: one of
-#= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators 
+#= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 
+def p_assignment_operator(p):
+    ''' assignment_operator : ASSIGN 
+                    | EQ_TIMES
+                    | EQ_DIV 
+                    | EQ_MODULO
+                    | EQ_PLUS
+                    | EQ_MINUS '''
+    pass 
 
 #expression:
     #assignment-expression
     #expression , assignment-expression
+def p_expression(p):
+    ''' expression : assignment_expression 
+                    | expression COMMA assignment_expression '''
+    pass 
 
 #constant-expression:
     #conditional-expression
+def p_constant_expression(p):
+    ''' constant_expression : conditional_expression ''' 
+    pass 
 
-
-
-
-
-
-
-
-
-
-
-
-
-                
-
-
-
-
-    
-
-
+def p_constant_expression_opt:
+    ''' constant_expression_opt : 
+                    | constant_expression '''
+    pass 
 
 ####################################################
 
 #################### STATEMENTS ####################
+
+#statement:
+    #labeled-statement
+    #expression-statement
+    #compound-statement
+    #selection-statement
+    #iteration-statement
+    #jump-statement
+    #declaration-statement
+    #try-block
+def p_statement(p):
+    ''' statement : labeled_statement
+                | expression_statement
+                | compound_statement 
+                | selection_statement
+                | iteration_statement
+                | jump_statement
+                | declaration_statement '''
+    pass 
+
+#labeled-statement:
+    #identifier : statement
+    #case constant-expression : statement
+    #default : statement
+def p_labeled_statement(p):
+    ''' labeled_statement : identifier COLON statement 
+                | CASE constant_expression COLON statement 
+                | DEFAULT COLON statement ''' 
+    pass 
+
+#expression-statement:
+    #expressionopt ;
+def p_expression_statement(p):
+    ''' expression_statement : SEMICOLON 
+                    | expression SEMICOLON '''
+    pass 
+
+#compound-statement:
+    #{ statement-seqopt }
+def p_compound_statement(p):
+    ''' compound_statement : LBRACE statement_seq RBRACE 
+                    | LBRACE RBRACE '''
+    pass 
+
+#statement-seq:
+    #statement
+    #statement-seq statement
+def p_statement_seq(p):
+    ''' statement_seq : statement 
+                | LBRACE statement_seq RBRACE 
+                | LBRACE RBRACE '''
+    pass 
+
+#selection-statement:
+    #if ( condition ) statement
+    #if ( condition ) statement else statement
+    #switch ( condition ) statement
+def p_selection_statement(p):
+    ''' selection_statement : IF LPAREN condition RPAREN statement 
+                    | IF LPAREN condition RPAREN statement ELSE statement 
+                    | SWITCH LPAREN condition RPAREN statement '''
+    pass 
+
+#condition:
+    #expression
+    #type-specifier-seq declarator = assignment-expression
+def p_condition(p):
+    ''' condition : expression 
+                | type_specifier_seq declarator ASSIGN assignment_expression '''
+    pass 
+
+#iteration-statement:
+    #while ( condition ) statement
+    #do statement while ( expression ) ;
+    #for ( for-init-statement conditionopt ; expressionopt ) statement
+def p_iteration_statement(p):
+    ''' iteration_statement : WHILE LPAREN condition RPAREN statement 
+                    | DO statement WHILE LPAREN condition RPAREN SEMICOLON 
+                    | FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement
+                    | FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement
+                    | FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement
+                    | FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+    pass 
+
+#for-init-statement:
+    #expression-statement
+    #simple-declaration
+def p_for_init_statement(p):
+    ''' for_init_statement : expression_statement 
+                    | simple_declaration '''
+    pass 
+
+#jump-statement:
+    #break ;
+    #continue ;
+    #return expressionopt ;
+    #goto identifier ;
+def p_jump_statement(p):
+    ''' jump_statement : BREAK 
+                    | CONTINUE 
+                    | RETURN expression SEMICOLON 
+                    | RETURN SEMICOLON '''
+    pass 
+
+#declaration-statement:
+    #block-declaration
+def p_declaration_statement(p):
+    ''' declaration_statement : block_declaration '''
+    pass
+
+
+
+                     
+
+
+
+
+
+
+
+
 
 ####################################################
 
