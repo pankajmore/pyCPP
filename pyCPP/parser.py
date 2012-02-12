@@ -539,18 +539,6 @@ def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
     pass
 
-
-
-                     
-
-
-
-
-
-
-
-
-
 ####################################################
 
 
@@ -1098,9 +1086,4 @@ def p_operator(p):
 ########### PREPROCESSING DIRECTIVES ###
 
 ########################################
-
-
-
-
-
 
