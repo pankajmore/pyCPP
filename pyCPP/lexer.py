@@ -26,7 +26,6 @@ class CPPLexer(object):
                 A type lookup function. Given a string, it must
                 return True IFF this string is a name of a type
                 that was defined with a typedef earlier.
-
         """
         #self.error_func = error_func
         #self.type_lookup_func = type_lookup_func
@@ -97,8 +96,11 @@ class CPPLexer(object):
     )
 
     complex_tokens=('ID',
+    'ILLEGAL_ID',
     'DNUMBER',
     'INUMBER',
+    'ILLEGAL_DNUMBER',
+    'ILLEGAL_INUMBER',
     'LIT_STR',
     'LIT_CHAR',
     'COMMENT')
@@ -126,24 +128,15 @@ class CPPLexer(object):
             'private' : 'PRIVATE',
             'public' : 'PUBLIC',
             'return' : 'RETURN',
-            'struct' : 'STRUCT',
             'switch' :'SWITCH',     
             'true' :'TRUE',
             'void' : 'VOID',
             'while' :'WHILE'
             }
-    
-    
-    # order of matching tokens is 
-    
-    
+
     tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 
-    # Each token is specified by writing a regular expression rule. 
-    # Each of these rules are are defined by making declarations with a 
-    # special prefix t_ to indicate that it defines a token.
-    
-    
+
     t_ASSIGN = r'='
     t_COMMA = r','
     t_COLON = r':'
@@ -176,7 +169,6 @@ class CPPLexer(object):
     t_QUESTION = r'\?'
     t_TILDE = r'~'
     t_POUND = r'\#'
-    t_DOT = r'\.'
     t_EQ_PLUS = r'\+='
     t_EQ_MINUS = r'-='
     t_EQ_TIMES = r'\*='
@@ -187,7 +179,8 @@ class CPPLexer(object):
     t_BACK_SLASH = r'\\'
 
     
-    
+    Id=r'[A-Za-z_][\w]*'
+    @TOKEN(Id)
     def t_ID(self,t):
         """Match an identifier and check if it is a keyword.
         This approach greatly reduces the number of regular 
@@ -198,16 +191,42 @@ class CPPLexer(object):
             t.type=self.keywords[t.value]
         return t
 
+    def t_ILLEGAL_ID(self,t):
+        r'(?<=[\d])[A-Za-z_][\w]*'
+        print "Ill_formed Identifier %s' at line number %d" % (t.value, t.lineno)
+
+        # Match a decimal number
     def t_DNUMBER(self,t):
-        """Match a decimal number"""
-        r'(\d*)((\.\d*([eE][+-]\d+)?)|([eE][+-]\d+))'
+        r'((\d*)\.((\d*([eE][+-]\d+))|\d+)(?=[+\-*/%(),;\s])|([eE][+-]\d+)(?=[+\-*/()%,;\s]))'
         return t
 
+        # Match an integer
     def t_INUMBER(self,t):
-        """Match an integer"""
-        r'\d+'
+        r'\d+(?=[+\-*/()%,;\s])'
         return t
 
+    def t_DOT(self,t):
+        r'\.'
+        return t
+
+    c1=r'[eE]([eE]*[+-]*\d*)*(?=[+\-*/()%,;\s])'
+    c2=r'([eE]*[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*(?=[+\-*/%(),;\s])'
+    c3=r'(\d*)\.((\d*([eE][+-]\d+))|\d+)([^+()\-*/%,;\s][a-zA-Z_]*)'
+    c4=r'([eE][+-]\d+)[^+()\-*/%,;\s][a-zA-Z_]*'
+    c5=r'[eE]([eE]*[+-]*\d*)*([^+\-*/()%,;\s][a-zA-Z_]*)'
+    c6=r'([eE]*[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*([^+\-*/%(),;\s][a-zA-Z_]*)'
+    Il_Dnum=r'('+c4+r'|'+c5+r'|'+c6+'|'+c1+r'|'+c2+r'|'+c3+r')'
+
+    @TOKEN(Il_Dnum)
+    
+    def t_ILLEGAL_DNUMBER(self,t):
+         print "Ill_formed Double Number '%s' at line number %d" % (t.value, t.lineno)
+        
+
+    def t_ILLEGAL_INUMBER(self,t):
+        r'\d+([^+\-*/()%,;\s][a-zA-Z_]*)'
+        print "Ill_formed Integer Number '%s' at line number %d" % (t.value, t.lineno)
+        
     def t_LIT_CHAR(self,t):
         r'\'[\w\W]\''
         return t
@@ -221,33 +240,29 @@ class CPPLexer(object):
             return
         return t
     
+        # Match single line and multiline comments and 
+        # increase the line number
     def t_COMMENT(self,t):
-        """Match single line and multiline comments and 
-        increase the line number"""
         r'(/\*[\w\W]*?\*/)|(//[\w\W]*?\n)'
         t.lineno += t.value.count('\n')
         pass
 
     def t_newline(self,t):
-        """Increase the lineno by the number of '\n's"""
         r'\n+'
         t.lexer.lineno += len(t.value)
         
-
     # The use of t_ignore provides substantially better lexing performance 
     # because it is handled as a special case and is checked in a much more 
     # efficient manner than the normal regular expression rules.
-
-
     t_ignore = '[ \t\r\f\v]'
 
+        # Called when no rule is matched
+        # t.value attribute contains the rest of the input string 
+        # that has not been tokenized
+        # we simply print the offending character and skip ahead 
+        # one character by calling t.lexer.skip(1)
+
     def t_error(self,t):
-        """Called when no rule is matched
-        t.value attribute contains the rest of the input string 
-        that has not been tokenized
-        we simply print the offending character and skip ahead 
-        one character by calling t.lexer.skip(1)
-        """
         print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
         t.lexer.skip(1)
 
@@ -275,4 +290,3 @@ def run_lexer():
 
 if __name__ == '__main__':
     run_lexer()
-
