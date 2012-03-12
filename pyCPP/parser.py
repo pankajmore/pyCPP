@@ -1,6 +1,7 @@
-import yacc
+import lexer
+import ply.yacc as yacc
 
-from lex import tokens
+
 
 #  ---------------------------------------------------------------
 #  ABSTRACT SYNTAX TREE - NODES
@@ -388,4 +389,9 @@ def p_initializer_list(p):
 def p_class_key(p):
     ''' class_key : CLASS 
                     | STRUCT '''
+    pass
 
+def p_error(p):
+    print("Whoa. We're hosed")
+
+yacc.yacc(method='LALR')

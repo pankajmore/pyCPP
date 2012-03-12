@@ -5,7 +5,7 @@ from ply.lex import TOKEN
 
 #class CPPLexer(object,error_func,type_lookup_func):
 class CPPLexer(object):
-    """ A lexer for the C language. After building it, set the
+    """ A lexer for the C++ language. After building it, set the
         input text with input(), and call token() to get new 
         tokens.
 
