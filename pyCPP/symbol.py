@@ -7,21 +7,33 @@ class Environment(object):
         self.table = SymbolTable() 
         self.prev = p 
 ## First  create an object of class Symbol and then insert it in the current environment . 
+## returns True if put was successful .In case of duplicate entry returns False . 
     def put(self,attr):
-        self.table.put(attr.name,attr)
-        pass 
+        return self.table.put(attr.name,attr)
 ## get will retrun an Symbol object if symbol is found otherwise None  .
     def get(self,name):
-        pass 
+        env = self
+        symbol = None 
+        while(symbol is None and env is not None):
+            symbol = env.table.get(name)
+            env = env.prev 
+        return symbol 
     
 ## Symbol table is implemented as a simple python dictionary .
 class SymbolTable(object):
     def __init__(self):
         self.symbols = {}
     def put(self,name,symbol):
-        pass 
-    def get(self,name,symbol):
-        pass 
+        if name in self.symbols:
+            return False 
+        self.symbols[name]=symbol
+        return True 
+    def get(self,name):
+        if name in self.symbols:
+            return self.symbols[name]
+        else :
+            return None 
+        
 
 ## This class represts a symbol , its type and associated attributes . 
 class Symbol(object):
@@ -30,6 +42,8 @@ class Symbol(object):
         self.keyword = False 
         self.type = None 
         self.attrs = {} 
+    def __repr__(self):
+        return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword))
 
 
 
@@ -40,7 +54,24 @@ def test():
     i.type = "Int"
     i.attrs["foo"] = "bar"
     env.put(i)
-    print("Done")
+
+    j = Symbol("j")
+    j.type = "Int"
+    j.attrs["foo"] = "bar"
+    env.put(j)
+
+    env2 = Environment(env)
+    i = Symbol("i")
+    i.type = "Float"
+    i.attrs["foo2"] = "bar2"
+    env2.put(i)
+
+    print(env.get("i"))
+    print(env2.get("i"))
+    print(env2.get("j"))
+
+if __name__ == "__main__":
+    test()
     
 
 
