@@ -70,7 +70,7 @@ class CPPLexer(object):
     )
 
     
-    operators=('ASSIGN',
+    operators=('ASSIGN','ARROW',
     'GREATER',
     'LESS',
     'IS_EQ',
@@ -116,6 +116,7 @@ class CPPLexer(object):
             'class' : 'CLASS',
             'continue' : 'CONTINUE',
             'default' : 'DEFAULT',
+            'delete' : 'DELETE',
             'do' : 'DO',
             'double' : 'DOUBLE',
             'else' : 'ELSE',
@@ -125,11 +126,17 @@ class CPPLexer(object):
             'if' : 'IF',
             'inline' : 'INLINE',
             'int' : 'INT',
+            'new' : 'NEW',
+            'operator' : 'OPERATOR',
             'private' : 'PRIVATE',
             'public' : 'PUBLIC',
+            'protected' : 'PROTECTED',
             'return' : 'RETURN',
+            'sizeof' : 'SIZEOF',
+            'struct' : 'STRUCT',
             'switch' :'SWITCH',     
             'true' :'TRUE',
+            'typename' : 'TYPENAME',
             'void' : 'VOID',
             'while' :'WHILE'
             }
@@ -137,6 +144,11 @@ class CPPLexer(object):
     tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 
 
+    # Each token is specified by writing a regular expression rule. 
+    # Each of these rules are are defined by making declarations with a 
+    # special prefix t_ to indicate that it defines a token.
+    
+    t_ARROW = r'->'
     t_ASSIGN = r'='
     t_COMMA = r','
     t_COLON = r':'
