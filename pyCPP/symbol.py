@@ -43,7 +43,7 @@ class Symbol(object):
         self.type = None 
         self.attrs = {} 
     def __repr__(self):
-        return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword))
+        return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attrs))
 
 
 
@@ -60,15 +60,34 @@ def test():
     j.attrs["foo"] = "bar"
     env.put(j)
 
+    j = Symbol("k")
+    j.type = "Int"
+    j.attrs["foo"] = "bar"
+    env.put(j)
+
     env2 = Environment(env)
     i = Symbol("i")
     i.type = "Float"
     i.attrs["foo2"] = "bar2"
     env2.put(i)
 
+    ## Duplicate entry test 
+    
+    j = Symbol("j")
+    j.type = "Float"
+    j.attrs["foo2"] = "bar2"
+    ## Env put should fail as j already exist 
+    if not env.put(j):
+        print "failure"
+    ## Env2 put should succeed as no local variable with id j 
+    if not env2.put(j):
+        print "failure"
+
     print(env.get("i"))
     print(env2.get("i"))
     print(env2.get("j"))
+    print(env2.get("k"))
+
 
 if __name__ == "__main__":
     test()
