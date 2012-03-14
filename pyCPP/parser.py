@@ -429,14 +429,35 @@ def p_unary_expression(p):
 
 #unary-operator: one of
 #* & + - ! ~
-def p_unary_operator(p):
-    ''' unary_operator : TIMES 
-                    | AMPERSAND 
-                    | PLUS 
-                    | MINUS 
-                    | EXCLAMATION 
-                    | TILDE '''
-    pass 
+def p_unary_operator_1(p):
+    ''' unary_operator : TIMES
+    '''
+    p[0] = '*'
+
+def p_unary_operator_2(p):
+    '''unary_operator : AMPERSAND
+    '''
+    p[0] = '&'
+
+def p_unary_operator_3(p):
+    '''unary_operator : PLUS
+    '''
+    p[0] = '+'
+
+def p_unary_operator_4(p):
+    '''unary_operator : MINUS 
+    '''
+    p[0] = '-'
+
+def p_unary_operator_5(p):
+    '''unary_expression : EXCLAMATION 
+    '''
+    p[0] = '!'
+
+def p_unary_operator_6(p):
+    '''unary_expression : TILDE
+    '''
+    p[0] = '~'
 
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
