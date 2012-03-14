@@ -72,15 +72,64 @@ def p_block_declaration(p):
     #:: qualified-id
     #( expression )
     #id-expression
-def p_primary_expression(p):
-    ''' primary_expression : literal 
-                    | COLON COLON identifier 
-                    | COLON COLON operator_function_id
-                    | COLON COLON qualified_id 
-                    | LPAREN expression RPAREN 
-                    | id_expression  '''
-    pass 
 
+# Reduced the no. of productions for primary_expression
+
+def literal_1(p):
+    '''literal : INUMBER '''
+    t[0]=Attribute()
+    t[0].type='INT'
+    t[0].value=int(p[1])
+
+def literal_2(p):
+    '''literal : DNUMBER '''
+    t[0]=Attribute()
+    t[0].type='FLOAT'
+    t[0].value=float(p[1])
+
+def literal_3(p):
+    '''literal : LIT_CHAR '''
+    t[0]=Attribute()
+    t[0].type='CHAR'
+    t[0].value=str(p[1])
+
+def literal_4(p):
+    '''literal : LIT_STRING '''
+    t[0]=Attribute()
+    t[0].type='STRING'  #Need to figure out the type that should be given to string
+    t[0].value=p[1]
+    t[0].isString=1
+
+def literal_5:
+    '''literal : TRUE '''
+    t[0]=Attribute()
+    t[0].type='BOOL'
+    t[0].value=bool(p[1])
+
+def literal_6:
+    '''literal : FALSE '''
+    t[0]=Attribute()
+    t[0].type='BOOL'
+    t[0].value=bool(p[1])
+    
+def p_primary_expression_1(p):
+    ''' primary_expression : literal'''
+    p[0]=copyAttribute(p[1])
+
+def p_primary_expression_2(p):
+    ''' primary_expression : identifier'''
+    if p[1].type ==None:
+        p[0]=Attribute()
+        print 'Error in line %s : Type of identifier not defined',% p.lineno(1)
+    else:
+        p[0]=copyAttribute(p[1])
+
+def p_primary_expression_3(p):
+    ''' primary_expression : LPAREN expression RPAREN '''
+    p[0]=copyAttribute(p[1])
+
+#Not included in grammer
+    
 #id-expression:
     #unqualified-id
     #qualified-id
@@ -141,17 +190,47 @@ def p_nested_name_specifier_opt(p):
     #const_cast < type-id > ( expression )
     #typeid ( expression )
     #typeid ( type-id )
-def p_postfix_expression(p):
-    ''' postfix_expression : primary_expression 
-                    | postfix_expression LBRACKET expression RBRACKET 
-                    | postfix_expression LPAREN expression_list_opt RPAREN 
-                    | simple_type_specifier LPAREN expression_list_opt RPAREN 
-                    | TYPENAME double_colon_opt nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
-                    | postfix_expression DOT pseudo_destructor_name 
-                    | postfix_expression ARROW pseudo_destructor_name 
-                    | postfix_expression PLUS_PLUS 
-                    | postfix_expression MINUS_MINUS '''
-    pass 
+def p_postfix_expression_1(p):
+    ''' postfix_expression : primary_expression '''
+    p[0]=copyAttribute(p[1])
+
+def p_postfix_expression_2(p):
+    ''' postfix_expression :  postfix_expression LBRACKET expression RBRACKET '''
+    p[0]=copyAttribute(p[1])
+    if p[0].isArray!=1:
+        print "Error in line %s : Cannot access index of non-array ",% p.lineno(2)
+        p[0]=initAttribute(p[0])
+    else: # for now only handling 1-d arrays
+        if p[0].type not in ['FLOAT','INT','CHAR','BOOL']:
+            print "Error in line %s : Unidentified type of array ",% p.lineno(2)
+            p[0]=initAttribute(p[0])
+        else:
+            if p[3].type!='INT':
+                print "Error in line %s : Index of array can only be an integer ",% p.lineno(2)
+                p[0]=initAttribute(p[0])
+            else:
+                p[0].isArray=0
+                #Determine p[0].value
+                # p[0].value= p[1].value[p[3].value]
+                
+            
+def p_postfix_expression_3(p):
+    ''' postfix_expression : postfix_expression LPAREN  RPAREN '''
+
+def p_postfix_expression_4(p):
+    ''' postfix_expression : postfix_expression LPAREN  expression_list RPAREN '''
+
+def p_postfix_expression_5(p):
+    ''' postfix_expression : postfix_expression DOT identifier'''
+
+def p_postfix_expression_6(p): 
+    ''' postfix_expression : postfix_expression ARROW identifier'''
+
+def p_postfix_expression_7(p):
+    ''' postfix_expression : postfix_expression PLUS_PLUS '''
+
+def p_postfix_expression_8(p):
+    ''' postfix_expression : postfix_expression MINUS_MINUS '''
 
 #expression-list:
     #assignment-expression
@@ -161,6 +240,7 @@ def p_expression_list(p):
                     | expression_list COMMA assignment_expression '''
     pass 
 
+#The production rules for expression_list_opt have beeen directly substitued
 def p_expression_list_opt(p):
     ''' expression_list_opt :
                     | expression_list '''
@@ -193,6 +273,12 @@ def p_unary_expression(p):
                     | SIZEOF LPAREN type_id RPAREN 
                     | new_expression 
                     | delete_expression '''
+    if len(t)==3:
+        if t[1]=='++':
+            pass
+        elif t[1]=='--':
+            pass
+        elif t[1]==
     pass
 
 #unary-operator: one of
@@ -265,10 +351,39 @@ def p_delete_expression(p):
 #cast-expression:
     #unary-expression
     #( type-id ) cast-expression
-def p_cast_expression(p):
-    ''' cast_expression : unary_expression 
-                    | LPAREN type_id RPAREN cast_expression '''
+def p_cast_expression_1(p):
+    ''' cast_expression : unary_expression'''
+    p[0]=copyAttribute(p[1])
+
+
+def p_cast_expression_2(p):
+    '''cast_expression : LPAREN type_id RPAREN cast_expression '''
+        p[0]=copyAttribute(p[4])
+        #TODO : Add support for type conversion with pointers i.e (int*), (char*), etc.
+        if p[4].type=p[2].type:
+            if p[2].value == 'FLOAT' and p[4].type=='INT':
+                p[0].type='FLOAT'
+                p[0].value=float(p[4].value)
+            elif p[2].value == 'INT' and p[4].type=='FLOAT':
+                p[4.type='INT'
+                p[0].value=int(p[4].value)
+            elif p[2].value == 'INT' and p[4].type=='CHAR':
+                p[4].type='INT'
+                p[0].value=ord(p[4].value)
+            elif p[2].value == 'CHAR' and p[4].type=='INT':
+                if p[4].value>=0 and p[4].value<=255:
+                    p[4].type='CHAR'
+                    p[0].value=chr(p[4].value)
+                else:
+                    print "Error in line %s : Cannot typecasting INT outside the range 0-255 to CHAR",% p.lineno(1)
+                    
+            else:
+                print "Error in line %s : Illegal Type conversion from %s to %s ",%(p.lineno(1),p[4]['type'],p[2]['value'])
+            
+        
     pass 
+
+#pm-expression not included in grammer
 
 #pm-expression:
     #cast-expression
@@ -285,23 +400,81 @@ def p_pm_expression(p):
     #multiplicative-expression * pm-expression
     #multiplicative-expression / pm-expression
     #multiplicative-expression % pm-expression
-def p_multiplicative_expression(p):
-    ''' multiplicative_expression : pm_expression 
-                    | multiplicative_expression TIMES pm_expression
-                    | multiplicative_expression DIV pm_expression 
-                    | multiplicative_expression MODULO pm_expression '''
+
+#not including pm-expression in the grammer
+
+
+#TODO : add support for pointers in mutiplicative, additive,etc. expression
+                  
+def p_multiplicative_expression_1(p):
+    ''' multiplicative_expression : cast_expression'''
+    p[0]=copyAttribute(p[1])
+    pass
+def p_multiplicative_expression_2(p):
+    ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
+    p[1]=copyAttribute(p[1])
+    if p[1].type=='INT' and p[3].type=='INT':
+        p[0].type='INT'
+        p[1].value=p[1].value * p[3].value
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+        p[0].type='FLOAT'
+        p[1].value=p[1].value * p[3].value
+    pass
+def p_multiplicative_expression_3(p):
+    ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
+    p[1]=copyAttribute(p[1])
+    if p[1].type=='INT' and p[3].type=='INT':
+        p[0].type='INT'
+        p[1].value=p[1].value / p[3].value
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+        p[0].type='FLOAT'
+        p[1].value=p[1].value / p[3].value
+    
+    pass                  
+def p_multiplicative_expression_4(p)
+    ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
+    p[1]=copyAttribute(p[1])
+    if p[1].type=='INT' and p[3].type=='INT':
+        p[0].type='INT'
+        p[1].value=p[1].value % p[3].value
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+        print 'Error in lino %s : Modulo operator can only be applied on integers',% p.lineno(2)
     pass 
 
 #additive-expression:
     #multiplicative-expression
     #additive-expression + multiplicative-expression
     #additive-expression - multiplicative-expression
-def p_additive_expression(p):
-    ''' additive_expression : multiplicative_expression 
-                    | additive_expression PLUS multiplicative_expression 
-                    | additive_expression MINUS multiplicative_expression '''
-    pass 
+def p_additive_expression_1(p):
+    ''' additive_expression : multiplicative_expression'''
+    p[0]=copyAttribute(p[1])
+    pass
 
+def p_additive_expression_2(p):
+    ''' additive_expression : additive_expression PLUS multiplicative_expression '''
+    p[1]=copyAttribute(p[1])
+    if p[1].type=='INT' and p[3].type=='INT':
+        p[0].type='INT'
+        p[1].value=p[1].value + p[3].value
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+        p[0].type='FLOAT'
+        p[1].value=p[1].value + p[3].value    
+    pass
+                  
+def p_additive_expression_3(p):
+    ''' additive_expression : additive_expression MINUS multiplicative_expression '''
+    p[1]=copyAttribute(p[1])
+    if p[1].type=='INT' and p[3].type=='INT':
+        p[0].type='INT'
+        p[1].value=p[1].value - p[3].value
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+        p[0].type='FLOAT'
+        p[1].value=p[1].value - p[3].value    
+    pass
+                  
+
+#shift expressions not included in grammer
+                  
 #shift-expression:
     #additive-expression
     #shift-expression << additive-expression
@@ -322,31 +495,81 @@ def p_shift_expression(p):
     #> shift-expression
     #<= shift-expression
     #>= shift-expression
-def p_relatiopnal_expression(p): 
-    ''' relational_expression : shift_expression 
-                    | relational_expression LESS shift_expression 
-                    | relational_expression GREATER shift_expression 
-                    | relational_expression LESS_EQ shift_expression 
-                    | relational_expression GREATER_EQ shift_expression '''
-    pass 
+
+def p_relational_expression_1(p): 
+    ''' relational_expression : additive_expression'''
+    p[0]=copyAttribute(p[1])
+    pass
+def p_relational_expression_2(p):
+    ''' relational_expression : relational_expression LESS additive_expression'''
+    p[0]=copyAttribute(p[1])
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value=p[1].value<=p[3].value
+    else:
+        p[0]=initAttribute(p[0])  
+
+def p_relational_expression_3(p):
+    ''' relational_expression : relational_expression GREATER additive_expression '''
+    p[0]=copyAttribute(p[1])
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value=p[1].value>p[3].value
+    else:
+        p[0]=initAttribute(p[0])
+    
+def p_relational_expression_4(p):
+    ''' relational_expression : relational_expression LESS_EQ additive_expression '''
+    p[0]=copyAttribute(p[1])
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value=p[1].value<=p[3].value
+    else:
+        p[0]=initAttribute(p[0]) 
+
+def p_relational_expression_5(p):
+    ''' relational_expression : relational_expression GREATER_EQ additive_expression '''
+    p[0]=copyAttribute(p[1])    
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value=p[1].value>=p[3].value
+    else:
+        p[0]=initAttribute(p[0])
 
 #equality-expression:
     #relational-expression
     #equality-expression == relational-expression
     #equality-expression != relational-expression
-def p_equality_expression(p):
-    ''' equality_expression : relational_expression 
-                    | equality_expression IS_EQ relational_expression 
-                    | equality_expression NOT_EQ relational_expression '''
-    pass 
-
+def p_equality_expression_1(p):
+    ''' equality_expression : relational_expression '''
+    p[0]=copyAttribute(p[1])
+                  
+def p_equality_expression_2(p):
+    ''' equality_expression : equality_expression IS_EQ relational_expression '''
+    p[0]=copyAttribute(p[1])
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value= (p[1].value==p[3].value)
+    else:
+        p[0]=initAttribute(p[0])
+        
+                  
+def p_equality_expression_3(p):
+    ''' equality_expression : equality_expression NOT_EQ relational_expression '''
+    p[0]=copyAttribute(p[1])
+    if check_compatibility_relational(p):
+        p[0].type='BOOL'
+        p[0].value= (p[1].value!=p[3].value)
+    else:        
+        p[0]=initAttribute(p[0])
+                  
 #and-expression:
     #equality-expression
     #and-expression & equality-expression
 def p_and_expression(p):
-    ''' and_expression : equality_expression 
-                    | and_expression AMPERSAND equality_expression '''
-    pass 
+    ''' and_expression : equality_expression
+                        | and_expression AMPERSAND equality_expression '''
+    pass
 
 #exclusive-or-expression:
     #and-expression
@@ -367,26 +590,55 @@ def p_inclusive_or_expression(p):
 #logical-and-expression:
     #inclusive-or-expression
     #logical-and-expression && inclusive-or-expression
-def p_logical_and_expression(p):
-    ''' logical_and_expression : inclusive_or_expression 
-                        | logical_and_expression DOUBLE_AMPERSAND inclusive_or_expression '''
-    pass 
+def p_logical_and_expression_1(p):
+    ''' logical_and_expression : equality_expression'''
+    p[0]=copyAttribute(p[1])
+                        
+def p_logical_and_expression_1(p):
+    ''' logical_and_expression : logical_and_expression DOUBLE_AMPERSAND equality_expression'''
+    p[0]=copyAttribute(p[1])
+    if p[1].type=='BOOL' and p[3].type=='BOOL':
+        p[0].type='BOOL'
+        p[0].value=p[1].value and p[3].value
+    else:
+        p[0]=initAttribute(p[0])
+        print 'Error at line %s : && operator can only be applied to boolean operands',% p.lineno(2)
 
 #logical-or-expression:
     #logical-and-expression
     #logical-or-expression || logical-and-expression
-def p_logical_or_expression(p):
-    ''' logical_or_expression : logical_and_expression 
-                    | logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
-    pass 
+def p_logical_or_expression_1(p):
+    ''' logical_or_expression : logical_and_expression '''
+    p[0]=copyAttribute(p[1])
+
+def p_logical_or_expression_2(p):
+''' logical_or_expression : logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
+    p[0]=copyAttribute(p[1])
+    if p[1].type=='BOOL' and p[3].type=='BOOL':
+        p[0].type='BOOL'
+        p[0].value=p[1].value or p[3].value
+    else:
+        p[0]=initAttribute(p[0])
+        print 'Error at line %s : || operator can only be applied to boolean operands',% p.lineno(2)
 
 #conditional-expression:
     #logical-or-expression
     #logical-or-expression ? expression : assignment-expression
-def conditional_expression(p):
-    ''' conditional_expression : logical_or_expression 
-                    | logical_or_expression QUESTION expression COLON assignment_expression '''
-    pass 
+def conditional_expression_1(p):
+    ''' conditional_expression : logical_or_expression '''
+    p[0]=copyAttribute(p[1])
+            
+def conditional_expression_1(p):
+    ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
+    p[0]=copyAttribute(p[1])
+    if p[1].type=='BOOL':
+        if p[1].value==True:
+            p[0]=copyAttribute(p[3])
+        elif p[1].value=False:
+            p[1]=copyAttribute(p[5])
+    else:
+        print 'Error at line %s : ? ternary operator can only be applied to boolean operands',% p.lineno(2)
+        p[0]=initAttribute(p[0])
 
 #assignment-expression:
     #conditional-expression
@@ -1078,7 +1330,95 @@ def p_operator(p):
                 | COMMA 
                 | LPAREN RPAREN 
                 | LBRACKET RBRACKET  '''
-    pass 
+    pass
+
+MaxPar=10
+
+class Attribute:
+    global MaxPar
+      def __init__(self):
+            self.id = ""
+            self.type = None
+            self.isArray = 0    #// True if variable is array
+            self.ArrayLimit = 0 # upper limit of array (valid if DIMENSION is true)
+            self.width = 0
+            self.isPointer = 0
+            self.qualifier = 0
+            self.specifier = 0
+            self.storage = 0
+            self.scope = 0
+            self.value=None    
+            self.isFunction = 0
+            self.numParameters = 0
+            self.isString = 0
+            self.offset = 0
+            self.ParameterList = [None]*MaxPar
+
+
+def copyAttribute(a1):      
+      i = 0
+      a = Attribute()
+      a.id=None
+      if a1.id != None:
+          a.id = a1.id
+
+      a.type=a1.type
+      a.isArray=a1.isArray
+      a.ArrayLimit=a1.ArrayLimit
+      a.width=a1.width
+      a.isPointer=a1.isPointer
+      a.qualifier=a1.qualifier
+      a.specifier=a1.specifier
+      a.storage=a1.storage
+      a.scope=a1.scope
+      a.value=a1.value
+      a.isFunction=a1.isFunction
+      a.isString=a1.isString
+      a.offset=a1.offset
+      a.numParameters=a1.numParameters
+      if a1.StringValue != None:
+	    a.StringValue = a1.StringValue
+      else:
+	    a.StringValue = None
+      
+      #ParameterList      
+      for i in range(a1.numParameters):
+	    if a1.ParameterList[i] == None:
+		  break
+	    a.ParameterList[i] = PassAttribute(a1.ParameterList[i])
+      return a
+
+def initAttr(a):
+      a.id=None
+      a.type=None	
+      a.isArray=0		# True if variable is array
+      a.ArrayLimit=0	#upper limit of array (valid if DIMENSION is true)
+      a.width=0
+      a.isPointer=0
+      a.qualifier=0
+      a.specifier=0
+      a.storage=0
+      a.scope=0
+      a.value=None
+      a.isString=0
+      a.offset=0			#0 means not
+      a.numParameters=0
+      a.isFunction=0
+      for i in range(MaxPar):      
+	    a.ParameterList[i]=None
+      return a
+
+def check_compatibility_relational(p):
+    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT']:
+        return True
+    elif p[1].type=='CHAR' and p[3].type=='CHAR' :
+        return True
+    elif p[1].type=='BOOL' and p[3].type=='BOOL' :
+        return True
+    else:
+        print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
+        return False               
+                  
 
 ########### TEMPLATES ################
 
