@@ -75,42 +75,43 @@ def p_block_declaration(p):
 
 # Reduced the no. of productions for primary_expression
 
-def literal_1(p):
+def p_literal_1(t):
     '''literal : INUMBER '''
     t[0]=Attribute()
     t[0].type='INT'
-    t[0].value=int(p[1])
+    t[0].value=int(t[1])
 
-def literal_2(p):
+def p_literal_2(t):
     '''literal : DNUMBER '''
     t[0]=Attribute()
     t[0].type='FLOAT'
-    t[0].value=float(p[1])
+    t[0].value=float(t[1])
 
-def literal_3(p):
+def p_literal_3(t):
     '''literal : LIT_CHAR '''
     t[0]=Attribute()
     t[0].type='CHAR'
-    t[0].value=str(p[1])
+    t[0].value=str(t[1])
 
-def literal_4(p):
+def p_literal_4(t):
     '''literal : LIT_STRING '''
     t[0]=Attribute()
-    t[0].type='STRING'  #Need to figure out the type that should be given to string
-    t[0].value=p[1]
+    t[0].type='CHAR'  #Need to figure out the type that should be given to string
+    t[0].isArray=1
+    t[0].value=t[1]
     t[0].isString=1
 
-def literal_5:
+def p_literal_5(t):
     '''literal : TRUE '''
     t[0]=Attribute()
     t[0].type='BOOL'
-    t[0].value=bool(p[1])
+    t[0].value=bool(t[1])
 
-def literal_6:
+def p_literal_6(t):
     '''literal : FALSE '''
     t[0]=Attribute()
     t[0].type='BOOL'
-    t[0].value=bool(p[1])
+    t[0].value=bool(t[1])
     
 def p_primary_expression_1(p):
     ''' primary_expression : literal'''
@@ -216,12 +217,43 @@ def p_postfix_expression_2(p):
             
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN  RPAREN '''
+    p[0]=copyAttribute(p[1])
+    if p[1].isFunction!=1:
+        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].id)
+        p[0]=initAttribute(p[0])
+    elif p[0].type not in ['FLOAT','INT','CHAR','BOOL']:
+        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].id)
+        p[0]=initAttribute(p[0])
+    else:
+        p[0].isFunction=0
+        p[0].numParameters=0
 
 def p_postfix_expression_4(p):
     ''' postfix_expression : postfix_expression LPAREN  expression_list RPAREN '''
-
+    #Default arguments not supported as of now
+    #Implicit type conversion not supported as of now
+    p[0]=copyAttribute(p[1])
+    if p[1].isFunction!=1:
+        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].id)
+        p[0]=initAttribute(p[0])
+    else:
+        p[0].isFunction=0
+        if p[1].numParameters!=p[3].numParameters:
+            print "Error in line %s : Function %s requires %s arguments, given %s arguments ",%( p.lineno(2), p[1].id,p[1].numParameters,p[3].numParameters)
+            p[0]=initAttribute(p[0])
+        else:
+            tmp=0
+            for i in range(p[0].numParameters):
+                if p[1].parameterList[i].type!=p[3].parameterList[i].type:
+                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s ",%( p.lineno(2), str(i+1), p[1].id, find_type(p[1].parameterList[i]), find_type(p[3].parameterList[i]))
+                    tmp=1
+                if tmp==1:
+                    p[0]=initAttribute(p[0]) 
+        p[0].numParameters=0
+        
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression DOT identifier'''
+    
 
 def p_postfix_expression_6(p): 
     ''' postfix_expression : postfix_expression ARROW identifier'''
@@ -1352,7 +1384,7 @@ class Attribute:
             self.numParameters = 0
             self.isString = 0
             self.offset = 0
-            self.ParameterList = [None]*MaxPar
+            self.parameterList = [None]*MaxPar
 
 
 def copyAttribute(a1):      
@@ -1376,16 +1408,11 @@ def copyAttribute(a1):
       a.isString=a1.isString
       a.offset=a1.offset
       a.numParameters=a1.numParameters
-      if a1.StringValue != None:
-	    a.StringValue = a1.StringValue
-      else:
-	    a.StringValue = None
-      
       #ParameterList      
       for i in range(a1.numParameters):
-	    if a1.ParameterList[i] == None:
+	    if a1.parameterList[i] == None:
 		  break
-	    a.ParameterList[i] = PassAttribute(a1.ParameterList[i])
+	    a.parameterList[i] = copyAttribute(a1.parameterList[i])
       return a
 
 def initAttr(a):
@@ -1405,7 +1432,7 @@ def initAttr(a):
       a.numParameters=0
       a.isFunction=0
       for i in range(MaxPar):      
-	    a.ParameterList[i]=None
+	    a.parameterList[i]=None
       return a
 
 def check_compatibility_relational(p):
