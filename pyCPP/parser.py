@@ -8,6 +8,7 @@ import symbol
 #  ABSTRACT SYNTAX TREE - NODES
 #  ---------------------------------------------------------------
 MaxPar=10
+Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 
 class Attribute:
     global MaxPar
@@ -79,16 +80,15 @@ def initAttr(a):
       return a
 
 def check_compatibility_relational(p):
-    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT']:
+    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT'] and is_primitive(p[1]) and is_primitive(p[3]):
         return True
-    elif p[1].type=='CHAR' and p[3].type=='CHAR' :
+    elif p[1].type=='CHAR' and p[3].type=='CHAR'  and is_primitive(p[1]) and is_primitive(p[3]):
         return True
-    elif p[1].type=='BOOL' and p[3].type=='BOOL' :
+    elif p[1].type=='BOOL' and p[3].type=='BOOL' and is_primitive(p[1]) and is_primitive(p[]) :
         return True
     else:
         print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
-        return False               
-
+        return False   
 
 ## Scoping rules defined 
 
@@ -381,10 +381,18 @@ def p_postfix_expression_8(p):
 #expression-list:
     #assignment-expression
     #expression-list , assignment-expression
-def p_expression_list(p):
-    ''' expression_list : assignment_expression 
-                    | expression_list COMMA assignment_expression '''
-    pass 
+def p_expression_list_1(p):
+    ''' expression_list : assignment_expression'''
+    p[0]=Attribute()
+    p[0].ParametersList[0]=copyAttribute(p[1])
+    p[0].numParameters=1
+    p[0].type='VOID'
+
+def p_expression_list_2(p):
+    ''' expression_list : expression_list COMMA assignment_expression '''
+    p[0]=copyAttribute(p[1])
+    p[0].numParameters+=1
+    p[0].parametersList[p[0].numParameters-1]=copyAttribute(p[3])
 
 #The production rules for expression_list_opt have beeen directly substitued
 def p_expression_list_opt(p):
@@ -410,22 +418,108 @@ def p_pseudo_destructor_name(p):
     #sizeof ( type-id )
     #new-expression
     #delete-expression
-def p_unary_expression(p):
-    ''' unary_expression : postfix_expression 
-                    | PLUS_PLUS cast_expression 
-                    | MINUS_MINUS cast_expression 
-                    | unary_operator cast_expression 
-                    | SIZEOF unary_expression 
-                    | SIZEOF LPAREN type_id RPAREN 
-                    | new_expression 
-                    | delete_expression '''
-    if len(t)==3:
-        if t[1]=='++':
-            pass
-        elif t[1]=='--':
-            pass
-        elif t[1]==
+def p_unary_expression_1(p):
+    ''' unary_expression : postfix_expression '''
+    p[0]=copyAttribute(p[1])
+    
+def p_unary_expression_2(p):
+    ''' unary_expression : PLUS_PLUS cast_expression'''
+    p[0]=copyAttribute(p[2])
+    if p[2].type=='FLOAT' or p[2].type=='INT' or p[2].type=='CHAR' and is_primitive(p[2]):
+        if p[2].type=='INT' or p[2].type=='FLOAT':
+            p[0].value+=1
+        if p[2].type=='CHAR':
+            tmp=ord(p[0].value)
+            if tmp<255:
+                p[0].value=chr(tmp+1)
+            elif tmp==255:
+                p[0].value=chr(0)
+    else:
+        print 'Error in line %s : PreIncrement ++ operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+        p[0]=initAttribute(p[0])           
+    
+
+def p_unary_expression_3(p):
+    ''' unary_expression : MINUS_MINUS cast_expression '''
+    p[0]=copyAttribute(p[2])
+    if p[2].type=='FLOAT' or p[2].type=='INT' or p[2].type=='CHAR' and is_primitive(p[2]):
+        if p[2].type=='INT' or p[2].type=='FLOAT':
+            p[0].value-=1
+        if p[0].type=='CHAR':
+            tmp=ord(p[0].value)
+            if tmp>0:
+                p[0].value=chr(tmp-1)
+            elif tmp==0:
+                p[0].value=chr(255)        
+    else:
+        print 'Error in line %s : PreDecrement -- operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+        p[0]=initAttribute(p[0])
+
+def p_unary_expression_4(p):
+    ''' unary_expression : unary_operator cast_expression '''
+    global Sizes
+    p[0]=copyAttribute(p[2])
+    if p[1]=='+':
+        if p[2].type=='FLOAT' or p[2].type=='INT' and is_primitive(p[2]):
+            p[0].value=p[1].value
+        else:
+            p[0]=initAttribute(p[0])
+            print 'Error in line %s : Unary + operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+
+    if p[1]=='-':
+        if p[2].type=='FLOAT' or p[2].type=='INT' and is_primitive(p[2]):
+            p[0].value=-p[1].value
+        else:
+            p[0]=initAttribute(p[0])
+            print 'Error in line %s : Unary - operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+
+    if p[1]=='!':
+        if p[2].type=='BOOL' and is_primitive(p[2]):
+            p[0].value=not(p[1].value)
+        else:
+            p[0]=initAttribute(p[0])
+            print 'Error in line %s : Unary ! operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+    if p[1]=='*':
+        if p[2].type in ['FLOAT','INT','CHAR','BOOL'] and p[2].isPointer==1:
+            p[0].isPointer=0
+            size=Sizes[p[2].type]
+            #find value of *p[2].value and store in p[0]
+        else:
+            p[0]=initAttribute(p[0])
+            print 'Error in line %s : Unary * operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+    if p[1]=='&':
+        if p[2].type in ['FLOAT','INT','CHAR','BOOL'] and is_primitive(p[2]):
+            p[0].isPointer=1
+            #find value of &p[2].value and store in p[0]
+        else:
+            p[0]=initAttribute(p[0])
+            print 'Error in line %s : Unary & operator can not be applied to %s',% (p.lineno(1),find_type(p[2].type))
+    if p[1]=='~':
+        pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
+    
+#Will need to rewrite SIZEOF functions
+def p_unary_expression_5(p):
+    ''' unary_expression : SIZEOF unary_expression '''
+    p[0]=Attribute()
+    p[0].type='INT'
+    p[0].value=p[2].width
+
+def p_unary_expression_6(p):
+    ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
+    p[0]=Attribute()
+    p[0].type='INT'
+    p[0].value=p[3].width
+
+
+#Will see whether to include the below  two productions in the grammer or not
+def p_unary_expression_7(p):
+    ''' unary_expression : new_expression'''
     pass
+
+def p_unary_expression_7(p):
+    ''' unary_expression : delete_expression'''
+    pass
+
 
 #unary-operator: one of
 #* & + - ! ~
@@ -436,7 +530,8 @@ def p_unary_operator(p):
                     | MINUS 
                     | EXCLAMATION 
                     | TILDE '''
-    pass 
+    p[0]=p[1]
+
 
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
@@ -1496,10 +1591,15 @@ def p_operator(p):
                 | LBRACKET RBRACKET  '''
     pass
 
-                
-=======
-                  
->>>>>>> 3f75928686e14a5a1dd13f8b43db6b7e6992edfc
+def is_primitive(p):
+    if p.isString==0 and p.isArray==0 and p.isFunction==0 and p.isPointer==0:
+        return True
+    else:
+        return False
+
+#Have to complete this function based on how the type pf objects,strings,etc are represented.
+def find_type(p):
+    return p.type
 
 ########### TEMPLATES ################
 
@@ -1513,4 +1613,3 @@ def p_operator(p):
 
 ########################################
 
->>>>>>> parser
