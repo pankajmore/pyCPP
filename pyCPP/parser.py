@@ -1,20 +1,105 @@
 import lexer
 import ply.yacc as yacc
+import symbol
 
 
 
 #  ---------------------------------------------------------------
 #  ABSTRACT SYNTAX TREE - NODES
 #  ---------------------------------------------------------------
+MaxPar=10
 
-class Node:
-    """Base class for all the nodes in the AST"""
+class Attribute:
+    global MaxPar
+      def __init__(self):
+            self.id = ""
+            self.type = None
+            self.isArray = 0    #// True if variable is array
+            self.ArrayLimit = 0 # upper limit of array (valid if DIMENSION is true)
+            self.width = 0
+            self.isPointer = 0
+            self.qualifier = 0
+            self.specifier = 0
+            self.storage = 0
+            self.scope = 0
+            self.value=None    
+            self.isFunction = 0
+            self.numParameters = 0
+            self.isString = 0
+            self.offset = 0
+            self.parameterList = [None]*MaxPar
 
-# abstract out the generic methods in this class
 
-# define new child classes for each token (non-terminal symbol) type and inherit from Node
+def copyAttribute(a1):      
+      i = 0
+      a = Attribute()
+      a.id=None
+      if a1.id != None:
+          a.id = a1.id
 
-# is it necessary to define separate nodes for Type System?
+      a.type=a1.type
+      a.isArray=a1.isArray
+      a.ArrayLimit=a1.ArrayLimit
+      a.width=a1.width
+      a.isPointer=a1.isPointer
+      a.qualifier=a1.qualifier
+      a.specifier=a1.specifier
+      a.storage=a1.storage
+      a.scope=a1.scope
+      a.value=a1.value
+      a.isFunction=a1.isFunction
+      a.isString=a1.isString
+      a.offset=a1.offset
+      a.numParameters=a1.numParameters
+      #ParameterList      
+      for i in range(a1.numParameters):
+	    if a1.parameterList[i] == None:
+		  break
+	    a.parameterList[i] = copyAttribute(a1.parameterList[i])
+      return a
+
+def initAttr(a):
+      a.id=None
+      a.type=None	
+      a.isArray=0		# True if variable is array
+      a.ArrayLimit=0	#upper limit of array (valid if DIMENSION is true)
+      a.width=0
+      a.isPointer=0
+      a.qualifier=0
+      a.specifier=0
+      a.storage=0
+      a.scope=0
+      a.value=None
+      a.isString=0
+      a.offset=0			#0 means not
+      a.numParameters=0
+      a.isFunction=0
+      for i in range(MaxPar):      
+	    a.parameterList[i]=None
+      return a
+
+def check_compatibility_relational(p):
+    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT']:
+        return True
+    elif p[1].type=='CHAR' and p[3].type=='CHAR' :
+        return True
+    elif p[1].type=='BOOL' and p[3].type=='BOOL' :
+        return True
+    else:
+        print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
+        return False               
+
+
+## Scoping rules defined 
+
+env = Environment(None)
+def NewScope():
+    global env 
+    env = Environment(env)
+
+def PopScope():
+    global env  
+    env = env.prev 
 
 
 
@@ -1411,6 +1496,7 @@ def p_operator(p):
                 | LBRACKET RBRACKET  '''
     pass
 
+<<<<<<< HEAD
 MaxPar=10
 
 class Attribute:
@@ -1498,6 +1584,9 @@ def is_primitive(p):
         return True
     else:
         return False                  
+=======
+                  
+>>>>>>> 3f75928686e14a5a1dd13f8b43db6b7e6992edfc
 
 ########### TEMPLATES ################
 
