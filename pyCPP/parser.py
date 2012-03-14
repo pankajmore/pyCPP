@@ -250,19 +250,48 @@ def p_postfix_expression_4(p):
                 if tmp==1:
                     p[0]=initAttribute(p[0]) 
         p[0].numParameters=0
-        
+
+#have to write code for the two functions below when handling pointers and objects becomes clear        
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression DOT identifier'''
+    pass  
     
-
+    
 def p_postfix_expression_6(p): 
     ''' postfix_expression : postfix_expression ARROW identifier'''
+    pass
 
 def p_postfix_expression_7(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
-
+    p[0]=copyAttribute(p[1])
+    if (p[0].type=='FLOAT' or p[0].type=='INT' or p[0].type=='CHAR') and is_primitive(p[0]):
+        if p[0].type=='INT' or p[0].type=='FLOAT':
+            p[0].value+=1
+        if p[0].type=='CHAR':
+            tmp=ord(p[0].value)
+            if tmp<255:
+                p[0].value=chr(tmp+1)
+            elif tmp==255:
+                p[0].value=chr(0)
+    else:
+        print 'Error in line %s : ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1].type))
+        p[0]=initAttribute(p[0])
+        
 def p_postfix_expression_8(p):
     ''' postfix_expression : postfix_expression MINUS_MINUS '''
+    p[0]=copyAttribute(p[1])
+    if (p[0].type=='FLOAT' or p[0].type=='INT' or p[0].type=='CHAR') and is_primitive(p[0]):
+        if p[0].type=='INT' or p[0].type=='FLOAT':
+            p[0].value-=1
+        if p[0].type=='CHAR':
+            tmp=ord(p[0].value)
+            if tmp>0:
+                p[0].value=chr(tmp-1)
+            elif tmp==0:
+                p[0].value=chr(255)        
+    else:
+        print 'Error in line %s : -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1].type))
+        p[0]=initAttribute(p[0])
 
 #expression-list:
     #assignment-expression
@@ -393,16 +422,16 @@ def p_cast_expression_2(p):
         p[0]=copyAttribute(p[4])
         #TODO : Add support for type conversion with pointers i.e (int*), (char*), etc.
         if p[4].type=p[2].type:
-            if p[2].value == 'FLOAT' and p[4].type=='INT':
+            if p[2].value == 'FLOAT' and p[4].type=='INT' and is_primitive(p[4])and is_primitive(p[0]) :
                 p[0].type='FLOAT'
                 p[0].value=float(p[4].value)
-            elif p[2].value == 'INT' and p[4].type=='FLOAT':
+            elif p[2].value == 'INT' and p[4].type=='FLOAT' and is_primitive(p[4])and is_primitive(p[0]):
                 p[4.type='INT'
                 p[0].value=int(p[4].value)
-            elif p[2].value == 'INT' and p[4].type=='CHAR':
+            elif p[2].value == 'INT' and p[4].type=='CHAR' and is_primitive(p[4])and is_primitive(p[0]):
                 p[4].type='INT'
                 p[0].value=ord(p[4].value)
-            elif p[2].value == 'CHAR' and p[4].type=='INT':
+            elif p[2].value == 'CHAR' and p[4].type=='INT' and is_primitive(p[4])and is_primitive(p[0]):
                 if p[4].value>=0 and p[4].value<=255:
                     p[4].type='CHAR'
                     p[0].value=chr(p[4].value)
@@ -441,37 +470,45 @@ def p_pm_expression(p):
 def p_multiplicative_expression_1(p):
     ''' multiplicative_expression : cast_expression'''
     p[0]=copyAttribute(p[1])
-    pass
+    
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
     p[1]=copyAttribute(p[1])
-    if p[1].type=='INT' and p[3].type=='INT':
+    if p[1].type=='INT' and p[3].type=='INT' and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='INT'
         p[1].value=p[1].value * p[3].value
-    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='FLOAT'
         p[1].value=p[1].value * p[3].value
-    pass
+    else:
+        p[0]=initAttribute(p[0])  
+        print "Error in line %s : Cannot perform multiplication between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
     p[1]=copyAttribute(p[1])
-    if p[1].type=='INT' and p[3].type=='INT':
+    if p[1].type=='INT' and p[3].type=='INT' and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='INT'
         p[1].value=p[1].value / p[3].value
-    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='FLOAT'
         p[1].value=p[1].value / p[3].value
-    
-    pass                  
+    else:
+        p[0]=initAttribute(p[0])  
+        print "Error in line %s : Cannot perform Division between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+                  
 def p_multiplicative_expression_4(p)
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
     p[1]=copyAttribute(p[1])
-    if p[1].type=='INT' and p[3].type=='INT':
+    if p[1].type=='INT' and p[3].type=='INT' and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='INT'
         p[1].value=p[1].value % p[3].value
     elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
-        print 'Error in lino %s : Modulo operator can only be applied on integers',% p.lineno(2)
-    pass 
+        print 'Error in lino %s : Modulo operator cannot be applied on floating point numbers',% p.lineno(2)
+    else:
+        p[0]=initAttribute(p[0])  
+        print "Error in line %s : Modulo operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+ 
 
 #additive-expression:
     #multiplicative-expression
@@ -480,30 +517,34 @@ def p_multiplicative_expression_4(p)
 def p_additive_expression_1(p):
     ''' additive_expression : multiplicative_expression'''
     p[0]=copyAttribute(p[1])
-    pass
+
 
 def p_additive_expression_2(p):
     ''' additive_expression : additive_expression PLUS multiplicative_expression '''
     p[1]=copyAttribute(p[1])
-    if p[1].type=='INT' and p[3].type=='INT':
+    if p[1].type=='INT' and p[3].type=='INT'and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='INT'
         p[1].value=p[1].value + p[3].value
-    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='FLOAT'
         p[1].value=p[1].value + p[3].value    
-    pass
+    else:
+        p[0]=initAttribute(p[0])
+        print "Error in line %s : Cannot perform addition between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 def p_additive_expression_3(p):
     ''' additive_expression : additive_expression MINUS multiplicative_expression '''
     p[1]=copyAttribute(p[1])
-    if p[1].type=='INT' and p[3].type=='INT':
+    if p[1].type=='INT' and p[3].type=='INT' and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='INT'
         p[1].value=p[1].value - p[3].value
-    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT']:
+    elif p[1].type in ['FLOAT','INT'] and p[1].type in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type='FLOAT'
         p[1].value=p[1].value - p[3].value    
-    pass
-                  
+    else:
+        p[0]=initAttribute(p[0])
+        print "Error in line %s : Cannot perform substraction between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+        
 
 #shift expressions not included in grammer
                   
@@ -539,7 +580,8 @@ def p_relational_expression_2(p):
         p[0].type='BOOL'
         p[0].value=p[1].value<=p[3].value
     else:
-        p[0]=initAttribute(p[0])  
+        p[0]=initAttribute(p[0])
+        print "Error in line %s : < operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_relational_expression_3(p):
     ''' relational_expression : relational_expression GREATER additive_expression '''
@@ -549,6 +591,7 @@ def p_relational_expression_3(p):
         p[0].value=p[1].value>p[3].value
     else:
         p[0]=initAttribute(p[0])
+        print "Error in line %s : > operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
     
 def p_relational_expression_4(p):
     ''' relational_expression : relational_expression LESS_EQ additive_expression '''
@@ -557,7 +600,8 @@ def p_relational_expression_4(p):
         p[0].type='BOOL'
         p[0].value=p[1].value<=p[3].value
     else:
-        p[0]=initAttribute(p[0]) 
+        p[0]=initAttribute(p[0])
+        print "Error in line %s : <= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_relational_expression_5(p):
     ''' relational_expression : relational_expression GREATER_EQ additive_expression '''
@@ -567,6 +611,7 @@ def p_relational_expression_5(p):
         p[0].value=p[1].value>=p[3].value
     else:
         p[0]=initAttribute(p[0])
+        print "Error in line %s : >= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 #equality-expression:
     #relational-expression
@@ -575,6 +620,7 @@ def p_relational_expression_5(p):
 def p_equality_expression_1(p):
     ''' equality_expression : relational_expression '''
     p[0]=copyAttribute(p[1])
+    
                   
 def p_equality_expression_2(p):
     ''' equality_expression : equality_expression IS_EQ relational_expression '''
@@ -584,7 +630,7 @@ def p_equality_expression_2(p):
         p[0].value= (p[1].value==p[3].value)
     else:
         p[0]=initAttribute(p[0])
-        
+        print "Error in line %s : == operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 def p_equality_expression_3(p):
     ''' equality_expression : equality_expression NOT_EQ relational_expression '''
@@ -594,6 +640,7 @@ def p_equality_expression_3(p):
         p[0].value= (p[1].value!=p[3].value)
     else:        
         p[0]=initAttribute(p[0])
+        print "Error in line %s : != operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 #and-expression:
     #equality-expression
@@ -629,7 +676,7 @@ def p_logical_and_expression_1(p):
 def p_logical_and_expression_1(p):
     ''' logical_and_expression : logical_and_expression DOUBLE_AMPERSAND equality_expression'''
     p[0]=copyAttribute(p[1])
-    if p[1].type=='BOOL' and p[3].type=='BOOL':
+    if p[1].type=='BOOL' and p[3].type=='BOOL' and is_primitive(p[1])and is_primitive(p[3]) :
         p[0].type='BOOL'
         p[0].value=p[1].value and p[3].value
     else:
@@ -646,7 +693,7 @@ def p_logical_or_expression_1(p):
 def p_logical_or_expression_2(p):
 ''' logical_or_expression : logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
     p[0]=copyAttribute(p[1])
-    if p[1].type=='BOOL' and p[3].type=='BOOL':
+    if p[1].type=='BOOL' and p[3].type=='BOOL' and is_primitive(p[1])and is_primitive(p[3])
         p[0].type='BOOL'
         p[0].value=p[1].value or p[3].value
     else:
@@ -663,7 +710,7 @@ def conditional_expression_1(p):
 def conditional_expression_1(p):
     ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
     p[0]=copyAttribute(p[1])
-    if p[1].type=='BOOL':
+    if p[1].type=='BOOL' and is_primitive(p[1]):
         if p[1].value==True:
             p[0]=copyAttribute(p[3])
         elif p[1].value=False:
@@ -1436,16 +1483,21 @@ def initAttr(a):
       return a
 
 def check_compatibility_relational(p):
-    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT']:
+    if p[1].type in ['FLOAT','INT'] and p[3].type in ['FLOAT','INT'] and is_primitive(p[1]) and is_primitive(p[3]):
         return True
-    elif p[1].type=='CHAR' and p[3].type=='CHAR' :
+    elif p[1].type=='CHAR' and p[3].type=='CHAR'  and is_primitive(p[1]) and is_primitive(p[3]):
         return True
-    elif p[1].type=='BOOL' and p[3].type=='BOOL' :
+    elif p[1].type=='BOOL' and p[3].type=='BOOL' and is_primitive(p[1]) and is_primitive(p[]) :
         return True
     else:
         print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
         return False               
-                  
+
+def is_primitive(p):
+    if p.isString==0 and p.isArray==0 and p.isFunction==0 and p.isPointer==0:
+        return True
+    else:
+        return False                  
 
 ########### TEMPLATES ################
 
