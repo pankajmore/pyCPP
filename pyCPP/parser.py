@@ -8,11 +8,7 @@ import symbol
 #  ABSTRACT SYNTAX TREE - NODES
 #  ---------------------------------------------------------------
 MaxPar=10
-<<<<<<< HEAD
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
-=======
-DEBUG  = False 
->>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 
 class Attribute:
     global MaxPar
@@ -92,14 +88,9 @@ def check_compatibility_relational(p):
         return True
     else:
         print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
-<<<<<<< HEAD
         return False   
-
-=======
-        return False               
-
+           
 start='translation_unit'
->>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 ## Scoping rules defined 
 
 env = Environment(None)
@@ -555,17 +546,6 @@ def p_unary_expression_7(p):
 
 #unary-operator: one of
 #* & + - ! ~
-<<<<<<< HEAD
-def p_unary_operator(p):
-    ''' unary_operator : TIMES 
-                    | AMPERSAND 
-                    | PLUS 
-                    | MINUS 
-                    | EXCLAMATION 
-                    | TILDE '''
-    p[0]=p[1]
-
-=======
 def p_unary_operator_1(p):
     ''' unary_operator : TIMES
     '''
@@ -595,7 +575,6 @@ def p_unary_operator_6(p):
     '''unary_expression : TILDE
     '''
     p[0] = '~'
->>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
