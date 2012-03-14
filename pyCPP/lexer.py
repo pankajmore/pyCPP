@@ -53,6 +53,7 @@ class CPPLexer(object):
 
     special_characters=('COMMA',
     'COLON',
+    'DOUBLE_COLON'
     'SEMICOLON',
     'LPAREN',
     'RPAREN',
@@ -152,6 +153,7 @@ class CPPLexer(object):
     t_ASSIGN = r'='
     t_COMMA = r','
     t_COLON = r':'
+    t_DOUBLE_COLON = r'::'
     t_SEMICOLON = r';'
     t_LPAREN = r'\('
     t_RPAREN = r'\)'

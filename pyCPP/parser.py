@@ -8,7 +8,11 @@ import symbol
 #  ABSTRACT SYNTAX TREE - NODES
 #  ---------------------------------------------------------------
 MaxPar=10
+<<<<<<< HEAD
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
+=======
+DEBUG  = False 
+>>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 
 class Attribute:
     global MaxPar
@@ -88,11 +92,18 @@ def check_compatibility_relational(p):
         return True
     else:
         print "Error in line %s : Relational operator cannot be applied to %s , %s",%(p.lineno(2),p[1].type,p[3].type)
+<<<<<<< HEAD
         return False   
 
+=======
+        return False               
+
+start='translation_unit'
+>>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 ## Scoping rules defined 
 
 env = Environment(None)
+saveenv = None 
 def NewScope():
     global env 
     env = Environment(env)
@@ -100,6 +111,16 @@ def NewScope():
 def PopScope():
     global env  
     env = env.prev 
+
+def p_new_scope(p):
+    '''new_scope : '''
+    NewScope()
+
+def p_finish_scope(p):
+    '''finish_scope : '''
+    PopScope()
+    
+
 
 
 
@@ -250,12 +271,23 @@ def p_qualified_id(p):
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
-    ''' nested_name_specifier : class_name COLON COLON nested_name_specifier_opt '''
-    pass
-def p_nested_name_specifier_opt(p):
-    ''' nested_name_specifier_opt : 
-                        | nested_name_specifier '''
-    pass 
+    ''' nested_name_specifier : class_name DOUBLE_COLON nested_name_specifier_opt '''
+    p[0] = [p[1]] + p[3]
+def p_nested_name_specifier_opt_1(p):
+    ''' nested_name_specifier_opt : '''
+    p[0] = [] 
+def p_nested_name_specifier_opt_2(p):
+    ''' nested_name_specifier_opt : nested_name_specifier '''
+    p[0] = p[1]
+
+def find_scope(nested_specifier):
+    global env 
+    p = env 
+    for i in nested_specifier :
+        cl = p.get(i)
+        p = cl.attrs["scope"]
+    return p 
+
 
 #postfix-expression:
     #primary-expression
@@ -523,6 +555,7 @@ def p_unary_expression_7(p):
 
 #unary-operator: one of
 #* & + - ! ~
+<<<<<<< HEAD
 def p_unary_operator(p):
     ''' unary_operator : TIMES 
                     | AMPERSAND 
@@ -532,6 +565,37 @@ def p_unary_operator(p):
                     | TILDE '''
     p[0]=p[1]
 
+=======
+def p_unary_operator_1(p):
+    ''' unary_operator : TIMES
+    '''
+    p[0] = '*'
+
+def p_unary_operator_2(p):
+    '''unary_operator : AMPERSAND
+    '''
+    p[0] = '&'
+
+def p_unary_operator_3(p):
+    '''unary_operator : PLUS
+    '''
+    p[0] = '+'
+
+def p_unary_operator_4(p):
+    '''unary_operator : MINUS 
+    '''
+    p[0] = '-'
+
+def p_unary_operator_5(p):
+    '''unary_expression : EXCLAMATION 
+    '''
+    p[0] = '!'
+
+def p_unary_operator_6(p):
+    '''unary_expression : TILDE
+    '''
+    p[0] = '~'
+>>>>>>> d77fffbeee40a20d31942a309324ef2bb80a356d
 
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
@@ -1366,23 +1430,39 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : identifier '''
-    pass
+    p[0] = p[1]
 
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier(p):
-    ''' class_specifier : class_head LBRACE member_specification_opt RBRACE '''
-    pass
+    ''' class_specifier : new_scope class_head LBRACE member_specification_opt RBRACE finish_scope'''
+    global env 
+    x.attrs["methods"]=p[4] 
+    if not env.put(x):
+        if DEBUG :
+            print( str(p[2].value) ++ "already declared" )
 
 #class-head:
     #class-key identifieropt base-clauseopt
     #class-key nested-name-specifier identifier base-clauseopt
     #class-key nested-name-specifier template template-id base-clauseopt
-def p_class_head(p):
-    ''' class_head : class_key base_clause_opt 
-                    | class_key identifier base_clause_opt 
-                    | class_key nested_name_specifier identifier base_clause_opt '''
-    pass 
+def p_class_head_1(p):
+    ''' class_head : class_key identifier base_clause_opt '''
+    global env 
+    x = Symbol(p[2])
+    x.type = p[1].type
+    x.attrs["inherits"] = p[3]
+    x.attrs["scope"] = env 
+    p[0]=x 
+    
+
+def p_class_head_2(p):
+    ''' class_head : class_key nested_name_specifier identifier base_clause_opt '''
+    x = Symbol(p[3].value)
+    x.type = p[1].type
+    x.attrs["inherits"] = p[4]
+    x.attrs["scope"] = find_scope(p[2]) 
+    p[0]=x 
 
 
 #class-key:
@@ -1391,9 +1471,13 @@ def p_class_head(p):
     #union
 
 def p_class_key(p):
-    ''' class_key : CLASS 
-                    | STRUCT '''
-    pass
+    global env 
+    ''' class_key : STRUCT '''
+    p[0] = "STRUCT" 
+
+def p_class_key(p):
+    ''' class_key : CLASS ''' 
+    p[0] = "CLASS"
 
 def p_error(p):
     print("Whoa. We're hosed")
@@ -1401,9 +1485,11 @@ def p_error(p):
 #member-specification:
     #member-declaration member-specificationopt
     #access-specifier : member-specificationopt
-def p_member_specification_opt(p):
-    '''member_specification_opt : member_declaration member_specification_opt 
-                    | access_specifier COLON member_specification_opt '''
+def p_member_specification_opt_1(p):
+    '''member_specification_opt : member_declaration member_specification_opt ''' 
+    pass 
+def p_member_specification_opt_2(p):
+    '''member_specification_opt : access_specifier COLON member_specification_opt '''
     pass 
 
 #member-declaration:
@@ -1463,39 +1549,51 @@ def p_consatnt_initializer_opt(p):
 
 #base-clause:
     #: base-specifier-list
-def p_base_clause_opt(p):
-    ''' base_clause_opt : 
-                    | base_specifier_list '''
-    pass 
+def p_base_clause_opt_1(p):
+    ''' base_clause_opt : ''' 
+    p[0] = []
+
+def p_base_clause_opt_2(p):
+    ''' base_clause_opt : COLON base_specifier_list '''
+    p[0] = p[2]
 
 #base-specifier-list:
     #base-specifier
     #base-specifier-list , base-specifier
-def p_base_specifier_list(p):
-    ''' base_specifier_list : base_specifier 
-                    | base_specifier_list , base_specifier '''
-    pass 
+def p_base_specifier_list_1(p):
+    ''' base_specifier_list : base_specifier ''' 
+    p[0] = [p[1]]
+def p_base_specifier_list_2(p):
+    ''' base_specifier_list : base_specifier_list COMMA base_specifier '''
+    p[0] = p[1] + [p[3]]
 
 #base-specifier:
     #::opt nested-name-specifieropt class-name
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
-def p_base_specifier(p):
-    ''' base_specifier : double_colon_opt nested_name_specifier_opt class_name 
-                    | double_colon_opt class_name 
-                    | access_specifier double_colon_opt nested_name_specifier_opt class_name 
-                    | access_specifier double_colon_opt class_name ''' 
-    pass 
+def p_base_specifier_1(p):
+    ''' base_specifier : double_colon_opt nested_name_specifier_opt class_name ''' 
+    env = p[2]
+    p[0] = env.get(p[3])
+
+def p_base_specifier_2(p):
+    ''' base_specifier : access_specifier double_colon_opt nested_name_specifier_opt class_name ''' 
+    env = p[3]
+    p[0] = env.get(p[4])
 
 #access-specifier:
     #private
     #protected
     #public
-def p_access_specifier(p):
-    ''' access_specifier : PUBLIC 
-                    | PRIVATE 
-                    | PROTECTED ''' 
-    pass 
+def p_access_specifier_1(p):
+    ''' access_specifier : PUBLIC ''' 
+    p[0] = "PUBLIC"
+def p_access_specifier_2(p):
+    ''' access_specifier : PRIVATE '''
+    p[0] = "PRIVATE"
+def p_access_specifier_3(p):
+    ''' access_specifier : PROTECTED ''' 
+    p[0] = "PROTECTED"
 
 
 ############# SPECIAL MEMBER FUNCTIONS ################
