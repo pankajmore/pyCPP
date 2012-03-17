@@ -1043,7 +1043,7 @@ def p_mem_initializer_id(p):
 ######### OVERLOADING ###########
 #operator-function-id:
     #operator operator
-def p_operator_function_id : 
+def p_operator_function_id(p) : 
     ''' operator_function_id : OPERATOR operator '''
     pass 
 
