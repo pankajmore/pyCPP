@@ -423,7 +423,7 @@ def p_constant_expression(p):
     pass 
 
 def p_constant_expression_opt:
-    ''' constant_expression_opt : 
+    ''' constant_expression_opt : empty
                     | constant_expression '''
     pass 
 
