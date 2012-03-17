@@ -51,7 +51,7 @@ operators=('ASSIGN','ARROW',
         'EQ_MODULO',
         )
 
-complex_tokens=('ID',
+complex_tokens=('IDENTIFIER',
         'ILLEGAL_ID',
         'DNUMBER',
         'INUMBER',
@@ -147,9 +147,9 @@ t_DOUBLE_QUOTE= r'\"'
 t_BACK_SLASH = r'\\'
 
 
-Id=r'[A-Za-z_][\w]*'
-@TOKEN(Id)
-def t_ID(t):
+IDENTIFIER = r'[A-Za-z_][\w]*'
+@TOKEN(IDENTIFIER)
+def t_IDENTIFIER(t):
     """Match an identifier and check if it is a keyword.
     This approach greatly reduces the number of regular 
     expression rules and is likely to make things a little faster.

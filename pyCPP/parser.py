@@ -1,4 +1,4 @@
-import lexer
+from lexer import *
 import ply.yacc as yacc
 
 
@@ -7,8 +7,6 @@ import ply.yacc as yacc
 #  ABSTRACT SYNTAX TREE - NODES
 #  ---------------------------------------------------------------
 
-class Node:
-    """Base class for all the nodes in the AST"""
 
 # abstract out the generic methods in this class
 
@@ -21,7 +19,9 @@ class Node:
 # define functions for each production rule and their attribute grammer/action
 
 ########### Start ################
-
+def p_identifier_1(t):
+    '''identifier : IDENTIFIER'''
+    pass
 
 def p_translation_unit(p):
     ''' translation_unit : declaration_seq_opt '''
@@ -668,7 +668,7 @@ def p_elaborated_type_specifier(p):
     #init-declarator-list , init-declarator
 def p_init_declarator_list(p):
     ''' init_declarator_list : init_declarator 
-                            | init_declarator_list , init_declarator '''
+                            | init_declarator_list COMMA init_declarator '''
     pass 
 
 #init-declarator:
@@ -801,7 +801,7 @@ def p_parameter_declaration(p):
     ''' parameter_declaration : decl_specifier_seq declarator 
                     | decl_specifier_seq declarator ASSIGN assignment_expression 
                     | decl_specifier_seq abstract_declarator_opt 
-                    | decl_specifier_seq abstract_declarator_opt = assignment_expression ''' 
+                    | decl_specifier_seq abstract_declarator_opt ASSIGN assignment_expression ''' 
     pass
 
 #function-definition:
@@ -825,9 +825,9 @@ def p_function_body(p):
     #( expression-list )
 
 def p_initializer_opt(p):
-    ''' initializer_opt:
-                    | initializer_clause 
+    ''' initializer_opt : initializer_clause
                     | LPAREN expression_list RPAREN ''' 
+    pass
 
 #initializer-clause:
     #assignment-expression
@@ -915,7 +915,7 @@ def p_member_declaration(p):
 
 def p_member_declarator_list(p):
     ''' member_declarator_list : member_declarator 
-                    | member_declarator_list , member_declarator '''
+                    | member_declarator_list COMMA member_declarator '''
     pass 
 
 def p_member_declarator_list_opt(p):
@@ -934,12 +934,13 @@ def p_member_declarator(p):
                     | COLON constant_expression '''
     pass 
 
+# TODO: fix this rule , no token for ZERO
 #pure-specifier:
     #= 0
-def p_pure_specifier_opt(p):
-    ''' pure_specifier_opt : 
-                    | ASSIGN ZERO  '''                                            ### ZERO Not defined .. I want to match it to 0 which is not in the tokens 
-    pass 
+#def p_pure_specifier_opt(p):
+    #''' pure_specifier_opt : 
+                    #| ASSIGN ZERO  '''                                            ### ZERO Not defined .. I want to match it to 0 which is not in the tokens 
+    #pass 
 
 #constant-initializer:
     #= constant-expression
@@ -962,7 +963,7 @@ def p_base_clause_opt(p):
     #base-specifier-list , base-specifier
 def p_base_specifier_list(p):
     ''' base_specifier_list : base_specifier 
-                    | base_specifier_list , base_specifier '''
+                    | base_specifier_list COMMA base_specifier '''
     pass 
 
 #base-specifier:
@@ -1020,7 +1021,7 @@ def p_ctor_initializer_opt(p):
     #mem-initializer , mem-initializer-list
 def p_mem_initializer_list(p):
     ''' mem_initializer_list : mem_initializer
-                    | mem_initializer , mem_initializer_list '''
+                    | mem_initializer COMMA mem_initializer_list '''
     pass 
 
 #mem-initializer:
@@ -1091,4 +1092,5 @@ def p_operator(p):
 ########### PREPROCESSING DIRECTIVES ###
 
 ########################################
+lex.lex()
 yacc.yacc()
