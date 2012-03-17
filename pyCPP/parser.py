@@ -1091,4 +1091,4 @@ def p_operator(p):
 ########### PREPROCESSING DIRECTIVES ###
 
 ########################################
-
+yacc.yacc()
