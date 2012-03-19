@@ -48,6 +48,31 @@ def p_declaration_seq_opt_2(p):
 
 
 #################### EXPRESSIONS ###################
+
+def p_literal_1(p):
+    ''' literal : DNUMBER '''
+    pass
+  
+def p_literal_2(p):
+    ''' literal : INUMBER '''
+    pass
+
+def p_literal_3(p):
+    ''' literal : LIT_CHAR '''
+    pass
+
+def p_literal_4(p):
+    ''' literal : LIT_STR '''
+    pass
+
+def p_literal_5(p):
+    ''' literal : TRUE '''
+    pass
+
+def p_literal_6(p):
+    ''' literal : FALSE '''
+    pass
+  
 #primary-expression:
     #literal
     #this
@@ -81,16 +106,15 @@ def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
     pass 
 
-### TODO : Add rules corresponding to literals here. I am just adding an empty definition ###
-def p_literal_1(p):
-    ''' literal : empty '''
-    pass
 #id-expression:
     #unqualified-id
     #qualified-id
-def p_id_expression(p):
-    ''' id_expression : unqualified_id 
-                    | qualified_id '''
+def p_id_expression_1(p):
+    ''' id_expression : unqualified_id '''
+    pass
+  
+def p_id_expression_2(p):
+    ''' id_expression : qualified_id '''
     pass 
 
 #unqualified-id:
@@ -106,24 +130,26 @@ def p_unqualified_id(p):
                     | TILDE class_name '''
     pass 
 
+#### TODO : To add production rule for templateopt as well when template is introduced. ###
 #qualified-id:
     #nested-name-specifier templateopt unqualified-id
-def p_qualified_id(p):
+def p_qualified_id_1(p):
     ''' qualified_id : nested_name_specifier unqualified_id '''
     pass 
 
 #nested-name-specifier:
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
-#nested-name-specifier:
-    #class-or-namespace-name :: nested-name-specifieropt
-    #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
     ''' nested_name_specifier : class_name COLON COLON nested_name_specifier_opt '''
     pass
-def p_nested_name_specifier_opt(p):
-    ''' nested_name_specifier_opt : 
-                        | nested_name_specifier '''
+  
+def p_nested_name_specifier_opt_1(p):
+    ''' nested_name_specifier_opt : empty '''
+    pass
+  
+def p_nested_name_specifier_opt_2(p):
+    ''' nested_name_specifier_opt : nested_name_specifier '''
     pass 
 
 #postfix-expression:
@@ -145,11 +171,20 @@ def p_nested_name_specifier_opt(p):
     #const_cast < type-id > ( expression )
     #typeid ( expression )
     #typeid ( type-id )
-def p_postfix_expression(p):
-    ''' postfix_expression : primary_expression 
-                    | postfix_expression LBRACKET expression RBRACKET 
-                    | postfix_expression LPAREN expression_list_opt RPAREN 
-                    | simple_type_specifier LPAREN expression_list_opt RPAREN 
+def p_postfix_expression_1(p):
+    ''' postfix_expression : primary_expression '''
+    pass
+  
+def p_postfix_expression_2(p):
+    ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
+    pass
+  
+def p_postfix_expression_3(p):
+    ''' postfix_expression : postfix_expression LPAREN expression_list_opt RPAREN '''
+    pass
+  
+def p_postfix_expression_4(p):
+    ''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN 
                     | TYPENAME double_colon_opt nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
                     | postfix_expression DOT pseudo_destructor_name 
                     | postfix_expression ARROW pseudo_destructor_name 
@@ -566,11 +601,11 @@ def p_declaration_2(p):
     ''' declaration : function_definition '''
     pass
 
-### TODO : Commenting this rule as rule corresponding to linkage_specialization has not been added anywhere. Have to add later.###
-#def p_declaration_3(p):
-#    ''' declaration : linkage_specialization '''
-#    pass
-  
+def p_declaration_3(p):
+    ''' declaration : linkage_specialization '''
+    pass
+
+### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
 #    ''' declaration : namespace_definition '''
 #    pass
@@ -625,7 +660,7 @@ def p_decl_specifier(p):
     #mutable
 
 def p_storage_class_specifier(p):
-    ''' storage_class_specifier :'''
+    ''' storage_class_specifier : AUTO'''
     pass 
 
 #function-specifier:
@@ -702,7 +737,17 @@ def p_type_name(p):
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key double_colon_opt nested_name_specifier_opt identifier '''
 
-
+#linkage_specialization : 
+    #extern string-literal { declaration_seq_opt }
+    #extern string-literal declaration
+def p_linkage_specialization_1(p):
+    ''' linkage_specialization : EXTERN LIT_STR LBRACE declaration_seq_opt RBRACE '''
+    pass
+  
+def p_linkage_specialization_2(p):
+    ''' linkage_specialization : EXTERN LIT_STR declaration '''
+    pass
+  
 ##### DECLARATORS #####
 
 #init-declarator-list:
@@ -727,7 +772,7 @@ def p_declarator_1(p):
     pass
   
 def p_declarator_2(p):
-    ''' declarator : ptr_direct_declarator '''
+    ''' declarator : ptr_operator direct_declarator '''
     pass 
 
 #direct-declarator:
@@ -735,21 +780,22 @@ def p_declarator_2(p):
     #direct-declarator ( parameter-declaration-clause ) cv-qualifier-seqopt exception-specificationopt
     #direct-declarator [ constant-expressionopt ]
     #( declarator )
-
-def p_direct_declarator(p):
-    ''' direct_declarator : declarator_id 
-                    | direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt 
-                    | direct_declarator LBRACKET constant_expression_opt RBRACKET 
-                    | LPAREN declarator RPAREN '''
-    pass 
-
-### TODO : Add production rules corresponding to ptr_direct_declarator here. Added a random grammer rule for it.#####
-
-#ptr_direct_declarator : empty
-def p_ptr_direct_declarator(p):
-    ''' ptr_direct_declarator : empty '''
+def p_direct_declarator_1(p):
+    ''' direct_declarator : declarator_id '''
     pass
   
+def p_direct_declarator_2(p):
+    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt '''
+    pass
+  
+def p_direct_declarator_3(p):
+    ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
+    pass
+  
+def p_direct_declarator_4(p):
+    ''' direct_declarator : LPAREN declarator RPAREN '''
+    pass 
+
 #ptr-operator:
     #* cv-qualifier-seqopt
     #&
@@ -859,12 +905,19 @@ def p_parameter_declaration(p):
 #function-definition:
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
-def p_function_definition(p):
-    ''' function_definition : declarator ctor_initializer_opt function_body 
-                    | decl_specifier_seq  declarator ctor_initializer_opt function_body 
-                    | declarator function_try_block 
-                    | decl_specifier_seq declarator function_try_block '''
+def p_function_definition_1(p):
+    ''' function_definition : declarator ctor_initializer_opt function_body '''
     pass
+  
+def p_function_definition_2(p):
+    ''' function_definition : decl_specifier_seq  declarator ctor_initializer_opt function_body '''
+    pass
+
+#### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
+#def p_function_definition_3(p):
+#    ''' function_definition : declarator function_try_block 
+#                    | decl_specifier_seq declarator function_try_block '''
+#    pass
 
 #function-body:
     #compound-statement
@@ -911,10 +964,14 @@ def p_class_name(p):
 
 #class-specifier:
     #class-head { member-specificationopt }
-def p_class_specifier(p):
-    ''' class_specifier : class_head LBRACE member_specification_opt RBRACE '''
+def p_class_specifier_1(p):
+    ''' class_specifier : class_head LBRACE member_specification RBRACE '''
     pass
 
+def p_class_specifier_2(p):
+    ''' class_specifier : class_head LBRACE RBRACE '''
+    pass
+  
 #class-head:
     #class-key identifieropt base-clauseopt
     #class-key nested-name-specifier identifier base-clauseopt
@@ -942,10 +999,21 @@ def p_error(p):
 #member-specification:
     #member-declaration member-specificationopt
     #access-specifier : member-specificationopt
-def p_member_specification_opt(p):
-    '''member_specification_opt : member_declaration member_specification_opt 
-                    | access_specifier COLON member_specification_opt '''
+def p_member_specification_1(p):
+    '''member_specification : member_declaration '''
+    pass
+  
+def p_member_specification_2(p):
+    ''' member_specification : member_declaration member_specification '''
+    pass
+  
+def p_member_specification_3(p):
+    ''' member_specification : access_specifier COLON member_specification '''
     pass 
+  
+def p_member_specification_4(p):
+    ''' member_specification : access_specifier COLON '''
+    pass
 
 #member-declaration:
     #decl-specifier-seqopt member-declarator-listopt ;
@@ -979,11 +1047,20 @@ def p_member_declarator_list_opt(p):
     #declarator pure-specifieropt
     #declarator constant-initializeropt
     #identifieropt : constant-expression
-def p_member_declarator(p):
-    ''' member_declarator : declarator pure_specifier_opt 
-                    | declarator constant_initializer_opt 
-                    | identifier COLON constant_expression
-                    | COLON constant_expression '''
+def p_member_declarator_1(p):
+    ''' member_declarator : declarator '''
+    pass
+  
+def p_member_declarator_2(p):
+    ''' member_declarator : declarator constant_initializer '''
+    pass
+  
+def p_member_declarator_3(p):
+    ''' member_declarator : identifier COLON constant_expression '''
+    pass
+  
+def p_member_declarator_4(p):
+    ''' member_declarator : COLON constant_expression '''
     pass 
 
 # TODO: fix this rule , no token for ZERO
@@ -996,9 +1073,8 @@ def p_member_declarator(p):
 
 #constant-initializer:
     #= constant-expression
-def p_consatnt_initializer_opt(p):
-    ''' constant_initializer_opt : 
-                    | ASSIGN constant_expression '''
+def p_constant_initializer(p):
+    ''' constant_initializer : ASSIGN constant_expression '''
     pass 
 
 ######## DERIVED CLASSES ##############
@@ -1138,7 +1214,14 @@ def p_operator(p):
 ######################################
 
 ########### EXCEPTION HANDLING #######
+#try_block :
+    #try compound_statement handler_seq
 
+#exception_specification :
+    #throw ( type-id-listopt )
+def p_exception_specification_opt(p):
+    ''' exception_specification_opt : empty '''
+    pass
 ###################################### 
 
 ########### PREPROCESSING DIRECTIVES ###

@@ -65,7 +65,8 @@ complex_tokens=('IDENTIFIER',
 ## Reserved keywords
 ##
 
-keywords={'bool': 'BOOL',
+keywords={'auto': 'AUTO',
+        'bool': 'BOOL',
         'break': 'BREAK',
         'case' : 'CASE', 
         'char'  : 'CHAR',
@@ -76,6 +77,7 @@ keywords={'bool': 'BOOL',
         'do' : 'DO',
         'double' : 'DOUBLE',
         'else' : 'ELSE',
+        'extern' : 'EXTERN',
         'false' : 'FALSE',
         'float' : 'FLOAT',
         'for' : 'FOR',
