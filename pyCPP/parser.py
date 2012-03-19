@@ -28,6 +28,11 @@ def p_translation_unit(p):
     pass
     ### TODO 
 
+def p_empty(p):
+    ''' empty : '''
+    pass
+  
+
 #declaration-seq:
     #declaration
     #declaration-seq declaration
