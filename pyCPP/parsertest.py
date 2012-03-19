@@ -39,6 +39,33 @@ def p_declaration_seq_opt(p):
 def p_empty(p):
     ''' empty : '''
     pass
+
+#declaration:
+    #block-declaration
+    #function-definition
+    #template-declaration
+    #explicit-instantiation
+    #explicit-specialization
+    #linkage-specification
+    #namespace-definition
+
+def p_declaration(p):
+    ''' declaration : block_declaration 
+                    | function_definition 
+                    | linkage_specialization 
+                    | namespace_definition '''
+    pass
+
+#block-declaration:
+    #simple-declaration
+    #asm-definition
+    #namespace-alias-definition
+    #using-declaration
+    #using-directive
+
+def p_block_declaration(p):
+    ''' block-declaration : simple_declaration '''
+    pass
     
     
 lex.lex()

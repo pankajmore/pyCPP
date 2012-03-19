@@ -36,9 +36,12 @@ def p_empty(p):
 #declaration-seq:
     #declaration
     #declaration-seq declaration
-def p_declaration_seq_opt(p):
-    ''' declaration_seq_opt : empty
-                           | declaration_seq_opt declaration  '''
+def p_declaration_seq_opt_1(p):
+    ''' declaration_seq_opt : empty '''
+    pass
+  
+def p_declaration_seq_opt_2(p):
+    ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
 #declaration:
@@ -50,12 +53,22 @@ def p_declaration_seq_opt(p):
     #linkage-specification
     #namespace-definition
 
-def p_declaration(p):
-    ''' declaration : block_declaration 
-                    | function_definition 
-                    | linkage_specialization 
-                    | namespace_definition '''
+def p_declaration_1(p):
+    ''' declaration : block_declaration '''
     pass
+  
+def p_declaration_2(p):
+    ''' declaration : function_definition '''
+    pass
+
+### Commenting this rule as rule corresponding to linkage_specialization has not been added anywhere ###
+#def p_declaration_3(p):
+#    ''' declaration : linkage_specialization '''
+#    pass
+  
+#def p_declaration_4(p):
+#    ''' declaration : namespace_definition '''
+#    pass
 
 #block-declaration:
     #simple-declaration
@@ -65,7 +78,7 @@ def p_declaration(p):
     #using-directive
 
 def p_block_declaration(p):
-    ''' block-declaration : simple_declaration '''
+    ''' block_declaration : simple_declaration '''
     pass
 
 #################### EXPRESSIONS ###################
@@ -86,6 +99,10 @@ def p_primary_expression(p):
                     | id_expression  '''
     pass 
 
+### Add rules corresponding to literals here. I am just adding an empty definition ###
+def p_literal_1(p):
+    ''' literal : empty '''
+    pass
 #id-expression:
     #unqualified-id
     #qualified-id
@@ -388,7 +405,7 @@ def p_logical_or_expression(p):
 #conditional-expression:
     #logical-or-expression
     #logical-or-expression ? expression : assignment-expression
-def conditional_expression(p):
+def p_conditional_expression(p):
     ''' conditional_expression : logical_or_expression 
                     | logical_or_expression QUESTION expression COLON assignment_expression '''
     pass 
@@ -685,9 +702,12 @@ def p_init_declarator(p):
 #declarator:
     #direct-declarator
     #ptr-operator declarator
-def p_declarator(p):
-    ''' declarator : direct_declarator 
-                    | ptr_direct_declarator '''
+def p_declarator_1(p):
+    ''' declarator : direct_declarator '''
+    pass
+  
+def p_declarator_2(p):
+    ''' declarator : ptr_direct_declarator '''
     pass 
 
 #direct-declarator:
@@ -703,6 +723,13 @@ def p_direct_declarator(p):
                     | LPAREN declarator RPAREN '''
     pass 
 
+### Add production rules corresponding to ptr_direct_declarator here. Added a random grammer rule for it.#####
+
+#ptr_direct_declarator : empty
+def p_ptr_direct_declarator(p):
+    ''' ptr_direct_declarator : empty '''
+    pass
+  
 #ptr-operator:
     #* cv-qualifier-seqopt
     #&
