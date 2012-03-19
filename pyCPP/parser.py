@@ -36,50 +36,16 @@ def p_empty(p):
 #declaration-seq:
     #declaration
     #declaration-seq declaration
+    
 def p_declaration_seq_opt_1(p):
-    ''' declaration_seq_opt : empty '''
+    ''' declaration_seq_opt : declaration '''
     pass
   
 def p_declaration_seq_opt_2(p):
     ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
-#declaration:
-    #block-declaration
-    #function-definition
-    #template-declaration
-    #explicit-instantiation
-    #explicit-specialization
-    #linkage-specification
-    #namespace-definition
 
-def p_declaration_1(p):
-    ''' declaration : block_declaration '''
-    pass
-  
-def p_declaration_2(p):
-    ''' declaration : function_definition '''
-    pass
-
-### Commenting this rule as rule corresponding to linkage_specialization has not been added anywhere ###
-#def p_declaration_3(p):
-#    ''' declaration : linkage_specialization '''
-#    pass
-  
-#def p_declaration_4(p):
-#    ''' declaration : namespace_definition '''
-#    pass
-
-#block-declaration:
-    #simple-declaration
-    #asm-definition
-    #namespace-alias-definition
-    #using-declaration
-    #using-directive
-
-def p_block_declaration(p):
-    ''' block_declaration : simple_declaration '''
-    pass
 
 #################### EXPRESSIONS ###################
 #primary-expression:
@@ -90,16 +56,32 @@ def p_block_declaration(p):
     #:: qualified-id
     #( expression )
     #id-expression
-def p_primary_expression(p):
-    ''' primary_expression : literal 
-                    | COLON COLON identifier 
-                    | COLON COLON operator_function_id
-                    | COLON COLON qualified_id 
-                    | LPAREN expression RPAREN 
-                    | id_expression  '''
+    
+def p_primary_expression_1(p):
+    ''' primary_expression : literal '''
+    pass
+  
+def p_primary_expression_2(p):
+    ''' primary_expression : COLON COLON identifier '''
+    pass
+  
+def p_primary_expression_3(p):
+    ''' primary_expression : COLON COLON operator_function_id '''
+    pass
+  
+def p_primary_expression_4(p):
+    ''' primary_expression : COLON COLON qualified_id '''
+    pass
+  
+def p_primary_expression_5(p):
+    ''' primary_expression : LPAREN expression RPAREN '''
+    pass
+  
+def p_primary_expression_6(p):
+    ''' primary_expression : id_expression  '''
     pass 
 
-### Add rules corresponding to literals here. I am just adding an empty definition ###
+### TODO : Add rules corresponding to literals here. I am just adding an empty definition ###
 def p_literal_1(p):
     ''' literal : empty '''
     pass
@@ -566,6 +548,44 @@ def p_declaration_statement(p):
 
 
 #################### DECLARATIONS ##################
+
+#declaration:
+    #block-declaration
+    #function-definition
+    #template-declaration
+    #explicit-instantiation
+    #explicit-specialization
+    #linkage-specification
+    #namespace-definition
+
+def p_declaration_1(p):
+    ''' declaration : block_declaration '''
+    pass
+  
+def p_declaration_2(p):
+    ''' declaration : function_definition '''
+    pass
+
+### TODO : Commenting this rule as rule corresponding to linkage_specialization has not been added anywhere. Have to add later.###
+#def p_declaration_3(p):
+#    ''' declaration : linkage_specialization '''
+#    pass
+  
+#def p_declaration_4(p):
+#    ''' declaration : namespace_definition '''
+#    pass
+
+#block-declaration:
+    #simple-declaration
+    #asm-definition
+    #namespace-alias-definition
+    #using-declaration
+    #using-directive
+
+def p_block_declaration(p):
+    ''' block_declaration : simple_declaration '''
+    pass
+  
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
@@ -723,7 +743,7 @@ def p_direct_declarator(p):
                     | LPAREN declarator RPAREN '''
     pass 
 
-### Add production rules corresponding to ptr_direct_declarator here. Added a random grammer rule for it.#####
+### TODO : Add production rules corresponding to ptr_direct_declarator here. Added a random grammer rule for it.#####
 
 #ptr_direct_declarator : empty
 def p_ptr_direct_declarator(p):
