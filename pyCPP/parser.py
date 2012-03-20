@@ -96,15 +96,15 @@ def p_primary_expression_1(p):
     pass
   
 def p_primary_expression_2(p):
-    ''' primary_expression : COLON COLON identifier '''
+    ''' primary_expression : SCOPE identifier '''
     pass
   
 def p_primary_expression_3(p):
-    ''' primary_expression : COLON COLON operator_function_id '''
+    ''' primary_expression : SCOPE operator_function_id '''
     pass
   
 def p_primary_expression_4(p):
-    ''' primary_expression : COLON COLON qualified_id '''
+    ''' primary_expression : SCOPE qualified_id '''
     pass
   
 def p_primary_expression_5(p):
@@ -150,7 +150,7 @@ def p_qualified_id_1(p):
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
-    ''' nested_name_specifier : class_name COLON COLON nested_name_specifier_opt '''
+    ''' nested_name_specifier : class_name SCOPE nested_name_specifier_opt '''
     pass
   
 def p_nested_name_specifier_opt_1(p):
@@ -219,7 +219,7 @@ def p_expression_list_opt(p):
     #::opt nested-name-specifier template template-id :: ~ type-name
     #::opt nested-name-specifieropt ~ type-name
 def p_pseudo_destructor_name(p):
-    ''' pseudo_destructor_name : double_colon_opt nested_name_specifier_opt type_name COLON COLON TILDE type_name
+    ''' pseudo_destructor_name : double_colon_opt nested_name_specifier_opt type_name SCOPE TILDE type_name
                     | double_colon_opt nested_name_specifier_opt TILDE type_name '''
     pass 
 
@@ -700,7 +700,7 @@ def p_type_specifier(p):
 
 def p_double_colon_opt(p):
     ''' double_colon_opt : empty
-                        | COLON COLON '''
+                        | SCOPE '''
     pass
 
 ##
@@ -906,8 +906,7 @@ def p_parameter_declaration_clause(p):
     ''' parameter_declaration_clause : 
                     | parameter_declaration_list 
                     | parameter_declaration_list ELLIPSIS
-                    #TODO: CHECK THIS| DOT DOT DOT 
-                    | parameter_declaration_list COMMA DOT DOT DOT '''
+                    | parameter_declaration_list COMMA ELLIPSIS '''
     pass 
 
 #parameter-declaration-list:
