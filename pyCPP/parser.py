@@ -1,7 +1,7 @@
 from lexer import *
 import ply.yacc as yacc
 
-
+success = True
 
 #  ---------------------------------------------------------------
 #  ABSTRACT SYNTAX TREE - NODES
@@ -993,8 +993,8 @@ def p_class_key(p):
                     | STRUCT '''
     pass
 
-def p_error(p):
-    print("Whoa. We're hosed")
+#def p_error(p):
+    #print("Whoa. We're hosed")
 
 #member-specification:
     #member-declaration member-specificationopt
@@ -1229,3 +1229,12 @@ def p_exception_specification_opt(p):
 ########################################
 lex.lex()
 yacc.yacc()
+
+try:
+    f1 = open(sys.argv[1])
+    yacc.parse(f1.read())
+    if success:
+        print 'Compilation Successful with No Error !!!'
+except IOError:
+    print 'Could not open file:',  sys.argv[1]
+

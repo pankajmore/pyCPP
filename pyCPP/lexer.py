@@ -6,7 +6,6 @@ from ply.lex import TOKEN
 ##
 ## All the tokens recognized by the lexer
 ##
-
 special_characters=('COMMA',
         'COLON',
         'SEMICOLON',
@@ -173,7 +172,7 @@ def t_DNUMBER(t):
 
 # Match an integer
 def t_INUMBER(t):
-    r'\d+(?=[+\-*/()%,;\s])'
+    r'\d+(?=[+\-*/()%\],;\s])'
     return t
 
 def t_DOT(t):
@@ -234,8 +233,10 @@ t_ignore = '[ \t\r\f\v]'
     # one character by calling t.lexer.skip(1)
 
 def t_error(t):
+    global success
     print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
     t.lexer.skip(1)
+    success = False
 
 def test_lexer(lexer, string):
     lexer.input(string)
