@@ -1020,6 +1020,7 @@ def p_error(p):
     global success
     success = False
     print("Whoa. We're hosed")
+    print("Syntax error at token " + str(p.type) + " of value " + str(p.value) + " at line number " + str(p.lineno))
 
 #member-specification:
     #member-declaration member-specificationopt
@@ -1251,11 +1252,11 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit')
+yacc.yacc(start='translation_unit',write_tables=1)
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:

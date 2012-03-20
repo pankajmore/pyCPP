@@ -1,5 +1,3 @@
-#include<iostream>
-#include<string>
 class productSpecification{
    int id;
    float price;
