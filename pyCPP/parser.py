@@ -24,6 +24,8 @@ success = True
 
 # define functions for each production rule and their attribute grammer/action
 
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IF'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO'), ('right', 'ASSIGN', 'PIPE', 'EXCLAMATION', 'CARET'), ('left', 'DOUBLE_PIPE', 'DOUBLE_AMPERSAND', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW', 'LESS_EQ', 'GREATER_EQ', 'IS_EQ', 'NOT_EQ'), ('left', 'COLON', 'LESS', 'GREATER'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE')]
+
 ########### Start ################
 def p_identifier_1(t):
     '''identifier : IDENTIFIER'''
@@ -1252,15 +1254,15 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=1)
+yacc.yacc(start='translation_unit',write_tables=0)
 
-try:
-    f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
-    if success:
-        print 'Compilation Successful with No Error !!!'
-    else:
-        print "Syntax error while parsing"
-except IOError:
-    print 'Could not open file:',  sys.argv[1]
+#try:
+#    f1 = open(sys.argv[1])
+#    yacc.parse(f1.read(),debug=0)
+#    if success:
+#        print 'Compilation Successful with No Error !!!'
+#    else:
+#        print "Syntax error while parsing"
+#except IOError:
+#    print 'Could not open file:',  sys.argv[1]
 
