@@ -44,6 +44,10 @@ def p_empty(p):
     #declaration-seq declaration
     
 def p_declaration_seq_opt_1(p):
+    ''' declaration_seq_opt : empty '''
+    pass
+
+def p_declaration_seq_opt_3(p):
     ''' declaration_seq_opt : declaration '''
     pass
   
@@ -51,9 +55,6 @@ def p_declaration_seq_opt_2(p):
     ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
-def p_declaration_seq_opt_3(p):
-    ''' declaration_seq_opt : empty '''
-    pass
 
 
 #################### EXPRESSIONS ###################
@@ -783,14 +784,14 @@ def p_linkage_specialization_2(p):
     #init-declarator
     #init-declarator-list , init-declarator
 def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator initializer_opt
+    ''' init_declarator_list : init_declarator
                             | init_declarator_list COMMA init_declarator '''
     pass 
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
-    ''' init_declarator : declarator '''
+    ''' init_declarator : declarator initializer_opt'''
     pass 
 
 #declarator:
@@ -958,7 +959,7 @@ def p_function_body(p):
     #( expression-list )
 
 def p_initializer_opt(p):
-    ''' initializer_opt : empty
+    ''' initializer_opt : 
                     | initializer_clause
                     | LPAREN expression_list RPAREN ''' 
     pass
