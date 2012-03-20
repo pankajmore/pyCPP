@@ -1,7 +1,11 @@
 from lexer import *
 import ply.yacc as yacc
 
+#start='translation_unit'
 success = True
+
+
+
 
 #  ---------------------------------------------------------------
 #  ABSTRACT SYNTAX TREE - NODES
@@ -45,6 +49,9 @@ def p_declaration_seq_opt_2(p):
     ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
+def p_declaration_seq_opt_1(p):
+    ''' declaration_seq_opt : empty '''
+    pass
 
 
 #################### EXPRESSIONS ###################
@@ -201,7 +208,7 @@ def p_expression_list(p):
     pass 
 
 def p_expression_list_opt(p):
-    ''' expression_list_opt :
+    ''' expression_list_opt : empty
                     | expression_list '''
     pass 
 
@@ -259,7 +266,7 @@ def p_new_placement(p):
     ''' new_placement : LPAREN expression_list RPAREN '''
     pass 
 def p_new_placement_opt(p):
-    ''' new_placement_opt : 
+    ''' new_placement_opt : empty
                     | new_placement '''
     pass 
 
@@ -274,6 +281,7 @@ def p_new_type_id(p):
     #direct-new-declarator
 def p_new_declarator_opt(p):
     ''' new_declarator_opt : 
+                    | empty
                     | ptr_operator new_declarator_opt 
                     | direct_new_declarator '''
     pass 
@@ -290,6 +298,7 @@ def p_direct_new_declarator(p):
     #( expression-listopt )
 def p_new_initializer_opt(p): 
     ''' new_initializer_opt : 
+                    | empty
                     | LPAREN expression_list_opt RPAREN '''
     pass 
 
@@ -688,7 +697,7 @@ def p_type_specifier(p):
 ## HELPER 
 
 def p_double_colon_opt(p):
-    ''' double_colon_opt : 
+    ''' double_colon_opt : empty
                         | COLON COLON '''
     pass
 
@@ -772,14 +781,14 @@ def p_linkage_specialization_2(p):
     #init-declarator
     #init-declarator-list , init-declarator
 def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator 
+    ''' init_declarator_list : init_declarator initializer_opt
                             | init_declarator_list COMMA init_declarator '''
     pass 
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
-    ''' init_declarator : declarator initializer_opt '''
+    ''' init_declarator : declarator '''
     pass 
 
 #declarator:
@@ -827,7 +836,7 @@ def p_ptr_operator(p):
 #cv-qualifier-seq:
     #cv-qualifier cv-qualifier-seqopt
 def p_cv_qualifier_seq_opt(p):
-    ''' cv_qualifier_seq_opt : 
+    ''' cv_qualifier_seq_opt : empty
                             | cv_qualifier cv_qualifier_seq_opt '''
     pass 
 
@@ -843,7 +852,7 @@ def p_cv_qualifier(p):
     #::opt id-expression
     #::opt nested-name-specifieropt type-name
 def p_declarator_id(p):
-    ''' declarator_id : double_colon_opt id_expression 
+    ''' declarator_id : id_expression 
                     | double_colon_opt type_name
                     | double_colon_opt nested_name_specifier_opt type_name '''
 
@@ -869,7 +878,7 @@ def p_abstract_declarator(p):
     pass
 
 def p_abstract_declarator_opt(p):
-    ''' abstract_declarator_opt : 
+    ''' abstract_declarator_opt : empty
                     | abstract_declarator '''
     pass
 
@@ -884,7 +893,7 @@ def p_direct_abstract_declarator(p):
     pass 
 
 def p_direct_abstract_declarator_opt(p):
-    ''' direct_abstract_declarator_opt : 
+    ''' direct_abstract_declarator_opt : empty
                     | direct_abstract_declarator '''
     pass 
 
@@ -948,7 +957,8 @@ def p_function_body(p):
     #( expression-list )
 
 def p_initializer_opt(p):
-    ''' initializer_opt : initializer_clause
+    ''' initializer_opt : empty
+                    | initializer_clause
                     | LPAREN expression_list RPAREN ''' 
     pass
 
@@ -1057,7 +1067,7 @@ def p_member_declarator_list(p):
     pass 
 
 def p_member_declarator_list_opt(p):
-    ''' member_declarator_list_opt : 
+    ''' member_declarator_list_opt : empty
                     | member_declarator_list'''
     pass 
 
@@ -1100,7 +1110,7 @@ def p_constant_initializer(p):
 #base-clause:
     #: base-specifier-list
 def p_base_clause_opt(p):
-    ''' base_clause_opt : 
+    ''' base_clause_opt : empty
                     | base_specifier_list '''
     pass 
 
@@ -1151,14 +1161,14 @@ def p_conversion_type_id(p):
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
 def p_conversion_declarator_opt(p):
-    ''' conversion_declarator_opt : 
+    ''' conversion_declarator_opt : empty
                     | ptr_operator conversion_declarator_opt '''
     pass 
 
 #ctor-initializer:
     #: mem-initializer-list
 def p_ctor_initializer_opt(p):
-    ''' ctor_initializer_opt : 
+    ''' ctor_initializer_opt : empty
                     | mem_initializer_list'''
     pass 
 
@@ -1246,7 +1256,7 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc()
+yacc.yacc(start='translation_unit')
 
 try:
     f1 = open(sys.argv[1])
