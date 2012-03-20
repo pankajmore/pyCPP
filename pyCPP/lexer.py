@@ -8,6 +8,8 @@ from ply.lex import TOKEN
 ##
 
 special_characters=('COMMA',
+        'ELLIPSIS',
+        'SCOPE' ,
         'COLON',
         'SEMICOLON',
         'LPAREN',
@@ -106,6 +108,8 @@ tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 # special prefix t_ to indicate that it defines a token.
 
 t_ARROW = r'->'
+t_ELLIPSIS = r'\.\.\.'
+t_SCOPE = r'::'
 t_ASSIGN = r'='
 t_COMMA = r','
 t_COLON = r':'
@@ -234,6 +238,10 @@ t_ignore = ' \t\r\f\v'
 def t_error(t):
     print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
     t.lexer.skip(1)
+    global success
+    print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
+    t.lexer.skip(1)
+    success = False
 
 def test_lexer(lexer, string):
     lexer.input(string)
@@ -243,6 +251,7 @@ def test_lexer(lexer, string):
         if not tok: 
             break      # No more input
     	print tok
+
 
 if __name__ == '__main__':
     file = open(sys.argv[1])

@@ -1,6 +1,3 @@
-#include "iostream.h"
-#include "conio.h"
-#include "stdio.h"
 struct account
 {
 int no[10];
