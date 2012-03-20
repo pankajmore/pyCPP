@@ -7,6 +7,8 @@ from ply.lex import TOKEN
 ## All the tokens recognized by the lexer
 ##
 special_characters=('COMMA',
+        'ELLIPSIS',
+        'SCOPE' ,
         'COLON',
         'SEMICOLON',
         'LPAREN',
@@ -106,6 +108,8 @@ tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
 # special prefix t_ to indicate that it defines a token.
 
 t_ARROW = r'->'
+t_ELLIPSIS = r'\.\.\.'
+t_SCOPE = r'::'
 t_ASSIGN = r'='
 t_COMMA = r','
 t_COLON = r':'

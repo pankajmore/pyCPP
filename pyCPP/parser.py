@@ -4,6 +4,8 @@ import ply.yacc as yacc
 #start='translation_unit'
 success = True
 
+#TODO : SATVIK replace all colon colon and dot dot dot by SCOPE
+# also fix the ASSIGN error in dummy.cpp
 
 
 
@@ -49,7 +51,7 @@ def p_declaration_seq_opt_2(p):
     ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
-def p_declaration_seq_opt_1(p):
+def p_declaration_seq_opt_3(p):
     ''' declaration_seq_opt : empty '''
     pass
 
@@ -903,8 +905,8 @@ def p_direct_abstract_declarator_opt(p):
 def p_parameter_declaration_clause(p):
     ''' parameter_declaration_clause : 
                     | parameter_declaration_list 
-                    | parameter_declaration_list DOT DOT DOT 
-                    | DOT DOT DOT 
+                    | parameter_declaration_list ELLIPSIS
+                    #TODO: CHECK THIS| DOT DOT DOT 
                     | parameter_declaration_list COMMA DOT DOT DOT '''
     pass 
 
@@ -1260,7 +1262,7 @@ yacc.yacc(start='translation_unit')
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
 except IOError:
