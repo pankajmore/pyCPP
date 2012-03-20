@@ -588,7 +588,8 @@ def p_new_expression(p):
     #( expression-list )
 def p_new_placement(p): 
     ''' new_placement : LPAREN expression_list RPAREN '''
-    pass 
+    p[0]=copyAttribute(p[2])
+    
 def p_new_placement_opt(p):
     ''' new_placement_opt : 
                     | new_placement '''
@@ -659,9 +660,11 @@ def p_cast_expression_2(p):
                     p[4].type='CHAR'
                     p[0].value=chr(p[4].value)
                 else:
+                    p[0]=initAttribute(p[0])
                     print "Error in line %s : Cannot typecasting INT outside the range 0-255 to CHAR",% p.lineno(1)
                     
             else:
+                p[0]=initAttribute(p[0])
                 print "Error in line %s : Illegal Type conversion from %s to %s ",%(p.lineno(1),p[4]['type'],p[2]['value'])
             
         
@@ -930,7 +933,7 @@ def conditional_expression_1(p):
     ''' conditional_expression : logical_or_expression '''
     p[0]=copyAttribute(p[1])
             
-def conditional_expression_1(p):
+def conditional_expression_2(p):
     ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
     p[0]=copyAttribute(p[1])
     if p[1].type=='BOOL' and is_primitive(p[1]):
@@ -946,10 +949,66 @@ def conditional_expression_1(p):
     #conditional-expression
     #logical-or-expression assignment-operator assignment-expression
     #throw-expression
-def p_assignment_expression(p):
-    ''' assignment_expression : conditional_expression 
-                    | logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
-    pass 
+def p_assignment_expression_1(p):
+    ''' assignment_expression : conditional_expression '''
+    p[0] = copyAttribute(p[1])
+
+#How to check for L-value???
+def p_assignment_expression_2(p):
+    ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
+    p[0] = Attribute()
+    p[0].type='VOID'
+                  
+    if p[1].isfunction==1 or p[3].isfunction==1:
+        p[0]=initAttribute(p[0])
+        p[1]=initAttribute(p[1])
+        print 'Error in line %s : Incompatible assignment operation. Cannot assign function to %s ',% (p.lineno(2),find_type(p[3])) 
+
+    else:
+        if p[2]=='=':
+            if find_type(p[1])!=find_type(p[3])
+                p[0]=initAttribute(p[0])
+                p[1]=initAttribute(p[1])
+                print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ',% (p.lineno(2),find_type(p[3]),find_type(p[1])) 
+        else:
+            if p[2]=='*=':
+                if (p[1].type='FLOAT' or p[1].type =='INT') and is_primitive(p[1]) and p[1].type==p[3].type and is_primitive(p[3]):
+                    p[1].value=p[1].value*p[3].value
+                else:
+                    p[0]=initAttribute(p[0])
+                    p[1]=initAttribute(p[1])
+                    print 'Error in line %s : Cannot apply %s to %s',%(p.lineno(2),p[2],find_type(p[1])
+
+            if p[2]=='/=':
+                if (p[1].type='FLOAT' or p[1].type =='INT') and is_primitive(p[1]) and p[1].type==p[3].type and is_primitive(p[3]):
+                    p[1].value=p[1].value/p[3].value
+                else:
+                    p[0]=initAttribute(p[0])
+                    p[1]=initAttribute(p[1])
+                    print 'Error in line %s : Cannot apply %s to %s',%(p.lineno(2),p[2],find_type(p[1])
+
+            if p[2]=='+=':
+                if (p[1].type='FLOAT' or p[1].type =='INT') and is_primitive(p[1]) and p[1].type==p[3].type and is_primitive(p[3]):
+                    p[1].value=p[1].value+p[3].value                                                                   
+                elif (p[1].isPointer==1 or p[1].isArray>0 and p[3].type=='INT' and is_primitive(p[3])):
+                    p[1].value= p[1].value+ p[3].value*p[1].width
+                else:
+                    p[0]=initAttribute(p[0])
+                    p[1]=initAttribute(p[1])
+                    print 'Error in line %s : Cannot apply += to %s',%(p.lineno(2),find_type(p[1])        
+
+            if p[2]=='-=':
+                if (p[1].type='FLOAT' or p[1].type =='INT') and is_primitive(p[1]) and p[1].type==p[3].type and is_primitive(p[3]):
+                    p[1].value=p[1].value-p[3].value                                                                   
+                elif (p[1].isPointer==1 or p[1].isArray>0 and p[3].type=='INT' and is_primitive(p[3])):
+                    p[1].value= p[1].value - p[3].value*p[1].width                                              
+                else:
+                    p[0]=initAttribute(p[0])
+                    p[1]=initAttribute(p[1])
+                    print 'Error in line %s : Cannot apply -= to %s',%(p.lineno(2),find_type(p[1])        
+
+            
+        
 
 #assignment-operator: one of
 #= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 
@@ -960,21 +1019,25 @@ def p_assignment_operator(p):
                     | EQ_MODULO
                     | EQ_PLUS
                     | EQ_MINUS '''
-    pass 
+    p[0]=p[1]
 
 #expression:
     #assignment-expression
     #expression , assignment-expression
-def p_expression(p):
-    ''' expression : assignment_expression 
-                    | expression COMMA assignment_expression '''
-    pass 
+def p_expression_1(p):
+    ''' expression : assignment_expression '''
+                    
+    p[0]=copyAttribute(p[1])
 
+def p_expression_2(p):
+    ''' expression : expression COMMA assignment_expression '''
+    pass                                                                       
+                                                                       
 #constant-expression:
     #conditional-expression
 def p_constant_expression(p):
     ''' constant_expression : conditional_expression ''' 
-    pass 
+    p[0]=copyAttribute(p[1])
 
 def p_constant_expression_opt:
     ''' constant_expression_opt : 
