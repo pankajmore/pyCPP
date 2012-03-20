@@ -6,6 +6,7 @@ from ply.lex import TOKEN
 ##
 ## All the tokens recognized by the lexer
 ##
+
 special_characters=('COMMA',
         'ELLIPSIS',
         'SCOPE' ,
@@ -19,7 +20,6 @@ special_characters=('COMMA',
         'RBRACE',
         'QUESTION',
         'TILDE',
-        'POUND',
         'DOT',    
         'SINGLE_QUOTE',
         'DOUBLE_QUOTE',
@@ -141,7 +141,6 @@ t_PIPE = r'\|'
 t_CARET = r'\^'
 t_QUESTION = r'\?'
 t_TILDE = r'~'
-t_POUND = r'\#'
 t_EQ_PLUS = r'\+='
 t_EQ_MINUS = r'-='
 t_EQ_TIMES = r'\*='
@@ -171,24 +170,24 @@ def t_ILLEGAL_ID(t):
 
     # Match a decimal number
 def t_DNUMBER(t):
-    r'((\d*)\.((\d*([eE][+-]\d+))|\d+)(?=[+\-*/%(),;\s])|([eE][+-]\d+)(?=[+\-*/()%,;\s]))'
+    r'((\d*)\.((\d*([eE][+-]\d+))|\d+)(?=[+\-*/%(),;\s\]])|([eE][+-]\d+)(?=[+\-*/()%,;\s\]]))'
     return t
 
 # Match an integer
 def t_INUMBER(t):
-    r'\d+(?=[+\-*/()%\],;\s])'
+    r'\d+(?=[+\-*/()%,;\s\]])'
     return t
 
 def t_DOT(t):
     r'\.'
     return t
 
-c1=r'[eE]([eE]*[+-]*\d*)*(?=[+\-*/()%,;\s])'
-c2=r'([eE]*[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*(?=[+\-*/%(),;\s])'
+c1=r'[eE]([eE]*[+-]*\d*)*(?=[+\-*/()%,;\s\]])'
+c2=r'([eE]+[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*(?=[+\-*/%(),;\s\]])'
 c3=r'(\d*)\.((\d*([eE][+-]\d+))|\d+)([^+()\-*/%,;\s][a-zA-Z_]*)'
 c4=r'([eE][+-]\d+)[^+()\-*/%,;\s][a-zA-Z_]*'
 c5=r'[eE]([eE]*[+-]*\d*)*([^+\-*/()%,;\s][a-zA-Z_]*)'
-c6=r'([eE]*[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*([^+\-*/%(),;\s][a-zA-Z_]*)'
+c6=r'([eE]+[+-]*\d*)*\.(\d*\.*[eE]*[+-]*)*([^+\-*/%(),;\s][a-zA-Z_]*)'
 Il_Dnum=r'('+c4+r'|'+c5+r'|'+c6+'|'+c1+r'|'+c2+r'|'+c3+r')'
 
 @TOKEN(Il_Dnum)
@@ -228,7 +227,7 @@ def t_newline(t):
 # The use of t_ignore provides substantially better lexing performance 
 # because it is handled as a special case and is checked in a much more 
 # efficient manner than the normal regular expression rules.
-t_ignore = '[ \t\r\f\v]'
+t_ignore = ' \t\r\f\v'
 
     # Called when no rule is matched
     # t.value attribute contains the rest of the input string 
@@ -237,6 +236,8 @@ t_ignore = '[ \t\r\f\v]'
     # one character by calling t.lexer.skip(1)
 
 def t_error(t):
+    print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
+    t.lexer.skip(1)
     global success
     print "Illegal character '%s' at line number %d" % (t.value[0], t.lineno)
     t.lexer.skip(1)
@@ -249,7 +250,8 @@ def test_lexer(lexer, string):
         tok = lexer.token()
         if not tok: 
             break      # No more input
-        print tok
+    	print tok
+
 
 if __name__ == '__main__':
     file = open(sys.argv[1])

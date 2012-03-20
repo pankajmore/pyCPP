@@ -44,6 +44,10 @@ def p_empty(p):
     #declaration-seq declaration
     
 def p_declaration_seq_opt_1(p):
+    ''' declaration_seq_opt : empty '''
+    pass
+
+def p_declaration_seq_opt_3(p):
     ''' declaration_seq_opt : declaration '''
     pass
   
@@ -51,9 +55,6 @@ def p_declaration_seq_opt_2(p):
     ''' declaration_seq_opt : declaration_seq_opt declaration  '''
     pass
 
-def p_declaration_seq_opt_3(p):
-    ''' declaration_seq_opt : empty '''
-    pass
 
 
 #################### EXPRESSIONS ###################
@@ -1015,8 +1016,10 @@ def p_class_key(p):
                     | STRUCT '''
     pass
 
-#def p_error(p):
-    #print("Whoa. We're hosed")
+def p_error(p):
+    global success
+    success = False
+    print("Whoa. We're hosed")
 
 #member-specification:
     #member-declaration member-specificationopt
@@ -1255,6 +1258,8 @@ try:
     yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
+    else:
+        print "Syntax error while parsing"
 except IOError:
     print 'Could not open file:',  sys.argv[1]
 

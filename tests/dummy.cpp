@@ -1,3 +1,3 @@
 int abc123 ;
 int x,y,z ;
-x = 5 ;
+int x = 5 + 2.4;
