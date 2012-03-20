@@ -283,7 +283,6 @@ def p_new_type_id(p):
     #direct-new-declarator
 def p_new_declarator_opt(p):
     ''' new_declarator_opt : 
-                    | empty
                     | ptr_operator new_declarator_opt 
                     | direct_new_declarator '''
     pass 
@@ -300,7 +299,6 @@ def p_direct_new_declarator(p):
     #( expression-listopt )
 def p_new_initializer_opt(p): 
     ''' new_initializer_opt : 
-                    | empty
                     | LPAREN expression_list_opt RPAREN '''
     pass 
 
@@ -529,8 +527,7 @@ def p_compound_statement(p):
     #statement-seq statement
 def p_statement_seq(p):
     ''' statement_seq : statement 
-                | LBRACE statement_seq RBRACE 
-                | LBRACE RBRACE '''
+                | statement_seq statement'''
     pass 
 
 #selection-statement:
@@ -612,9 +609,6 @@ def p_declaration_2(p):
     ''' declaration : function_definition '''
     pass
 
-def p_declaration_3(p):
-    ''' declaration : linkage_specialization '''
-    pass
 
 ### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
@@ -783,14 +777,14 @@ def p_linkage_specialization_2(p):
     #init-declarator
     #init-declarator-list , init-declarator
 def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator initializer_opt
+    ''' init_declarator_list : init_declarator
                             | init_declarator_list COMMA init_declarator '''
     pass 
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
-    ''' init_declarator : declarator '''
+    ''' init_declarator : declarator initializer_opt'''
     pass 
 
 #declarator:
@@ -801,7 +795,7 @@ def p_declarator_1(p):
     pass
   
 def p_declarator_2(p):
-    ''' declarator : ptr_operator direct_declarator '''
+    ''' declarator : ptr_operator declarator '''
     pass 
 
 #direct-declarator:
@@ -854,8 +848,7 @@ def p_cv_qualifier(p):
     #::opt id-expression
     #::opt nested-name-specifieropt type-name
 def p_declarator_id(p):
-    ''' declarator_id : id_expression 
-                    | double_colon_opt type_name
+    ''' declarator_id : double_colon_opt id_expression 
                     | double_colon_opt nested_name_specifier_opt type_name '''
 
 #type-id:
@@ -958,8 +951,8 @@ def p_function_body(p):
     #( expression-list )
 
 def p_initializer_opt(p):
-    ''' initializer_opt : empty
-                    | initializer_clause
+    ''' initializer_opt : 
+                    | ASSIGN initializer_clause
                     | LPAREN expression_list RPAREN ''' 
     pass
 
@@ -1052,7 +1045,7 @@ def p_member_specification_4(p):
     #template-declaration
 def p_member_declaration(p):
     ''' member_declaration : decl_specifier_seq member_declarator_list_opt SEMICOLON 
-                    | member_declarator_list_opt
+                    | member_declarator_list_opt SEMICOLON
                     | function_definition SEMICOLON
                     | function_definition 
                     | double_colon_opt nested_name_specifier unqualified_id SEMICOLON '''
@@ -1130,8 +1123,7 @@ def p_base_specifier_list(p):
 def p_base_specifier(p):
     ''' base_specifier : double_colon_opt nested_name_specifier_opt class_name 
                     | double_colon_opt class_name 
-                    | access_specifier double_colon_opt nested_name_specifier_opt class_name 
-                    | access_specifier double_colon_opt class_name ''' 
+                    | access_specifier double_colon_opt nested_name_specifier_opt class_name ''' 
     pass 
 
 #access-specifier:
@@ -1193,7 +1185,6 @@ def p_mem_initializer(p):
     #identifier
 def p_mem_initializer_id(p):
     ''' mem_initializer_id : double_colon_opt nested_name_specifier_opt class_name 
-                    | double_colon_opt class_name 
                     | identifier '''
     pass 
 

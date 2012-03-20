@@ -1,3 +1,1 @@
-int a ;
-int b ;
-float c ;
+int x = 1;
