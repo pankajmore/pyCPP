@@ -710,14 +710,32 @@ def p_double_colon_opt(p):
     #void
 
 
-def p_simple_type_specifier(p):
-    ''' simple_type_specifier : double_colon_opt nested_name_specifier_opt type_name
-                            | BOOL 
-                            | CHAR 
-                            | INT 
-                            | FLOAT 
-                            | DOUBLE 
-                            | VOID '''
+def p_simple_type_specifier_1(p):
+    ''' simple_type_specifier : double_colon_opt nested_name_specifier_opt type_name '''
+    pass
+
+def p_simple_type_specifier_2(p):
+    ''' simple_type_specifier : BOOL '''
+    pass
+
+def p_simple_type_specifier_3(p):
+    ''' simple_type_specifier : CHAR '''
+    pass
+
+def p_simple_type_specifier_4(p):
+    ''' simple_type_specifier : INT '''
+    pass
+
+def p_simple_type_specifier_5(p):
+    ''' simple_type_specifier : FLOAT '''
+    pass
+
+def p_simple_type_specifier_6(p):
+    ''' simple_type_specifier : DOUBLE '''
+    pass
+
+def p_simple_type_specifier_7(p):
+    ''' simple_type_specifier : VOID '''
     pass 
 
 #type-name:
@@ -1232,7 +1250,7 @@ yacc.yacc()
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read())
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
 except IOError:
