@@ -1,6 +1,5 @@
 #include<iostream>
 #include<string>
-using namespace std;
 class productSpecification{
    int id;
    float price;
@@ -43,8 +42,5 @@ void productCatalog::displayMenu(int choice){
 int main(){
    productCatalog ob;
    ob.prodInfo();
- 
-   
-   
    return 0;
 }

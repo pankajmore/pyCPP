@@ -2,11 +2,16 @@
  * Random
  * multiline comments
  * 
-$abc
-void 43abc4444(int a, float b)
+ **/
+void abc(int a, float b)
 {
     if (a==b)
     {
-      return a+2.2.3*b; // single line
+      return a +1.2 * b; // single line
     }
 }
+
+class A {
+    public :
+        int a;
+} hell ;
