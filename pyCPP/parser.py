@@ -37,9 +37,9 @@ def p_translation_unit(p):
     pass
     ### TODO 
 
-def p_empty(p):
-    ''' empty : '''
-    pass
+#def p_empty(p):
+#    ''' empty : '''
+#    pass
   
 
 #declaration-seq:
@@ -702,10 +702,10 @@ def p_type_specifier(p):
     pass 
 ## HELPER 
 
-def p_double_colon_opt(p):
-    ''' double_colon_opt : 
-                        | SCOPE '''
-    pass
+#def p_double_colon_opt(p):
+#    ''' double_colon_opt : 
+#                        | SCOPE '''
+#    pass
 
 ##
 
@@ -726,8 +726,10 @@ def p_double_colon_opt(p):
 
 
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : SCOPE nested_name_specifier_opt type_name
-                                | nested_name_specifier_opt type_name '''
+    ''' simple_type_specifier : SCOPE type_name
+                                | SCOPE nested_name_specifier type_name
+                                | type_name
+                                | nested_name_specifier type_name '''
     pass
 
 def p_simple_type_specifier_2(p):
@@ -769,20 +771,22 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier identifier
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
-    ''' elaborated_type_specifier : class_key SCOPE nested_name_specifier_opt identifier
-                                  | class_key nested_name_specifier_opt identifier '''
+    ''' elaborated_type_specifier : class_key SCOPE identifier
+                                  | class_key SCOPE nested_name_specifier identifier
+                                  | class_key identifier
+                                  | class_key nested_name_specifier identifier '''
 
 #linkage_specialization : 
     #extern string-literal { declaration_seq_opt }
     #extern string-literal declaration
-def p_linkage_specialization_1(p):
-    ''' linkage_specialization : EXTERN LIT_STR LBRACE declaration_seq RBRACE 
-                               | EXTERN LIT_STR LBRACE RBRACE '''
-    pass
+#def p_linkage_specialization_1(p):
+#    ''' linkage_specialization : EXTERN LIT_STR LBRACE declaration_seq RBRACE 
+#                               | EXTERN LIT_STR LBRACE RBRACE '''
+#    pass
   
-def p_linkage_specialization_2(p):
-    ''' linkage_specialization : EXTERN LIT_STR declaration '''
-    pass
+#def p_linkage_specialization_2(p):
+#    ''' linkage_specialization : EXTERN LIT_STR declaration '''
+#    pass
   
 ##### DECLARATORS #####
 
@@ -862,9 +866,11 @@ def p_cv_qualifier_seq_opt(p):
     #::opt nested-name-specifieropt type-name
 def p_declarator_id(p):
     ''' declarator_id : SCOPE id_expression 
-                    | id_expression 
-                    | SCOPE nested_name_specifier_opt type_name 
-                    | nested_name_specifier_opt type_name '''
+                    | id_expression
+                    | SCOPE type_name
+                    | SCOPE nested_name_specifier type_name 
+                    | type_name
+                    | nested_name_specifier type_name '''
 
 #type-id:
     #type-specifier-seq abstract-declaratoropt
