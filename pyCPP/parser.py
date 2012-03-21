@@ -27,9 +27,7 @@ success = True
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 
 ########### Start ################
-def p_identifier_1(t):
-    '''identifier : IDENTIFIER'''
-    pass
+
 
 def p_translation_unit(p):
     ''' translation_unit : 
@@ -97,7 +95,7 @@ def p_primary_expression_1(p):
     pass
   
 def p_primary_expression_2(p):
-    ''' primary_expression : SCOPE identifier '''
+    ''' primary_expression : SCOPE IDENTIFIER '''
     pass
   
 def p_primary_expression_3(p):
@@ -128,13 +126,13 @@ def p_id_expression_2(p):
     pass 
 
 #unqualified-id:
-    #identifier
+    #IDENTIFIER
     #operator-function-id
     #conversion-function-id
     #~ class-name
     #template-id
 def p_unqualified_id(p):
-    ''' unqualified_id : identifier 
+    ''' unqualified_id : IDENTIFIER 
                     | operator_function_id 
                     | conversion_function_id 
                     | TILDE class_name '''
@@ -199,10 +197,8 @@ def p_postfix_expression_3(p):
     #pass
 
 def p_postfix_expression_5(p):
-    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
-                    | TYPENAME nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
-                    | postfix_expression DOT pseudo_destructor_name 
-                    | postfix_expression ARROW pseudo_destructor_name 
+    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
+                    | TYPENAME nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
                     | postfix_expression PLUS_PLUS 
                     | postfix_expression MINUS_MINUS '''
     pass 
@@ -224,12 +220,13 @@ def p_expression_list_opt(p):
     #::opt nested-name-specifieropt type-name :: ~ type-name
     #::opt nested-name-specifier template template-id :: ~ type-name
     #::opt nested-name-specifieropt ~ type-name
-def p_pseudo_destructor_name(p):
-    ''' pseudo_destructor_name : SCOPE nested_name_specifier_opt type_name SCOPE TILDE type_name
-                    | nested_name_specifier_opt type_name SCOPE TILDE type_name
-                    | SCOPE nested_name_specifier_opt TILDE type_name 
-                    | nested_name_specifier_opt TILDE type_name '''
-    pass 
+
+##def p_pseudo_destructor_name(p):
+##    ''' pseudo_destructor_name : SCOPE nested_name_specifier_opt type_name SCOPE TILDE type_name
+##                    | nested_name_specifier_opt type_name SCOPE TILDE type_name
+##                    | SCOPE nested_name_specifier_opt TILDE type_name 
+##                    | nested_name_specifier_opt TILDE type_name '''
+##    pass 
 
 #unary-expression:
     #postfix-expression
@@ -514,7 +511,7 @@ def p_statement(p):
     #case constant-expression : statement
     #default : statement
 def p_labeled_statement(p):
-    ''' labeled_statement : identifier COLON statement 
+    ''' labeled_statement : IDENTIFIER COLON statement 
                 | CASE constant_expression COLON statement 
                 | DEFAULT COLON statement ''' 
     pass 
@@ -771,10 +768,10 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier identifier
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
-    ''' elaborated_type_specifier : class_key SCOPE identifier
-                                  | class_key SCOPE nested_name_specifier identifier
-                                  | class_key identifier
-                                  | class_key nested_name_specifier identifier '''
+    ''' elaborated_type_specifier : class_key SCOPE IDENTIFIER
+                                  | class_key SCOPE nested_name_specifier IDENTIFIER
+                                  | class_key IDENTIFIER
+                                  | class_key nested_name_specifier IDENTIFIER '''
 
 #linkage_specialization : 
     #extern string-literal { declaration_seq_opt }
@@ -1002,7 +999,7 @@ def p_initializer_list(p):
     #identifier
     #template-id
 def p_class_name(p):
-    ''' class_name : identifier '''
+    ''' class_name : IDENTIFIER '''
     pass
 
 #class-specifier:
@@ -1021,8 +1018,8 @@ def p_class_specifier_2(p):
     #class-key nested-name-specifier template template-id base-clauseopt
 def p_class_head(p):
     ''' class_head : class_key base_clause_opt 
-                    | class_key identifier base_clause_opt 
-                    | class_key nested_name_specifier identifier base_clause_opt '''
+                    | class_key IDENTIFIER base_clause_opt 
+                    | class_key nested_name_specifier IDENTIFIER base_clause_opt '''
     pass 
 
 
@@ -1103,7 +1100,7 @@ def p_member_declarator_2(p):
     pass
   
 def p_member_declarator_3(p):
-    ''' member_declarator : identifier COLON constant_expression '''
+    ''' member_declarator : IDENTIFIER COLON constant_expression '''
     pass
   
 def p_member_declarator_4(p):
@@ -1214,7 +1211,7 @@ def p_mem_initializer(p):
 def p_mem_initializer_id(p):
     ''' mem_initializer_id : SCOPE nested_name_specifier_opt class_name 
                     | nested_name_specifier_opt class_name 
-                    | identifier '''
+                    | IDENTIFIER '''
     pass 
 
 
