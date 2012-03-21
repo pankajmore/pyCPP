@@ -24,7 +24,7 @@ success = True
 
 # define functions for each production rule and their attribute grammer/action
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IF'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO'), ('right', 'ASSIGN', 'PIPE', 'EXCLAMATION', 'CARET'), ('left', 'DOUBLE_PIPE', 'DOUBLE_AMPERSAND', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW', 'LESS_EQ', 'GREATER_EQ', 'IS_EQ', 'NOT_EQ'), ('left', 'COLON', 'LESS', 'GREATER'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 
 ########### Start ################
 def p_identifier_1(t):
@@ -543,7 +543,7 @@ def p_statement_seq(p):
     #if ( condition ) statement else statement
     #switch ( condition ) statement
 def p_selection_statement(p):
-    ''' selection_statement : IF LPAREN condition RPAREN statement 
+    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX
                     | IF LPAREN condition RPAREN statement ELSE statement 
                     | SWITCH LPAREN condition RPAREN statement '''
     pass 
@@ -1268,7 +1268,7 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=1)
+yacc.yacc(start='translation_unit',write_tables=0)
 
 try:
     f1 = open(sys.argv[1])
