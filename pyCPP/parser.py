@@ -900,7 +900,7 @@ def p_abstract_declarator_opt(p):
     #direct-abstract-declaratoropt [ constant-expressionopt ]
     #( abstract-declarator )
 def p_direct_abstract_declarator(p):
-    ''' direct_abstract_declarator : direct_abstract_declarator_opt LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt 
+    ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt 
                     | direct_abstract_declarator_opt LBRACKET constant_expression_opt RBRACKET 
                     | LPAREN abstract_declarator RPAREN '''
     pass 
@@ -1065,8 +1065,10 @@ def p_member_specification_4(p):
     #using-declaration
     #template-declaration
 def p_member_declaration(p):
-    ''' member_declaration : decl_specifier_seq member_declarator_list_opt SEMICOLON 
-                    | member_declarator_list_opt SEMICOLON
+    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
+		    | decl_specifier_seq SEMICOLON
+                    | member_declarator_list SEMICOLON
+		    | SEMICOLON
                     | function_definition SEMICOLON
                     | function_definition 
                     | SCOPE nested_name_specifier unqualified_id SEMICOLON 
@@ -1082,10 +1084,7 @@ def p_member_declarator_list(p):
                     | member_declarator_list COMMA member_declarator '''
     pass 
 
-def p_member_declarator_list_opt(p):
-    ''' member_declarator_list_opt :
-                    | member_declarator_list'''
-    pass 
+
 
 #member-declarator:
     #declarator pure-specifieropt
