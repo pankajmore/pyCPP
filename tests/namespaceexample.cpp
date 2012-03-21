@@ -13,8 +13,6 @@
 written by Jared Bruni
 www.LostSideDead.com
 */
-#include<iostream.h>
-#include <stdlib.h>
 namespace master 
     {
     	int variable = 100;

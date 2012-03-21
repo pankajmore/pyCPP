@@ -1,7 +1,7 @@
 //**************************************
 // Name: Code Example - A Recursive Function
 // Description:This is some examples of basic C++ programming. Some people at school will be creating software using some of these concepts. So if someone happens to wander over here, theres some help.
-However this wont solve your problems just show you how.
+//However this wont solve your problems just show you how.
 // By: Jared Bruni
 //
 //
@@ -19,12 +19,9 @@ However this wont solve your problems just show you how.
 This is some examples of basic C++ programming. Some people at school will be creating software using some of these concepts. So if someone happens to wander over here, theres some help.
 However this wont solve your problems just show you how.
 */
-#include <iostream.h>
-#include <string.h>
-#include <stdlib.h>
 // C++ code example
 // example how to use recursion
-void 4recurfunc(int start,int stop,char* buff);
+void recurfunc(int start,int stop,char* buff);
 void main()
     {
     	cout << "enter how many times to loop: ";

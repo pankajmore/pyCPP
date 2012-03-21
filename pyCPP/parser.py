@@ -24,36 +24,37 @@ success = True
 
 # define functions for each production rule and their attribute grammer/action
 
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+
 ########### Start ################
 def p_identifier_1(t):
     '''identifier : IDENTIFIER'''
     pass
 
 def p_translation_unit(p):
-    ''' translation_unit : declaration_seq_opt '''
+    ''' translation_unit : 
+                         | declaration_seq'''
     pass
     ### TODO 
 
-def p_empty(p):
-    ''' empty : '''
-    pass
+#def p_empty(p):
+#    ''' empty : '''
+#    pass
   
 
 #declaration-seq:
     #declaration
     #declaration-seq declaration
     
-def p_declaration_seq_opt_1(p):
-    ''' declaration_seq_opt : declaration '''
+
+def p_declaration_seq_1(p):
+    ''' declaration_seq : declaration '''
     pass
   
-def p_declaration_seq_opt_2(p):
-    ''' declaration_seq_opt : declaration_seq_opt declaration  '''
+def p_declaration_seq_2(p):
+    ''' declaration_seq : declaration_seq declaration  '''
     pass
 
-def p_declaration_seq_opt_3(p):
-    ''' declaration_seq_opt : empty '''
-    pass
 
 
 #################### EXPRESSIONS ###################
@@ -150,11 +151,12 @@ def p_qualified_id_1(p):
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
-    ''' nested_name_specifier : class_name SCOPE nested_name_specifier_opt '''
+    ''' nested_name_specifier : class_name SCOPE 
+                              | class_name SCOPE nested_name_specifier '''
     pass
   
 def p_nested_name_specifier_opt_1(p):
-    ''' nested_name_specifier_opt : empty '''
+    ''' nested_name_specifier_opt : '''
     pass
   
 def p_nested_name_specifier_opt_2(p):
@@ -192,9 +194,13 @@ def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN expression_list_opt RPAREN '''
     pass
   
-def p_postfix_expression_4(p):
-    ''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN 
-                    | TYPENAME double_colon_opt nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
+#def p_postfix_expression_4(p):
+    #''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN '''
+    #pass
+
+def p_postfix_expression_5(p):
+    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
+                    | TYPENAME nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
                     | postfix_expression DOT pseudo_destructor_name 
                     | postfix_expression ARROW pseudo_destructor_name 
                     | postfix_expression PLUS_PLUS 
@@ -210,7 +216,7 @@ def p_expression_list(p):
     pass 
 
 def p_expression_list_opt(p):
-    ''' expression_list_opt : empty
+    ''' expression_list_opt : 
                     | expression_list '''
     pass 
 
@@ -219,8 +225,10 @@ def p_expression_list_opt(p):
     #::opt nested-name-specifier template template-id :: ~ type-name
     #::opt nested-name-specifieropt ~ type-name
 def p_pseudo_destructor_name(p):
-    ''' pseudo_destructor_name : double_colon_opt nested_name_specifier_opt type_name SCOPE TILDE type_name
-                    | double_colon_opt nested_name_specifier_opt TILDE type_name '''
+    ''' pseudo_destructor_name : SCOPE nested_name_specifier_opt type_name SCOPE TILDE type_name
+                    | nested_name_specifier_opt type_name SCOPE TILDE type_name
+                    | SCOPE nested_name_specifier_opt TILDE type_name 
+                    | nested_name_specifier_opt TILDE type_name '''
     pass 
 
 #unary-expression:
@@ -237,6 +245,7 @@ def p_unary_expression(p):
                     | PLUS_PLUS cast_expression 
                     | MINUS_MINUS cast_expression 
                     | unary_operator cast_expression 
+                    | ptr_operator cast_expression
                     | SIZEOF unary_expression 
                     | SIZEOF LPAREN type_id RPAREN 
                     | new_expression 
@@ -246,9 +255,7 @@ def p_unary_expression(p):
 #unary-operator: one of
 #* & + - ! ~
 def p_unary_operator(p):
-    ''' unary_operator : TIMES 
-                    | AMPERSAND 
-                    | PLUS 
+    ''' unary_operator : PLUS 
                     | MINUS 
                     | EXCLAMATION 
                     | TILDE '''
@@ -258,8 +265,10 @@ def p_unary_operator(p):
     #::opt new new-placementopt new-type-id new-initializeropt
     #::opt new new-placementopt ( type-id ) new-initializeropt
 def p_new_expression(p):
-    ''' new_expression : double_colon_opt NEW new_placement_opt new_type_id new_initializer_opt 
-                    | double_colon_opt NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt '''
+    ''' new_expression : SCOPE NEW new_placement_opt new_type_id new_initializer_opt 
+                    | NEW new_placement_opt new_type_id new_initializer_opt 
+                    | SCOPE NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt
+                    | NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt '''
     pass 
 
 #new-placement:
@@ -268,7 +277,7 @@ def p_new_placement(p):
     ''' new_placement : LPAREN expression_list RPAREN '''
     pass 
 def p_new_placement_opt(p):
-    ''' new_placement_opt : empty
+    ''' new_placement_opt : 
                     | new_placement '''
     pass 
 
@@ -283,7 +292,6 @@ def p_new_type_id(p):
     #direct-new-declarator
 def p_new_declarator_opt(p):
     ''' new_declarator_opt : 
-                    | empty
                     | ptr_operator new_declarator_opt 
                     | direct_new_declarator '''
     pass 
@@ -300,7 +308,6 @@ def p_direct_new_declarator(p):
     #( expression-listopt )
 def p_new_initializer_opt(p): 
     ''' new_initializer_opt : 
-                    | empty
                     | LPAREN expression_list_opt RPAREN '''
     pass 
 
@@ -308,8 +315,10 @@ def p_new_initializer_opt(p):
     #::opt delete cast-expression
     #::opt delete [ ] cast-expression
 def p_delete_expression(p):
-    ''' delete_expression : double_colon_opt DELETE cast_expression 
-                    | double_colon_opt DELETE LBRACKET RBRACKET cast_expression '''
+    ''' delete_expression : SCOPE DELETE cast_expression 
+                    | DELETE cast_expression 
+                    | SCOPE DELETE LBRACKET RBRACKET cast_expression
+                    | DELETE LBRACKET RBRACKET cast_expression '''
     pass 
 
 #cast-expression:
@@ -473,7 +482,7 @@ def p_constant_expression(p):
     pass 
 
 def p_constant_expression_opt(p):
-    ''' constant_expression_opt : empty
+    ''' constant_expression_opt : 
                     | constant_expression '''
     pass 
 
@@ -529,8 +538,7 @@ def p_compound_statement(p):
     #statement-seq statement
 def p_statement_seq(p):
     ''' statement_seq : statement 
-                | LBRACE statement_seq RBRACE 
-                | LBRACE RBRACE '''
+                | statement_seq statement'''
     pass 
 
 #selection-statement:
@@ -538,7 +546,7 @@ def p_statement_seq(p):
     #if ( condition ) statement else statement
     #switch ( condition ) statement
 def p_selection_statement(p):
-    ''' selection_statement : IF LPAREN condition RPAREN statement 
+    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX
                     | IF LPAREN condition RPAREN statement ELSE statement 
                     | SWITCH LPAREN condition RPAREN statement '''
     pass 
@@ -612,9 +620,6 @@ def p_declaration_2(p):
     ''' declaration : function_definition '''
     pass
 
-def p_declaration_3(p):
-    ''' declaration : linkage_specialization '''
-    pass
 
 ### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
@@ -693,15 +698,14 @@ def p_function_specifier(p):
 def p_type_specifier(p):
     ''' type_specifier : simple_type_specifier 
                         | class_specifier
-                        | elaborated_type_specifier
-                        | cv_qualifier '''
+                        | elaborated_type_specifier '''
     pass 
 ## HELPER 
 
-def p_double_colon_opt(p):
-    ''' double_colon_opt : empty
-                        | SCOPE '''
-    pass
+#def p_double_colon_opt(p):
+#    ''' double_colon_opt : 
+#                        | SCOPE '''
+#    pass
 
 ##
 
@@ -722,7 +726,10 @@ def p_double_colon_opt(p):
 
 
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : double_colon_opt nested_name_specifier_opt type_name '''
+    ''' simple_type_specifier : SCOPE type_name
+                                | SCOPE nested_name_specifier type_name
+                                | type_name
+                                | nested_name_specifier type_name '''
     pass
 
 def p_simple_type_specifier_2(p):
@@ -764,18 +771,22 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier identifier
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
-    ''' elaborated_type_specifier : class_key double_colon_opt nested_name_specifier_opt identifier '''
+    ''' elaborated_type_specifier : class_key SCOPE identifier
+                                  | class_key SCOPE nested_name_specifier identifier
+                                  | class_key identifier
+                                  | class_key nested_name_specifier identifier '''
 
 #linkage_specialization : 
     #extern string-literal { declaration_seq_opt }
     #extern string-literal declaration
-def p_linkage_specialization_1(p):
-    ''' linkage_specialization : EXTERN LIT_STR LBRACE declaration_seq_opt RBRACE '''
-    pass
+#def p_linkage_specialization_1(p):
+#    ''' linkage_specialization : EXTERN LIT_STR LBRACE declaration_seq RBRACE 
+#                               | EXTERN LIT_STR LBRACE RBRACE '''
+#    pass
   
-def p_linkage_specialization_2(p):
-    ''' linkage_specialization : EXTERN LIT_STR declaration '''
-    pass
+#def p_linkage_specialization_2(p):
+#    ''' linkage_specialization : EXTERN LIT_STR declaration '''
+#    pass
   
 ##### DECLARATORS #####
 
@@ -783,14 +794,14 @@ def p_linkage_specialization_2(p):
     #init-declarator
     #init-declarator-list , init-declarator
 def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator initializer_opt
+    ''' init_declarator_list : init_declarator
                             | init_declarator_list COMMA init_declarator '''
     pass 
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
-    ''' init_declarator : declarator '''
+    ''' init_declarator : declarator initializer_opt'''
     pass 
 
 #declarator:
@@ -801,7 +812,7 @@ def p_declarator_1(p):
     pass
   
 def p_declarator_2(p):
-    ''' declarator : ptr_operator direct_declarator '''
+    ''' declarator : ptr_operator declarator '''
     pass 
 
 #direct-declarator:
@@ -832,31 +843,34 @@ def p_direct_declarator_4(p):
 def p_ptr_operator(p):
     ''' ptr_operator : TIMES cv_qualifier_seq_opt 
                     | AMPERSAND 
-                    | double_colon_opt nested_name_specifier TIMES cv_qualifier_seq_opt '''
+                    | SCOPE nested_name_specifier TIMES
+                    | nested_name_specifier TIMES '''
     pass 
 
 #cv-qualifier-seq:
     #cv-qualifier cv-qualifier-seqopt
 def p_cv_qualifier_seq_opt(p):
-    ''' cv_qualifier_seq_opt : empty
-                            | cv_qualifier cv_qualifier_seq_opt '''
+    ''' cv_qualifier_seq_opt : '''
     pass 
 
 #cv-qualifier:
     #const
     #volatile
 
-def p_cv_qualifier(p):
-    ''' cv_qualifier : '''
-    pass 
+#def p_cv_qualifier(p):
+    #''' cv_qualifier : '''
+    #pass 
 
 #declarator-id:
     #::opt id-expression
     #::opt nested-name-specifieropt type-name
 def p_declarator_id(p):
-    ''' declarator_id : id_expression 
-                    | double_colon_opt type_name
-                    | double_colon_opt nested_name_specifier_opt type_name '''
+    ''' declarator_id : SCOPE id_expression 
+                    | id_expression
+                    | SCOPE type_name
+                    | SCOPE nested_name_specifier type_name 
+                    | type_name
+                    | nested_name_specifier type_name '''
 
 #type-id:
     #type-specifier-seq abstract-declaratoropt
@@ -880,7 +894,7 @@ def p_abstract_declarator(p):
     pass
 
 def p_abstract_declarator_opt(p):
-    ''' abstract_declarator_opt : empty
+    ''' abstract_declarator_opt :
                     | abstract_declarator '''
     pass
 
@@ -895,7 +909,7 @@ def p_direct_abstract_declarator(p):
     pass 
 
 def p_direct_abstract_declarator_opt(p):
-    ''' direct_abstract_declarator_opt : empty
+    ''' direct_abstract_declarator_opt :
                     | direct_abstract_declarator '''
     pass 
 
@@ -958,8 +972,8 @@ def p_function_body(p):
     #( expression-list )
 
 def p_initializer_opt(p):
-    ''' initializer_opt : empty
-                    | initializer_clause
+    ''' initializer_opt : 
+                    | ASSIGN initializer_clause
                     | LPAREN expression_list RPAREN ''' 
     pass
 
@@ -1022,8 +1036,11 @@ def p_class_key(p):
                     | STRUCT '''
     pass
 
-#def p_error(p):
-    #print("Whoa. We're hosed")
+def p_error(p):
+    global success
+    success = False
+    print("Whoa. We're hosed")
+    print("Syntax error at token " + str(p.type) + " of value " + str(p.value) + " at line number " + str(p.lineno))
 
 #member-specification:
     #member-declaration member-specificationopt
@@ -1052,10 +1069,11 @@ def p_member_specification_4(p):
     #template-declaration
 def p_member_declaration(p):
     ''' member_declaration : decl_specifier_seq member_declarator_list_opt SEMICOLON 
-                    | member_declarator_list_opt
+                    | member_declarator_list_opt SEMICOLON
                     | function_definition SEMICOLON
                     | function_definition 
-                    | double_colon_opt nested_name_specifier unqualified_id SEMICOLON '''
+                    | SCOPE nested_name_specifier unqualified_id SEMICOLON 
+                    | nested_name_specifier unqualified_id SEMICOLON '''
     pass 
 
 #member-declarator-list:
@@ -1068,7 +1086,7 @@ def p_member_declarator_list(p):
     pass 
 
 def p_member_declarator_list_opt(p):
-    ''' member_declarator_list_opt : empty
+    ''' member_declarator_list_opt :
                     | member_declarator_list'''
     pass 
 
@@ -1111,7 +1129,7 @@ def p_constant_initializer(p):
 #base-clause:
     #: base-specifier-list
 def p_base_clause_opt(p):
-    ''' base_clause_opt : empty
+    ''' base_clause_opt : 
                     | base_specifier_list '''
     pass 
 
@@ -1128,10 +1146,12 @@ def p_base_specifier_list(p):
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
 def p_base_specifier(p):
-    ''' base_specifier : double_colon_opt nested_name_specifier_opt class_name 
-                    | double_colon_opt class_name 
-                    | access_specifier double_colon_opt nested_name_specifier_opt class_name 
-                    | access_specifier double_colon_opt class_name ''' 
+    ''' base_specifier : SCOPE nested_name_specifier_opt class_name 
+                    | nested_name_specifier class_name  
+                    | SCOPE class_name 
+                    | class_name 
+                    | access_specifier SCOPE nested_name_specifier_opt class_name 
+                    | access_specifier nested_name_specifier_opt class_name ''' 
     pass 
 
 #access-specifier:
@@ -1162,14 +1182,14 @@ def p_conversion_type_id(p):
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
 def p_conversion_declarator_opt(p):
-    ''' conversion_declarator_opt : empty
+    ''' conversion_declarator_opt : 
                     | ptr_operator conversion_declarator_opt '''
     pass 
 
 #ctor-initializer:
     #: mem-initializer-list
 def p_ctor_initializer_opt(p):
-    ''' ctor_initializer_opt : empty
+    ''' ctor_initializer_opt : 
                     | mem_initializer_list'''
     pass 
 
@@ -1192,8 +1212,8 @@ def p_mem_initializer(p):
     #::opt nested-name-specifieropt class-name
     #identifier
 def p_mem_initializer_id(p):
-    ''' mem_initializer_id : double_colon_opt nested_name_specifier_opt class_name 
-                    | double_colon_opt class_name 
+    ''' mem_initializer_id : SCOPE nested_name_specifier_opt class_name 
+                    | nested_name_specifier_opt class_name 
                     | identifier '''
     pass 
 
@@ -1249,7 +1269,7 @@ def p_operator(p):
 #exception_specification :
     #throw ( type-id-listopt )
 def p_exception_specification_opt(p):
-    ''' exception_specification_opt : empty '''
+    ''' exception_specification_opt : '''
     pass
 ###################################### 
 
@@ -1257,13 +1277,15 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit')
+yacc.yacc(start='translation_unit',write_tables=0,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
     yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
+    else:
+        print "Syntax error while parsing"
 except IOError:
     print 'Could not open file:',  sys.argv[1]
 

@@ -16,10 +16,12 @@
 written by Jared Bruni
 www.LostSideDead.com
 */
-#include <iostream>
-using namespace std;
-void func1(char* str);
-void func1(int val);
+
+//void func1(char* str);
+//void func1(int val);
+float a;
+class hello {
+}
 int main()
     {
     	func1("character string passed\n");
