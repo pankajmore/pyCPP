@@ -1261,7 +1261,7 @@ yacc.yacc(start='translation_unit')
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
 except IOError:

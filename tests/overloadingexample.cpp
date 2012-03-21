@@ -16,6 +16,8 @@
 written by Jared Bruni
 www.LostSideDead.com
 */
+#include <iostream>
+using namespace std;
 void func1(char* str);
 void func1(int val);
 int main()
