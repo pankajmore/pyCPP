@@ -194,9 +194,12 @@ def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN expression_list_opt RPAREN '''
     pass
   
-def p_postfix_expression_4(p):
-    ''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN 
-                    | TYPENAME SCOPE nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
+#def p_postfix_expression_4(p):
+    #''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN '''
+    #pass
+
+def p_postfix_expression_5(p):
+    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
                     | TYPENAME nested_name_specifier identifier LPAREN expression_list_opt RPAREN 
                     | postfix_expression DOT pseudo_destructor_name 
                     | postfix_expression ARROW pseudo_destructor_name 
@@ -1268,7 +1271,7 @@ def p_exception_specification_opt(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=0)
+yacc.yacc(start='translation_unit',write_tables=0,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
