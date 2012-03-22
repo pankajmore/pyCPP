@@ -149,22 +149,9 @@ def p_qualified_id_1(p):
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
-    ''' nested_name_specifier : class_name SCOPE nested_name_specifier_opt '''
+    ''' nested_name_specifier : IDENTIFIER SCOPE nested_name_specifier_opt '''
+    ## IDENTIFIER is class_name here 
     pass
-
-def p_scoped_id(p):
-    ''' scoped_id : nested_id 
-                | SCOPE nested_id '''
-    pass 
-
-def p_nested_id(p):
-    ''' nested_id : IDENTIFIER 
-            | id_scope nested_id '''
-    ## Shift in first case in case of shift reduce error 
-    pass
-def p_id_scope(p):
-    ''' id_scope : IDENTIFIER SCOPE '''
-    pass 
 
   
 def p_nested_name_specifier_opt_1(p):
@@ -737,8 +724,9 @@ def p_type_specifier(p):
 
 
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : class_name 
+    ''' simple_type_specifier : IDENTIFIER 
                                 | nested_name_specifier class_name  '''
+    ## IDENTIFIER is class name here 
     pass
 
 def p_simple_type_specifier_2(p):
@@ -958,9 +946,9 @@ def p_parameter_declaration(p):
 #function-definition:
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
-def p_function_definition_1(p):
-    ''' function_definition : declarator ctor_initializer_opt function_body '''
-    pass
+#def p_function_definition_1(p):
+    #''' function_definition : declarator ctor_initializer_opt function_body '''
+    #pass
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator ctor_initializer_opt function_body '''
