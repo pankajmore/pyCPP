@@ -152,6 +152,19 @@ def p_nested_name_specifier(p):
     ''' nested_name_specifier : class_name SCOPE nested_name_specifier_opt '''
     pass
 
+def p_scoped_id(p):
+    ''' scoped_id : nested_id 
+                | SCOPE nested_id '''
+    pass 
+
+def p_nested_id(p):
+    ''' nested_id : IDENTIFIER 
+            | id_scope nested_id '''
+    ## Shift in first case in case of shift reduce error 
+    pass
+def p_id_scope(p):
+    ''' id_scope : IDENTIFIER SCOPE '''
+    pass 
 
   
 def p_nested_name_specifier_opt_1(p):
