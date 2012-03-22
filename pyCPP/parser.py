@@ -737,9 +737,7 @@ def p_type_specifier(p):
 
 
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : SCOPE class_name
-                                | SCOPE nested_name_specifier class_name
-                                | class_name 
+    ''' simple_type_specifier : class_name 
                                 | nested_name_specifier class_name  '''
     pass
 
@@ -852,7 +850,7 @@ def p_direct_declarator_4(p):
     #&
     #::opt nested-name-specifier * cv-qualifier-seqopt
 def p_ptr_operator(p):
-    ''' ptr_operator : TIMES cv_qualifier_seq_opt 
+    ''' ptr_operator : TIMES 
                     | AMPERSAND 
                     | SCOPE nested_name_specifier TIMES
                     | nested_name_specifier TIMES '''
@@ -877,11 +875,13 @@ def p_cv_qualifier_seq_opt(p):
     #::opt nested-name-specifieropt type-name
 def p_declarator_id(p):
     ''' declarator_id : SCOPE id_expression 
-                    | id_expression
-                    | SCOPE nested_name_specifier class_name
-                    | SCOPE class_name 
-                    | class_name
-                    | nested_name_specifier class_name  '''
+                    | id_expression '''
+    pass 
+
+                    #| SCOPE nested_name_specifier class_name
+                    #| SCOPE class_name 
+                    #| class_name
+                    #| nested_name_specifier class_name  '''
 
 #type-id:
     #type-specifier-seq abstract-declaratoropt
