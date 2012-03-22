@@ -990,9 +990,10 @@ def p_parameter_declaration(p):
 #function-definition:
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
-#def p_function_definition_1(p):
-    #''' function_definition : declarator ctor_initializer_opt function_body '''
-    #pass
+
+def p_function_definition_1(p):
+    ''' function_definition : declarator ctor_initializer_opt function_body '''
+    pass
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator ctor_initializer_opt function_body '''
@@ -1185,7 +1186,7 @@ def p_constant_initializer(p):
     #: base-specifier-list
 def p_base_clause_opt(p):
     ''' base_clause_opt : 
-                    | base_specifier_list '''
+                    | COLON base_specifier_list '''
     pass 
 
 #base-specifier-list:
@@ -1251,7 +1252,7 @@ def p_conversion_declarator_opt(p):
     #: mem-initializer-list
 def p_ctor_initializer_opt(p):
     ''' ctor_initializer_opt : 
-                    | mem_initializer_list'''
+                    | COLON mem_initializer_list'''
     pass 
 
 #mem-initializer-list:
@@ -1352,4 +1353,5 @@ try:
         print "Syntax error while parsing"
 except IOError:
     print 'Could not open file:',  sys.argv[1]
+
 
