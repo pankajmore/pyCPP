@@ -94,17 +94,17 @@ def p_primary_expression_1(p):
     ''' primary_expression : literal '''
     pass
   
-def p_primary_expression_2(p):
-    ''' primary_expression : SCOPE IDENTIFIER '''
-    pass
-  
-def p_primary_expression_3(p):
-    ''' primary_expression : SCOPE operator_function_id '''
-    pass
-  
-def p_primary_expression_4(p):
-    ''' primary_expression : SCOPE qualified_id '''
-    pass
+##def p_primary_expression_2(p):
+##    ''' primary_expression : SCOPE IDENTIFIER '''
+##    pass
+##  
+##def p_primary_expression_3(p):
+##    ''' primary_expression : SCOPE operator_function_id '''
+##    pass
+##  
+##def p_primary_expression_4(p):
+##    ''' primary_expression : SCOPE qualified_id '''
+##    pass
   
 def p_primary_expression_5(p):
     ''' primary_expression : LPAREN expression RPAREN '''
@@ -121,9 +121,9 @@ def p_id_expression_1(p):
     ''' id_expression : unqualified_id '''
     pass
   
-def p_id_expression_2(p):
-    ''' id_expression : qualified_id '''
-    pass 
+##def p_id_expression_2(p):
+##    ''' id_expression : qualified_id '''
+##    pass 
 
 #unqualified-id:
     #IDENTIFIER
@@ -141,26 +141,28 @@ def p_unqualified_id(p):
 #### TODO : To add production rule for templateopt as well when template is introduced. ###
 #qualified-id:
     #nested-name-specifier templateopt unqualified-id
-def p_qualified_id_1(p):
-    ''' qualified_id : nested_name_specifier unqualified_id '''
-    pass 
+
+##def p_qualified_id_1(p):
+##    ''' qualified_id : nested_name_specifier unqualified_id '''
+##    pass 
 
 #nested-name-specifier:
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
-def p_nested_name_specifier(p):
-    ''' nested_name_specifier : IDENTIFIER SCOPE nested_name_specifier_opt '''
-    ## IDENTIFIER is class_name here 
-    pass
+
+##def p_nested_name_specifier(p):
+##    ''' nested_name_specifier : IDENTIFIER SCOPE nested_name_specifier_opt '''
+##    ## IDENTIFIER is class_name here 
+##    pass
 
   
-def p_nested_name_specifier_opt_1(p):
-    ''' nested_name_specifier_opt : '''
-    pass
-  
-def p_nested_name_specifier_opt_2(p):
-    ''' nested_name_specifier_opt : nested_name_specifier '''
-    pass 
+##def p_nested_name_specifier_opt_1(p):
+##    ''' nested_name_specifier_opt : '''
+##    pass
+##  
+##def p_nested_name_specifier_opt_2(p):
+##    ''' nested_name_specifier_opt : nested_name_specifier '''
+##    pass 
 
 #postfix-expression:
     #primary-expression
@@ -198,11 +200,17 @@ def p_postfix_expression_3(p):
     #pass
 
 def p_postfix_expression_5(p):
-    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
-                    | TYPENAME nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
-                    | postfix_expression PLUS_PLUS 
+    ''' postfix_expression : postfix_expression PLUS_PLUS 
                     | postfix_expression MINUS_MINUS '''
     pass 
+
+
+##def p_postfix_expression_5(p):
+##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
+##                    | TYPENAME nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
+##                    | postfix_expression PLUS_PLUS 
+##                    | postfix_expression MINUS_MINUS '''
+##    pass 
 
 #expression-list:
     #assignment-expression
@@ -262,12 +270,19 @@ def p_unary_operator(p):
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
     #::opt new new-placementopt ( type-id ) new-initializeropt
+
 def p_new_expression(p):
-    ''' new_expression : SCOPE NEW new_placement_opt new_type_id new_initializer_opt 
-                    | NEW new_placement_opt new_type_id new_initializer_opt 
-                    | SCOPE NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt
+    ''' new_expression : NEW new_placement_opt new_type_id new_initializer_opt 
                     | NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt '''
-    pass 
+    pass
+
+##def p_new_expression(p):
+##    ''' new_expression : SCOPE NEW new_placement_opt new_type_id new_initializer_opt 
+##                    | NEW new_placement_opt new_type_id new_initializer_opt 
+##                    | SCOPE NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt
+##                    | NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt '''
+##    pass 
+
 
 #new-placement:
     #( expression-list )
@@ -313,11 +328,16 @@ def p_new_initializer_opt(p):
     #::opt delete cast-expression
     #::opt delete [ ] cast-expression
 def p_delete_expression(p):
-    ''' delete_expression : SCOPE DELETE cast_expression 
-                    | DELETE cast_expression 
-                    | SCOPE DELETE LBRACKET RBRACKET cast_expression
+    ''' delete_expression : DELETE cast_expression 
                     | DELETE LBRACKET RBRACKET cast_expression '''
     pass 
+
+##def p_delete_expression(p):
+##    ''' delete_expression : SCOPE DELETE cast_expression 
+##                    | DELETE cast_expression 
+##                    | SCOPE DELETE LBRACKET RBRACKET cast_expression
+##                    | DELETE LBRACKET RBRACKET cast_expression '''
+##    pass 
 
 #cast-expression:
     #unary-expression
@@ -723,9 +743,14 @@ def p_type_specifier(p):
     #void
 
 
+##def p_simple_type_specifier_1(p):
+##    ''' simple_type_specifier : IDENTIFIER 
+##                                | nested_name_specifier class_name  '''
+##    ## IDENTIFIER is class name here 
+##    pass
+
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : IDENTIFIER 
-                                | nested_name_specifier class_name  '''
+    ''' simple_type_specifier : IDENTIFIER  '''
     ## IDENTIFIER is class name here 
     pass
 
@@ -768,10 +793,16 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier identifier
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
-    ''' elaborated_type_specifier : class_key SCOPE IDENTIFIER
-                                  | class_key SCOPE nested_name_specifier IDENTIFIER
-                                  | class_key IDENTIFIER
-                                  | class_key nested_name_specifier IDENTIFIER '''
+    ''' elaborated_type_specifier : class_key IDENTIFIER'''
+    pass
+
+
+##def p_elaborated_type_specifier(p):
+##    ''' elaborated_type_specifier : class_key IDENTIFIER
+##                                  | class_key SCOPE nested_name_specifier IDENTIFIER
+##                                  | class_key IDENTIFIER
+##                                  | class_key nested_name_specifier IDENTIFIER '''
+##    pass
 
 #linkage_specialization : 
     #extern string-literal { declaration_seq_opt }
@@ -822,7 +853,7 @@ def p_direct_declarator_1(p):
     pass
   
 def p_direct_declarator_2(p):
-    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt '''
+    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
     pass
   
 def p_direct_declarator_3(p):
@@ -837,12 +868,19 @@ def p_direct_declarator_4(p):
     #* cv-qualifier-seqopt
     #&
     #::opt nested-name-specifier * cv-qualifier-seqopt
+
+##def p_ptr_operator(p):
+##    ''' ptr_operator : TIMES 
+##                    | AMPERSAND 
+##                    | SCOPE nested_name_specifier TIMES
+##                    | nested_name_specifier TIMES '''
+##    pass 
+
+
 def p_ptr_operator(p):
     ''' ptr_operator : TIMES 
-                    | AMPERSAND 
-                    | SCOPE nested_name_specifier TIMES
-                    | nested_name_specifier TIMES '''
-    pass 
+                    | AMPERSAND '''
+    pass
 
 #cv-qualifier-seq:
     #cv-qualifier cv-qualifier-seqopt
@@ -861,10 +899,16 @@ def p_cv_qualifier_seq_opt(p):
 #declarator-id:
     #::opt id-expression
     #::opt nested-name-specifieropt type-name
+
 def p_declarator_id(p):
-    ''' declarator_id : SCOPE id_expression 
-                    | id_expression '''
+    ''' declarator_id : id_expression '''
     pass 
+
+
+##def p_declarator_id(p):
+##    ''' declarator_id : SCOPE id_expression 
+##                    | id_expression '''
+##    pass 
 
                     #| SCOPE nested_name_specifier class_name
                     #| SCOPE class_name 
@@ -902,7 +946,7 @@ def p_abstract_declarator_opt(p):
     #direct-abstract-declaratoropt [ constant-expressionopt ]
     #( abstract-declarator )
 def p_direct_abstract_declarator(p):
-    ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt exception_specification_opt 
+    ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt 
                     | direct_abstract_declarator_opt LBRACKET constant_expression_opt RBRACKET 
                     | LPAREN abstract_declarator RPAREN '''
     pass 
@@ -1020,10 +1064,14 @@ def p_class_specifier_2(p):
     #class-key nested-name-specifier template template-id base-clauseopt
 def p_class_head(p):
     ''' class_head : class_key base_clause_opt 
-                    | class_key IDENTIFIER base_clause_opt 
-                    | class_key nested_name_specifier IDENTIFIER base_clause_opt '''
-    pass 
+                    | class_key IDENTIFIER base_clause_opt '''
+    pass
 
+##def p_class_head(p):
+##    ''' class_head : class_key base_clause_opt 
+##                    | class_key IDENTIFIER base_clause_opt 
+##                    | class_key nested_name_specifier IDENTIFIER base_clause_opt '''
+##    pass 
 
 #class-key:
     #class
@@ -1072,10 +1120,19 @@ def p_member_declaration(p):
                     | member_declarator_list SEMICOLON
 		    | SEMICOLON
                     | function_definition SEMICOLON
-                    | function_definition 
-                    | SCOPE nested_name_specifier unqualified_id SEMICOLON 
-                    | nested_name_specifier unqualified_id SEMICOLON '''
-    pass 
+                    | function_definition '''
+    pass
+
+##def p_member_declaration(p):
+##    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
+##		    | decl_specifier_seq SEMICOLON
+##                    | member_declarator_list SEMICOLON
+##		    | SEMICOLON
+##                    | function_definition SEMICOLON
+##                    | function_definition 
+##                    | SCOPE nested_name_specifier unqualified_id SEMICOLON 
+##                    | nested_name_specifier unqualified_id SEMICOLON '''
+##    pass 
 
 #member-declarator-list:
     #member-declarator
@@ -1144,13 +1201,19 @@ def p_base_specifier_list(p):
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
 def p_base_specifier(p):
-    ''' base_specifier : SCOPE class_name 
-                    | SCOPE nested_name_specifier class_name
-                    | nested_name_specifier class_name
-                    | class_name
-                    | access_specifier SCOPE nested_name_specifier_opt class_name 
-                    | access_specifier nested_name_specifier_opt class_name'''
+    ''' base_specifier : class_name 
+                    | access_specifier class_name '''
     pass 
+
+##def p_base_specifier(p):
+##    ''' base_specifier : SCOPE class_name 
+##                    | SCOPE nested_name_specifier class_name
+##                    | nested_name_specifier class_name
+##                    | class_name
+##                    | access_specifier SCOPE nested_name_specifier_opt class_name 
+##                    | access_specifier nested_name_specifier_opt class_name'''
+##    pass 
+
 
 #access-specifier:
     #private
@@ -1210,11 +1273,16 @@ def p_mem_initializer(p):
     #::opt nested-name-specifieropt class-name
     #identifier
 def p_mem_initializer_id(p):
-    ''' mem_initializer_id : SCOPE nested_name_specifier_opt class_name 
-                    | nested_name_specifier_opt class_name  
+    ''' mem_initializer_id : class_name 
                     | IDENTIFIER '''
     pass 
 
+
+##def p_mem_initializer_id(p):
+##    ''' mem_initializer_id : SCOPE nested_name_specifier_opt class_name 
+##                    | nested_name_specifier_opt class_name  
+##                    | IDENTIFIER '''
+##    pass 
 
 ######### OVERLOADING ###########
 #operator-function-id:
@@ -1266,9 +1334,7 @@ def p_operator(p):
 
 #exception_specification :
     #throw ( type-id-listopt )
-def p_exception_specification_opt(p):
-    ''' exception_specification_opt : '''
-    pass
+
 ###################################### 
 
 ########### PREPROCESSING DIRECTIVES ###
