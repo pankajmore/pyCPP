@@ -149,9 +149,10 @@ def p_qualified_id_1(p):
     #class-or-namespace-name :: nested-name-specifieropt
     #class-or-namespace-name :: template nested-name-specifier
 def p_nested_name_specifier(p):
-    ''' nested_name_specifier : class_name SCOPE 
-                              | class_name SCOPE nested_name_specifier '''
+    ''' nested_name_specifier : class_name SCOPE nested_name_specifier_opt '''
     pass
+
+
   
 def p_nested_name_specifier_opt_1(p):
     ''' nested_name_specifier_opt : '''
@@ -723,10 +724,10 @@ def p_type_specifier(p):
 
 
 def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : SCOPE type_name
-                                | SCOPE nested_name_specifier type_name
-                                | type_name
-                                | nested_name_specifier type_name '''
+    ''' simple_type_specifier : SCOPE class_name
+                                | SCOPE nested_name_specifier class_name
+                                | class_name 
+                                | nested_name_specifier class_name  '''
     pass
 
 def p_simple_type_specifier_2(p):
@@ -864,10 +865,10 @@ def p_cv_qualifier_seq_opt(p):
 def p_declarator_id(p):
     ''' declarator_id : SCOPE id_expression 
                     | id_expression
-                    | SCOPE type_name
-                    | SCOPE nested_name_specifier type_name 
-                    | type_name
-                    | nested_name_specifier type_name '''
+                    | SCOPE nested_name_specifier class_name
+                    | SCOPE class_name 
+                    | class_name
+                    | nested_name_specifier class_name  '''
 
 #type-id:
     #type-specifier-seq abstract-declaratoropt
@@ -1142,12 +1143,12 @@ def p_base_specifier_list(p):
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
 def p_base_specifier(p):
-    ''' base_specifier : SCOPE nested_name_specifier_opt class_name 
-                    | nested_name_specifier class_name  
-                    | SCOPE class_name 
-                    | class_name 
+    ''' base_specifier : SCOPE class_name 
+                    | SCOPE nested_name_specifier class_name
+                    | nested_name_specifier class_name
+                    | class_name
                     | access_specifier SCOPE nested_name_specifier_opt class_name 
-                    | access_specifier nested_name_specifier_opt class_name ''' 
+                    | access_specifier nested_name_specifier_opt class_name'''
     pass 
 
 #access-specifier:
@@ -1209,7 +1210,7 @@ def p_mem_initializer(p):
     #identifier
 def p_mem_initializer_id(p):
     ''' mem_initializer_id : SCOPE nested_name_specifier_opt class_name 
-                    | nested_name_specifier_opt class_name 
+                    | nested_name_specifier_opt class_name  
                     | IDENTIFIER '''
     pass 
 
