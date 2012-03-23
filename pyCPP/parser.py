@@ -24,6 +24,25 @@ success = True
 
 
 # define functions for each production rule and their attribute grammer/action
+class Type:
+    def __init__(self,next):
+        self.link = next
+    def __eq__(self,other):
+        if isinstance(other,Type):
+            if (isinstance(self.next,Type) == isinstance(other.next,Type)):
+                return (self.next == other.next)
+            else :
+                return False 
+        else :
+            return NotImplemented 
+    def __ne__(self,other):
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
+
+
+
 
 MaxPar=10
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
