@@ -1346,7 +1346,7 @@ def p_operator(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=0,method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
