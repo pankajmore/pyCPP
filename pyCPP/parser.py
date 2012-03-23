@@ -132,7 +132,7 @@ def p_id_expression_1(p):
     #~ class-name
     #template-id
 def p_unqualified_id(p):
-    ''' unqualified_id : IDENTIFIER %prec IFX
+    ''' unqualified_id : IDENTIFIER %prec RPAREN
                     | operator_function_id 
                     | conversion_function_id 
                     | TILDE class_name '''
@@ -1353,7 +1353,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
