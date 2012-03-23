@@ -1,6 +1,6 @@
 from lexer import *
 import ply.yacc as yacc
-import * from symbol
+from symbol import *
 from copy import deepcopy
 #start='translation_unit'
 success = True
@@ -85,6 +85,21 @@ def p_translation_unit(p):
     #declaration
     #declaration-seq declaration
     
+def NewScope():
+    global env 
+    env = Environment(env)
+
+def PopScope():
+    global env  
+    env = env.prev 
+
+def p_new_scope(p):
+    '''new_scope : '''
+    NewScope()
+
+def p_finish_scope(p):
+    '''finish_scope : '''
+    PopScope()
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -1096,7 +1111,7 @@ def p_class_name(p):
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
-    ''' class_specifier : class_head LBRACE member_specification RBRACE '''
+    ''' class_specifier : class_head  new_scope LBRACE member_specification RBRACE finish_scope'''
     pass
 
 def p_class_specifier_2(p):
@@ -1108,9 +1123,13 @@ def p_class_specifier_2(p):
     #class-key nested-name-specifier identifier base-clauseopt
     #class-key nested-name-specifier template template-id base-clauseopt
 def p_class_head(p):
-    ''' class_head : class_key base_clause_opt 
-                    | class_key IDENTIFIER base_clause_opt '''
-    pass
+    ''' class_head : class_key IDENTIFIER base_clause_opt '''
+    global env
+    cl = Symbol(p[2])
+    cl.type = p[1].type 
+    cl.attrs["inherits"] = p[3]
+    env.put(cl)
+    p[0] = cl 
 
 ##def p_class_head(p):
 ##    ''' class_head : class_key base_clause_opt 
@@ -1124,9 +1143,15 @@ def p_class_head(p):
     #union
 
 def p_class_key(p):
-    ''' class_key : CLASS 
-                    | STRUCT '''
-    pass
+    ''' class_key : CLASS '''
+    p[0] = Attribute()
+    p[0].type = Type("CLASS")
+    
+
+def p_class_key(p):
+    ''' class_key : STRUCT '''
+    p[0] = Attribute()
+    p[0].type = Type("STRUCT")
 
 def p_error(p):
     global success
@@ -1139,6 +1164,7 @@ def p_error(p):
     #access-specifier : member-specificationopt
 def p_member_specification_1(p):
     '''member_specification : member_declaration '''
+
     pass
   
 def p_member_specification_2(p):
@@ -1394,7 +1420,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
