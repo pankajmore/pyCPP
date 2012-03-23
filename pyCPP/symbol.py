@@ -1,3 +1,4 @@
+from lexer import *
 ## Symbol Table 
 
 ## Environment represents a scope . So whenever you create a new scope you should create a new environment and p in the constructor 
@@ -24,6 +25,12 @@ class Environment(object):
 class SymbolTable(object):
     def __init__(self):
         self.symbols = {}
+        for key in keywords :
+            symbol = Symbol(key)
+            symbol.keyword = True
+            symbol.type = 'Keyword'
+            self.put(key,symbol)
+            
     def put(self,name,symbol):
         if name in self.symbols:
             return False 
