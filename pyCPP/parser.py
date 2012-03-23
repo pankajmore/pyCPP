@@ -749,10 +749,10 @@ def p_type_specifier(p):
 ##    ## IDENTIFIER is class name here 
 ##    pass
 
-def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : IDENTIFIER  '''
-    ## IDENTIFIER is class name here 
-    pass
+#def p_simple_type_specifier_1(p):
+    #''' simple_type_specifier : IDENTIFIER  '''
+    ### IDENTIFIER is class name here 
+    #pass
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
