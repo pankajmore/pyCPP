@@ -24,7 +24,7 @@ success = True
 
 # define functions for each production rule and their attribute grammer/action
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 
 ########### Start ################
 
@@ -132,7 +132,7 @@ def p_id_expression_1(p):
     #~ class-name
     #template-id
 def p_unqualified_id(p):
-    ''' unqualified_id : IDENTIFIER 
+    ''' unqualified_id : IDENTIFIER %prec IFX
                     | operator_function_id 
                     | conversion_function_id 
                     | TILDE class_name '''
@@ -290,7 +290,7 @@ def p_new_placement(p):
     ''' new_placement : LPAREN expression_list RPAREN '''
     pass 
 def p_new_placement_opt(p):
-    ''' new_placement_opt : 
+    ''' new_placement_opt : %prec NOPAREN
                     | new_placement '''
     pass 
 
@@ -304,7 +304,7 @@ def p_new_type_id(p):
     #ptr-operator new-declaratoropt
     #direct-new-declarator
 def p_new_declarator_opt(p):
-    ''' new_declarator_opt : 
+    ''' new_declarator_opt : %prec IFX
                     | ptr_operator new_declarator_opt 
                     | direct_new_declarator '''
     pass 
@@ -384,9 +384,9 @@ def p_additive_expression(p):
     #shift-expression << additive-expression
     #shift-expression >> additive-expression
 def p_shift_expression(p):
-    ''' shift_expression : additive_expression 
-                    | shift_expression LESS LESS additive_expression 
-                    | shift_expression GREATER GREATER additive_expression '''                         #### ADD shift operators and change here 
+    ''' shift_expression : additive_expression '''
+                    #| shift_expression LESS LESS additive_expression 
+                    #| shift_expression GREATER GREATER additive_expression '''                         #### ADD shift operators and change here 
     pass 
 
 #relational-expression:
@@ -836,7 +836,7 @@ def p_init_declarator(p):
     #direct-declarator
     #ptr-operator declarator
 def p_declarator_1(p):
-    ''' declarator : direct_declarator '''
+    ''' declarator : direct_declarator %prec NOPAREN'''
     pass
   
 def p_declarator_2(p):
@@ -1237,15 +1237,19 @@ def p_conversion_function_id(p):
 
 #conversion-type-id:
     #type-specifier-seq conversion-declaratoropt
-def p_conversion_type_id(p):
-    ''' conversion_type_id : type_specifier_seq conversion_declarator_opt '''
+def p_conversion_type_id_1(p):
+    ''' conversion_type_id : type_specifier_seq %prec NOPAREN'''
+    pass
+
+def p_conversion_type_id_2(p):
+    ''' conversion_type_id : type_specifier_seq conversion_declarator %prec LPAREN'''
     pass 
 
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
-def p_conversion_declarator_opt(p):
-    ''' conversion_declarator_opt : 
-                    | ptr_operator conversion_declarator_opt '''
+def p_conversion_declarator(p):
+    ''' conversion_declarator : ptr_operator %prec NOPAREN
+                              | ptr_operator conversion_declarator %prec LPAREN'''
     pass 
 
 #ctor-initializer:
