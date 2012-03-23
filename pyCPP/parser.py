@@ -659,8 +659,8 @@ def p_block_declaration(p):
     #decl-specifier-seqopt init-declarator-listopt ;
 
 def p_simple_declaration(p):
-    ''' simple_declaration : SEMICOLON  
-                           | decl_specifier_seq init_declarator_list SEMICOLON
+    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON
+                           | IDENTIFIER init_declarator_list SEMICOLON
                            | decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
     pass
@@ -749,10 +749,10 @@ def p_type_specifier(p):
 ##    ## IDENTIFIER is class name here 
 ##    pass
 
-def p_simple_type_specifier_1(p):
-    ''' simple_type_specifier : IDENTIFIER  '''
-    ## IDENTIFIER is class name here 
-    pass
+#def p_simple_type_specifier_1(p):
+    #''' simple_type_specifier : IDENTIFIER  '''
+    ### IDENTIFIER is class name here 
+    #pass
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
@@ -996,7 +996,7 @@ def p_parameter_declaration(p):
     #pass
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  declarator ctor_initializer_opt function_body '''
+    ''' function_definition : decl_specifier_seq  declarator function_body '''
     pass
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
