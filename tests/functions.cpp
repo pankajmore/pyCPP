@@ -1,4 +1,4 @@
-int *f(int &a, int b[4][32], int *z)
+int f(int &a, int b[4][32], int *z)
 {
     int x,y,z ;
     x = y = z = 200.324;
@@ -7,5 +7,10 @@ int *f(int &a, int b[4][32], int *z)
     b += 1324;
     for (;;)
         x++;
+    return 0;
+}
+int main()
+{
+    a = ob.f(2,3);
     return 0;
 }

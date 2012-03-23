@@ -204,6 +204,9 @@ def p_postfix_expression_5(p):
                     | postfix_expression MINUS_MINUS '''
     pass 
 
+def p_postfix_expression_6(p):
+    ''' postfix_expression : postfix_expression DOT id_expression'''
+    pass
 
 ##def p_postfix_expression_5(p):
 ##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
