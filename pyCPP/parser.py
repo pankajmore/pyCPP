@@ -26,7 +26,7 @@ success = True
 # define functions for each production rule and their attribute grammer/action
 class Type:
     def __init__(self,next):
-        self.link = next
+        self.next = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
