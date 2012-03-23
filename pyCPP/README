@@ -1,0 +1,6 @@
+## Changes in the grammar
+* function with no return types not allowed.
+    eg. 
+OLD =>        hello();
+    will by default have void type but to remove ambiguity we only allow functions with explicit return type 
+NEW =>        void hello()

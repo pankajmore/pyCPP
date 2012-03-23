@@ -132,7 +132,7 @@ def p_id_expression_1(p):
     #~ class-name
     #template-id
 def p_unqualified_id(p):
-    ''' unqualified_id : IDENTIFIER %prec IFX
+    ''' unqualified_id : IDENTIFIER %prec RPAREN
                     | operator_function_id 
                     | conversion_function_id 
                     | TILDE class_name '''
@@ -204,6 +204,9 @@ def p_postfix_expression_5(p):
                     | postfix_expression MINUS_MINUS '''
     pass 
 
+def p_postfix_expression_6(p):
+    ''' postfix_expression : postfix_expression DOT id_expression'''
+    pass
 
 ##def p_postfix_expression_5(p):
 ##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
@@ -756,7 +759,7 @@ def p_type_specifier(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
-    pass
+    pass 
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
@@ -853,7 +856,7 @@ def p_direct_declarator_1(p):
     pass
   
 def p_direct_declarator_2(p):
-    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     pass
   
 def p_direct_declarator_3(p):
@@ -991,9 +994,9 @@ def p_parameter_declaration(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-#def p_function_definition_1(p):
-    #''' function_definition : declarator ctor_initializer_opt function_body '''
-    #pass
+def p_function_definition_1(p):
+    ''' function_definition : declarator function_body '''
+    pass
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_body '''
@@ -1346,11 +1349,11 @@ def p_operator(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=0,method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
