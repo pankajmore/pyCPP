@@ -35,6 +35,7 @@ class Attribute:
             self.value=None    
             self.offset = 0
 	    self.code=''
+	    self.place=None
 
 def initAttr(a):
       a.type=None	
@@ -42,6 +43,7 @@ def initAttr(a):
       a.value=None
       a.offset= 0
       a.code=''
+      a.place=None
       
 
 
@@ -80,27 +82,45 @@ def p_declaration_seq_2(p):
 #################### EXPRESSIONS ###################
 
 def p_literal_1(p):
-    ''' literal : DNUMBER '''
+    '''literal : INUMBER '''
+    p[0]=Attribute()
+    p[0].type=Type('INT')
+    p[0].place=int(p[1])
     pass
   
 def p_literal_2(p):
     ''' literal : INUMBER '''
+    p[0]=Attribute()
+    p[0].type=Type('FLOAT')
+    p[0].place=float(p[1])
     pass
 
 def p_literal_3(p):
     ''' literal : LIT_CHAR '''
+    p[0]=Attribute()
+    p[0].type=Type('CHAR')
+    p[0].place=str(p[1])
     pass
 
 def p_literal_4(p):
     ''' literal : LIT_STR '''
+    p[0]=Attribute()
+    p[0].type=Type(Type('CHAR'))
+    p[0].place=str(p[1])
     pass
 
 def p_literal_5(p):
     ''' literal : TRUE '''
+    p[0]=Attribute()
+    p[0].type=Type('BOOL')
+    p[0].place=bool(p[1])
     pass
 
 def p_literal_6(p):
-    ''' literal : FALSE '''
+    ''' literal : FALSE'''
+    p[0]=Attribute()
+    p[0].type=Type('BOOL')
+    p[0].place=bool(p[1])
     pass
   
 #primary-expression:
@@ -114,6 +134,7 @@ def p_literal_6(p):
     
 def p_primary_expression_1(p):
     ''' primary_expression : literal '''
+    p[0]=deepcopy(p[1])
     pass
   
 ##def p_primary_expression_2(p):
@@ -130,10 +151,12 @@ def p_primary_expression_1(p):
   
 def p_primary_expression_5(p):
     ''' primary_expression : LPAREN expression RPAREN '''
+    p[0]=deepcopy(p[1])
     pass
   
 def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
+    p[0]=deepcopy(p[1])
     pass 
 
 #id-expression:
@@ -141,6 +164,7 @@ def p_primary_expression_6(p):
     #qualified-id
 def p_id_expression_1(p):
     ''' id_expression : unqualified_id '''
+    p[0]=deepcopy(p[1])
     pass
   
 ##def p_id_expression_2(p):
@@ -207,10 +231,27 @@ def p_unqualified_id(p):
     #typeid ( type-id )
 def p_postfix_expression_1(p):
     ''' postfix_expression : primary_expression '''
+    p[0]=deepcopy(p[1])
     pass
   
 def p_postfix_expression_2(p):
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
+    p[0] = deepcopy(p[1])
+    p[0].type==is_instance
+        print "Error in line %s : Cannot access index of non-array ",% p.lineno(2)
+        p[0]=initAttribute(p[0])
+    else: # for now only handling 1-d arrays
+        if p[0].type not in ['FLOAT','INT','CHAR','BOOL']:
+            print "Error in line %s : Unidentified type of array ",% p.lineno(2)
+            p[0]=initAttribute(p[0])
+        else:
+            if p[3].type!='INT':
+                print "Error in line %s : Index of array can only be an integer ",% p.lineno(2)
+                p[0]=initAttribute(p[0])
+            else:
+                p[0].isArray=0
+                #Determine p[0].value
+                # p[0].value= p[1].value[p[3].value]
     pass
   
 def p_postfix_expression_3(p):
