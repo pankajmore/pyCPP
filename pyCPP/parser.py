@@ -1,6 +1,7 @@
 from lexer import *
 import ply.yacc as yacc
-
+import * from symbol
+from copy import deepcopy
 #start='translation_unit'
 success = True
 
@@ -23,6 +24,27 @@ success = True
 
 
 # define functions for each production rule and their attribute grammer/action
+
+MaxPar=10
+Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
+env=Environment(None)
+class Attribute:
+      def __init__(self):
+            self.type = None
+	    self.attr={}    
+            self.value=None    
+            self.offset = 0
+	    self.code=''
+
+def initAttr(a):
+      a.type=None	
+      a.attr={}
+      a.value=None
+      a.offset= 0
+      a.code=''
+      
+
+
 
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 
