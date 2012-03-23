@@ -263,7 +263,7 @@ def p_postfix_expression_5(p):
     pass 
 
 def p_postfix_expression_6(p):
-    ''' postfix_expression : postfix_expression DOT id_expression'''
+    ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
     pass
 
 ##def p_postfix_expression_5(p):
@@ -308,7 +308,7 @@ def p_expression_list_opt(p):
     #new-expression
     #delete-expression
 def p_unary_expression(p):
-    ''' unary_expression : postfix_expression 
+    ''' unary_expression : postfix_expression %prec INUMBER
                     | PLUS_PLUS cast_expression 
                     | MINUS_MINUS cast_expression 
                     | unary_operator cast_expression 
