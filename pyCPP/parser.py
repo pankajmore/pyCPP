@@ -24,9 +24,9 @@ success = True
 
 
 # define functions for each production rule and their attribute grammer/action
-class Type:
+class Type(object):
     def __init__(self,next):
-        self.link = next
+        self.next = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -40,6 +40,8 @@ class Type:
         if result is NotImplemented:
             return result
         return not result
+    def __repr__(self):
+        return str(self.next)
 
 
 
@@ -47,13 +49,13 @@ class Type:
 MaxPar=10
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 env=Environment(None)
-class Attribute:
+class Attribute(object):
       def __init__(self):
             self.type = None
-	    self.attr={}    
+            self.attr={}    
             self.value=None    
             self.offset = 0
-	    self.code=''
+            self.code=''
 
 def initAttr(a):
       a.type=None	
@@ -1106,16 +1108,17 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
+    p[0] = p[1] 
     pass
 
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
-    ''' class_specifier : class_head  new_scope LBRACE member_specification RBRACE finish_scope'''
+    ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
     pass
 
 def p_class_specifier_2(p):
-    ''' class_specifier : class_head LBRACE RBRACE '''
+    ''' class_specifier : new_scope class_head LBRACE RBRACE finish_scope'''
     pass
   
 #class-head:
@@ -1128,7 +1131,12 @@ def p_class_head(p):
     cl = Symbol(p[2])
     cl.type = p[1].type 
     cl.attrs["inherits"] = p[3]
-    env.put(cl)
+    table = env.table
+    temp = SymbolTable()
+    for s in cl.attrs["inherits"]:
+        temp = temp.combine(s)
+    cl.attrs["scope"] = env.table 
+    env.prev.put(cl)
     p[0] = cl 
 
 ##def p_class_head(p):
@@ -1142,13 +1150,13 @@ def p_class_head(p):
     #struct
     #union
 
-def p_class_key(p):
+def p_class_key_1(p):
     ''' class_key : CLASS '''
     p[0] = Attribute()
     p[0].type = Type("CLASS")
     
 
-def p_class_key(p):
+def p_class_key_2(p):
     ''' class_key : STRUCT '''
     p[0] = Attribute()
     p[0].type = Type("STRUCT")
@@ -1157,7 +1165,8 @@ def p_error(p):
     global success
     success = False
     print("Whoa. We're hosed")
-    print("Syntax error at token " + str(p.type) + " of value " + str(p.value) + " at line number " + str(p.lineno))
+    print("Syntax error at token " + str(p))
+    #print("Syntax error at token " + str() + " of value " + str(p.value) + " at line number " + str(p.lineno))
 
 #member-specification:
     #member-declaration member-specificationopt
@@ -1185,14 +1194,19 @@ def p_member_specification_4(p):
     #::opt nested-name-specifier templateopt unqualified-id ;
     #using-declaration
     #template-declaration
-def p_member_declaration(p):
-    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
-		    | decl_specifier_seq SEMICOLON
-                    | member_declarator_list SEMICOLON
-		    | SEMICOLON
-                    | function_definition SEMICOLON
-                    | function_definition '''
-    pass
+def p_member_declaration_1(p):
+    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON ''' 
+def p_member_declaration_2(p):
+    ''' member_declaration : decl_specifier_seq SEMICOLON '''
+def p_member_declaration_3(p):
+    ''' member_declaration : member_declarator_list SEMICOLON '''
+def p_member_declaration_4(p):
+    ''' member_declaration : SEMICOLON '''
+def p_member_declaration_5(p):
+    ''' member_declaration : function_definition SEMICOLON '''
+def p_member_declaration_6(p):
+    ''' member_declaration : function_definition '''
+
 
 ##def p_member_declaration(p):
 ##    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
@@ -1254,27 +1268,46 @@ def p_constant_initializer(p):
 
 #base-clause:
     #: base-specifier-list
-def p_base_clause_opt(p):
-    ''' base_clause_opt : 
-                    | COLON base_specifier_list '''
-    pass 
+def p_base_clause_opt_1(p):
+    ''' base_clause_opt : '''
+    p[0] = []
+def p_base_clause_opt_2(p):
+    ''' base_clause_opt : COLON base_specifier_list '''
+    p[0] = p[2]
+
 
 #base-specifier-list:
     #base-specifier
     #base-specifier-list , base-specifier
-def p_base_specifier_list(p):
-    ''' base_specifier_list : base_specifier 
-                    | base_specifier_list COMMA base_specifier '''
+def p_base_specifier_list_1(p):
+    ''' base_specifier_list : base_specifier_list COMMA base_specifier '''
+    p[0] = p[1] + p[3]
+    pass 
+def p_base_specifier_list_2(p):
+    ''' base_specifier_list : base_specifier ''' 
+    p[0] = [p[1]]
     pass 
 
 #base-specifier:
     #::opt nested-name-specifieropt class-name
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
-def p_base_specifier(p):
-    ''' base_specifier : class_name 
-                    | access_specifier class_name '''
+def p_base_specifier_1(p):
+    ''' base_specifier : class_name '''
+    global env 
+    if env.get(p[2]):
+        p[0] = copy(env.get(p[1]).attrs['scope'])
+    else :
+        print("Identifier" + str(p[1]) + "not defined")
     pass 
+def p_base_specifier_2(p):
+    ''' base_specifier : access_specifier class_name '''
+    global env 
+    if env.get(p[2]):
+        p[0] = copy(env.get(p[2]).attrs['scope'])
+    else :
+        print("Identifier" + str(p[2]) + "not defined")
+    pass
 
 ##def p_base_specifier(p):
 ##    ''' base_specifier : SCOPE class_name 
@@ -1420,9 +1453,12 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
+        global env
+        print env.get("A")
+        print env.get("B")
     else:
         print "Syntax error while parsing"
 except IOError:
