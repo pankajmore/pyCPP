@@ -661,8 +661,8 @@ def p_block_declaration(p):
 def p_simple_declaration(p):
     ''' simple_declaration : SEMICOLON  
                            | decl_specifier_seq init_declarator_list SEMICOLON
-                           | decl_specifier_seq SEMICOLON 
-                           | init_declarator_list SEMICOLON '''
+                           | decl_specifier_seq SEMICOLON '''
+                           #| init_declarator_list SEMICOLON '''
     pass
 
 #decl-specifier-seq:
@@ -715,8 +715,8 @@ def p_function_specifier(p):
 
 def p_type_specifier(p):
     ''' type_specifier : simple_type_specifier 
-                        | class_specifier
-                        | elaborated_type_specifier '''
+                        | class_specifier '''
+                        #| elaborated_type_specifier '''
     pass 
 ## HELPER 
 
@@ -749,10 +749,10 @@ def p_type_specifier(p):
 ##    ## IDENTIFIER is class name here 
 ##    pass
 
-#def p_simple_type_specifier_1(p):
-    #''' simple_type_specifier : IDENTIFIER  '''
-    ### IDENTIFIER is class name here 
-    #pass
+def p_simple_type_specifier_1(p):
+    ''' simple_type_specifier : IDENTIFIER  '''
+    ## IDENTIFIER is class name here 
+    pass
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
@@ -991,9 +991,9 @@ def p_parameter_declaration(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-def p_function_definition_1(p):
-    ''' function_definition : declarator ctor_initializer_opt function_body '''
-    pass
+#def p_function_definition_1(p):
+    #''' function_definition : declarator ctor_initializer_opt function_body '''
+    #pass
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator ctor_initializer_opt function_body '''
