@@ -759,7 +759,7 @@ def p_type_specifier(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
-    pass
+    pass 
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
@@ -856,7 +856,7 @@ def p_direct_declarator_1(p):
     pass
   
 def p_direct_declarator_2(p):
-    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     pass
   
 def p_direct_declarator_3(p):
@@ -994,9 +994,9 @@ def p_parameter_declaration(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-#def p_function_definition_1(p):
-    #''' function_definition : declarator ctor_initializer_opt function_body '''
-    #pass
+def p_function_definition_1(p):
+    ''' function_definition : declarator function_body '''
+    pass
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_body '''
