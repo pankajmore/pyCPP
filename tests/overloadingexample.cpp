@@ -30,10 +30,10 @@ int main()
 }
 void func1(char* str)
     {
-    	cout << "string value := " << str << endl;
+    	//cout << "string value := " << str << endl;
 }
 void func1(int val)
     {
-    	cout << "integer value := " << val << endl;
+    	//cout << "integer value := " << val << endl;
 }
 		

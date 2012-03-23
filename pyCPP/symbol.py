@@ -5,7 +5,8 @@
 class Environment(object):
     def __init__(self,p):
         self.table = SymbolTable() 
-        self.prev = p 
+        self.prev = p
+       
 ## First  create an object of class Symbol and then insert it in the current environment . 
 ## returns True if put was successful .In case of duplicate entry returns False . 
     def put(self,attr):
@@ -26,6 +27,7 @@ class SymbolTable(object):
     def put(self,name,symbol):
         if name in self.symbols:
             return False 
+        symbol.table = self;
         self.symbols[name]=symbol
         return True 
     def get(self,name):
@@ -41,7 +43,8 @@ class Symbol(object):
         self.name = name 
         self.keyword = False 
         self.type = None 
-        self.attrs = {} 
+        self.attrs = {}
+        self.table = None
     def __repr__(self):
         return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attrs))
 
