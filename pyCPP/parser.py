@@ -204,6 +204,9 @@ def p_postfix_expression_5(p):
                     | postfix_expression MINUS_MINUS '''
     pass 
 
+def p_postfix_expression_6(p):
+    ''' postfix_expression : postfix_expression DOT id_expression'''
+    pass
 
 ##def p_postfix_expression_5(p):
 ##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
@@ -1346,7 +1349,7 @@ def p_operator(p):
 
 ########################################
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=0,method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
