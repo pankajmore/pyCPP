@@ -2,6 +2,8 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
+
+## {{{
 success = True
 class Type(object):
     def __init__(self,next):
@@ -42,9 +44,11 @@ def initAttr(a):
       a.offset= 0
       a.code=''
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+## }}}
 
 ########### Start ################
 
+## {{{
 def p_translation_unit(p):
     ''' translation_unit : 
                          | declaration_seq'''
@@ -92,8 +96,10 @@ def p_declaration_seq_2(p):
     ''' declaration_seq : declaration_seq declaration  '''
     pass
 
+## }}}
 #################### EXPRESSIONS ###################
 
+## {{{
 def p_literal_1(p):
     ''' literal : DNUMBER '''
     pass
@@ -552,11 +558,13 @@ def p_constant_expression_opt(p):
     ''' constant_expression_opt : 
                     | constant_expression '''
     pass 
+## }}}
 
 ####################################################
 
 #################### STATEMENTS ####################
 
+## {{{
 #statement:
     #labeled-statement
     #expression-statement
@@ -710,11 +718,13 @@ def p_jump_statement_4(p):
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
     pass
+## }}}
 
 ####################################################
 
 #################### DECLARATIONS ##################
 
+## {{{
 #declaration:
     #block-declaration
     #function-definition
@@ -909,9 +919,11 @@ def p_elaborated_type_specifier(p):
 #def p_linkage_specialization_2(p):
 #    ''' linkage_specialization : EXTERN LIT_STR declaration '''
 #    pass
+## }}}
   
 ##### DECLARATORS #####
 
+## {{{
 #init-declarator-list:
     #init-declarator
     #init-declarator-list , init-declarator
@@ -1132,9 +1144,11 @@ def p_initializer_list(p):
     ''' initializer_list : initializer_clause
                     | initializer_list COMMA initializer_clause ''' 
     pass 
+## }}}
 
 ##### CLASSES #####     
 
+## {{{
 #class-name:
     #identifier
     #template-id
@@ -1295,9 +1309,11 @@ def p_member_declarator_4(p):
 def p_constant_initializer(p):
     ''' constant_initializer : ASSIGN constant_expression '''
     pass 
+## }}}
 
 ######## DERIVED CLASSES ##############
 
+## {{{
 #base-clause:
     #: base-specifier-list
 def p_base_clause_opt_1(p):
@@ -1360,9 +1376,11 @@ def p_access_specifier(p):
                     | PRIVATE 
                     | PROTECTED ''' 
     pass 
+## }}}
 
 ############# SPECIAL MEMBER FUNCTIONS ################
 
+## {{{
 #conversion-function-id:
     #operator conversion-type-id
 def p_conversion_function_id(p):
@@ -1424,9 +1442,11 @@ def p_mem_initializer_id(p):
 ##                    | nested_name_specifier_opt class_name  
 ##                    | IDENTIFIER '''
 ##    pass 
+### }}}
 
 ######### OVERLOADING ###########
 
+## {{{
 #operator-function-id:
     #operator operator
 def p_operator_function_id(p) : 
@@ -1466,6 +1486,7 @@ def p_operator(p):
                 | LPAREN RPAREN 
                 | LBRACKET RBRACKET  '''
     pass 
+### }}}
 
 ########### TEMPLATES ################
 
