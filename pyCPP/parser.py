@@ -5,8 +5,6 @@ from copy import deepcopy
 #start='translation_unit'
 success = True
 
-#TODO : SATVIK replace all colon colon and dot dot dot by SCOPE
-# also fix the ASSIGN error in dummy.cpp
 
 
 
@@ -46,7 +44,6 @@ class Type(object):
 
 
 
-MaxPar=10
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 env=Environment(None)
 class Attribute(object):
@@ -197,11 +194,15 @@ def p_id_expression_1(p):
     #conversion-function-id
     #~ class-name
     #template-id
-def p_unqualified_id(p):
-    ''' unqualified_id : IDENTIFIER %prec RPAREN
-                    | operator_function_id 
-                    | conversion_function_id 
-                    | TILDE class_name '''
+def p_unqualified_id_1(p):
+    ''' unqualified_id : IDENTIFIER %prec RPAREN '''
+    pass
+def p_unqualified_id_2(p):
+    ''' unqualified_id : operator_function_id '''
+def p_unqualified_id_3(p):
+    ''' unqualified_id : conversion_function_id ''' 
+def p_unqualified_id_4(p):
+    ''' unqualified_id : TILDE class_name '''
     pass 
 
 #### TODO : To add production rule for templateopt as well when template is introduced. ###
@@ -284,14 +285,19 @@ def p_postfix_expression_6(p):
 #expression-list:
     #assignment-expression
     #expression-list , assignment-expression
-def p_expression_list(p):
-    ''' expression_list : assignment_expression 
-                    | expression_list COMMA assignment_expression '''
+def p_expression_list_1(p):
+    ''' expression_list : assignment_expression '''
     pass 
 
-def p_expression_list_opt(p):
-    ''' expression_list_opt : 
-                    | expression_list '''
+def p_expression_list_2(p):
+    ''' expression_list : expression_list COMMA assignment_expression '''
+    pass 
+
+def p_expression_list_opt_1(p):
+    ''' expression_list_opt : '''
+    pass 
+def p_expression_list_opt_2(p):
+    ''' expression_list_opt : expression_list '''
     pass 
 
 #pseudo-destructor-name:
@@ -586,85 +592,125 @@ def p_constant_expression_opt(p):
     #jump-statement
     #declaration-statement
     #try-block
-def p_statement(p):
-    ''' statement : labeled_statement
-                | expression_statement
-                | compound_statement 
-                | selection_statement
-                | iteration_statement
-                | jump_statement
-                | declaration_statement '''
+def p_statement_1(p):
+    ''' statement : labeled_statement '''
+    pass 
+def p_statement_2(p):
+    ''' statement : expression_statement '''
+    pass 
+def p_statement_3(p):
+    ''' statement : compound_statement '''
+    pass 
+def p_statement_4(p):
+    ''' statement : selection_statement '''
+    pass 
+def p_statement_5(p):
+    ''' statement : iteration_statement '''
+    pass 
+def p_statement_6(p):
+    ''' statement : jump_statement '''
+    pass 
+def p_statement_7(p):
+    ''' statement : declaration_statement '''
     pass 
 
 #labeled-statement:
     #identifier : statement
     #case constant-expression : statement
     #default : statement
-def p_labeled_statement(p):
-    ''' labeled_statement : IDENTIFIER COLON statement 
-                | CASE constant_expression COLON statement 
-                | DEFAULT COLON statement ''' 
+def p_labeled_statement_1(p):
+    ''' labeled_statement : IDENTIFIER COLON statement ''' 
+    pass 
+def p_labeled_statement_2(p):
+    ''' labeled_statement : CASE constant_expression COLON statement '''
+    pass 
+def p_labeled_statement_3(p):
+    ''' labeled_statement : DEFAULT COLON statement ''' 
     pass 
 
 #expression-statement:
     #expressionopt ;
-def p_expression_statement(p):
-    ''' expression_statement : SEMICOLON 
-                    | expression SEMICOLON '''
+def p_expression_statement_1(p):
+    ''' expression_statement : SEMICOLON ''' 
+    pass 
+def p_expression_statement_2(p):
+    ''' expression_statement : expression SEMICOLON '''
     pass 
 
 #compound-statement:
     #{ statement-seqopt }
-def p_compound_statement(p):
-    ''' compound_statement : LBRACE statement_seq RBRACE 
-                    | LBRACE RBRACE '''
+def p_compound_statement_1(p):
+    ''' compound_statement : LBRACE RBRACE '''
+    pass 
+def p_compound_statement_2(p):
+    ''' compound_statement : LBRACE statement_seq RBRACE '''
     pass 
 
 #statement-seq:
     #statement
     #statement-seq statement
-def p_statement_seq(p):
-    ''' statement_seq : statement 
-                | statement_seq statement'''
+def p_statement_seq_1(p):
+    ''' statement_seq : statement ''' 
+    pass 
+def p_statement_seq_2(p):
+    ''' statement_seq : statement_seq statement'''
     pass 
 
 #selection-statement:
     #if ( condition ) statement
     #if ( condition ) statement else statement
     #switch ( condition ) statement
-def p_selection_statement(p):
-    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX
-                    | IF LPAREN condition RPAREN statement ELSE statement 
-                    | SWITCH LPAREN condition RPAREN statement '''
+def p_selection_statement_1(p):
+    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
+    pass 
+def p_selection_statement_2(p):
+    ''' selection_statement : IF LPAREN condition RPAREN statement ELSE statement '''
+    pass 
+def p_selection_statement_3(p):
+    ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
     pass 
 
 #condition:
     #expression
     #type-specifier-seq declarator = assignment-expression
-def p_condition(p):
-    ''' condition : expression 
-                | type_specifier_seq declarator ASSIGN assignment_expression '''
+def p_condition_1(p):
+    ''' condition : expression ''' 
+    pass 
+def p_condition_2(p):
+    ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
     pass 
 
 #iteration-statement:
     #while ( condition ) statement
     #do statement while ( expression ) ;
     #for ( for-init-statement conditionopt ; expressionopt ) statement
-def p_iteration_statement(p):
-    ''' iteration_statement : WHILE LPAREN condition RPAREN statement 
-                    | DO statement WHILE LPAREN condition RPAREN SEMICOLON 
-                    | FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement
-                    | FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement
-                    | FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement
-                    | FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+def p_iteration_statement_1(p):
+    ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
+    pass 
+def p_iteration_statement_2(p):
+    ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
+    pass 
+def p_iteration_statement_3(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
+    pass 
+def p_iteration_statement_4(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
+    pass 
+def p_iteration_statement_5(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
+    pass 
+def p_iteration_statement_6(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
     pass 
 
 #for-init-statement:
     #expression-statement
     #simple-declaration
-def p_for_init_statement(p):
-    ''' for_init_statement : expression_statement 
-                    | simple_declaration '''
+def p_for_init_statement_1(p):
+    ''' for_init_statement : expression_statement ''' 
+    pass 
+def p_for_init_statement_2(p):
+    ''' for_init_statement : simple_declaration '''
     pass 
 
 #jump-statement:
@@ -672,11 +718,17 @@ def p_for_init_statement(p):
     #continue ;
     #return expressionopt ;
     #goto identifier ;
-def p_jump_statement(p):
-    ''' jump_statement : BREAK 
-                    | CONTINUE 
-                    | RETURN expression SEMICOLON 
-                    | RETURN SEMICOLON '''
+def p_jump_statement_1(p):
+    ''' jump_statement : BREAK ''' 
+    pass 
+def p_jump_statement_2(p):
+    ''' jump_statement : CONTINUE '''
+    pass 
+def p_jump_statement_3(p):
+    ''' jump_statement : RETURN expression SEMICOLON '''
+    pass 
+def p_jump_statement_4(p):
+    ''' jump_statement : RETURN SEMICOLON '''
     pass 
 
 #declaration-statement:
