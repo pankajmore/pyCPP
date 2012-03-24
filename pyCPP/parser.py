@@ -103,6 +103,14 @@ def p_finish_scope(p):
     '''finish_scope : '''
     PopScope()
 
+def p_function_scope(t):
+    '''function_scope : '''
+    functionScope()
+
+def p_unset_function_scope(t):
+    '''unset_function_scope : '''
+    unsetFunctionScope()
+
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
     pass
@@ -1453,7 +1461,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
         global env
