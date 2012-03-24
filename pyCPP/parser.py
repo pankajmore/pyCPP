@@ -1456,9 +1456,6 @@ try:
     yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
-        global env
-        print env.get("A")
-        print env.get("B")
     else:
         print "Syntax error while parsing"
 except IOError:
