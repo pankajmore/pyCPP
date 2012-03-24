@@ -48,7 +48,7 @@ def initAttr(a):
     return a
 
 def errorAttr(a):
-    a.type='ERROR'
+    a.type=Type('ERROR')
     a.attr={}
     a.value=None
     a.offset= 0
@@ -297,8 +297,8 @@ def p_postfix_expression_2(p):
         print "Error in line %s : Cannot access index of non-array " % p.lineno(2)
         p[0]=errorAttr(p[0])
     else: # for now only handling 1-d arrays
-        if p[0].type =='ERROR' or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or not is_primitive(p[0]):
-            if p[0]!='ERROR':
+        if p[0].type ==Type('ERROR') or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or not is_primitive(p[0]):
+            if p[0]!=Type('ERROR'):
                 print "Error in line %s : Unidentified type of array " % p.lineno(2)
             p[0]=errorAttr(p[0])
         else:
@@ -318,8 +318,8 @@ def p_postfix_expression_3(p):
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
-    elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type=='ERROR':
-        if p[0].type!='ERROR':
+    elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
+        if p[0].type!=Type('ERROR'):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
@@ -337,8 +337,8 @@ def p_postfix_expression_4(p):
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
-    elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type=='ERROR':
-        if p[0].type!='ERROR':
+    elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
+        if p[0].type!=Type('ERROR'):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
@@ -367,7 +367,7 @@ def p_postfix_expression_5(p):
         p[0].place=newTemp()
     #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"                                                                                               
     else:
-        if p[1].type!='ERROR':                                                                                                     
+        if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
 
@@ -382,7 +382,7 @@ def p_postfix_expression_6(p):
         p[0].place=newTemp()
     #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"                                                                                                     
     else:
-        if p[1].type!='ERROR':                                                                                                     
+        if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostDecrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
     pass 
@@ -403,7 +403,7 @@ def p_postfix_expression_7(p):
     #expression-list , assignment-expression
 def p_expression_list_1(p):
     ''' expression_list : assignment_expression'''
-    if p[1].type=='ERROR':
+    if p[1].type==Type('ERROR'):
         p[0]=errorAttr(p[0])
     else:
         p[0]=deepcopy(p[1])
@@ -413,7 +413,7 @@ def p_expression_list_1(p):
 
 def p_expression_list_2(p):
     ''' expression_list : expression_list COMMA assignment_expression '''
-    if p[1].type=='ERROR' or p[3].type=='ERROR':
+    if p[1].type==Type('ERROR') or p[3].type==Type('ERROR'):
         p[0]=errorAttr(p[0])
     else:                                                                                                     
         p[0]=deepcopy(p[1])
@@ -463,7 +463,7 @@ def p_unary_expression_2(p):
         p[0].place=newTemp()
     #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"                                                                                                        
     else:
-        if p[2].type!='ERROR':
+        if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
     pass         
@@ -479,7 +479,7 @@ def p_unary_expression_3(p):
         p[0].place=newTemp()
     #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1"                
     else:
-        if p[2].type!='ERROR':
+        if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
     pass 
@@ -493,7 +493,7 @@ def p_unary_expression_4(p):
             pass
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR':
+            if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary + operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
 
     if p[1]=='-':
@@ -502,7 +502,7 @@ def p_unary_expression_4(p):
             p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "-" +  p[2].place +"\n"
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR':        
+            if p[2].type!=Type('ERROR'):        
                 print 'Error in line %s : Unary - operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
 
     if p[1]=='!':
@@ -511,7 +511,7 @@ def p_unary_expression_4(p):
             p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "not" +  p[2].place +"\n"
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR':
+            if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary ! operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='*':
         if isinstance(p[2].type,Type) and isinstance(p[2].type.link,Type):
@@ -519,7 +519,7 @@ def p_unary_expression_4(p):
             #find value of *p[2].value and store in p[0]
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR':
+            if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary * operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='&':
         if p[2].type in [Type('FLOAT'),Type('INT'),Type('BOOL'),Type('CHAR')] and is_primitive(p[1]):
@@ -527,7 +527,7 @@ def p_unary_expression_4(p):
             #find value of &p[2].value and store in p[0]
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR':
+            if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary & operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='~':
         pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
@@ -681,7 +681,7 @@ def p_cast_expression_2(p):
             p[4].type='CHAR'                
         else:
             p[0]=errorAttr(p[0])
-            if p[2].type!='ERROR' and p[4].type!='ERROR':
+            if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
                 print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
             
         
@@ -711,7 +711,7 @@ def p_multiplicative_expression_2(p):
         p[0].code = p[1].code +'\t' + p[3].code +'\t' + p[0].place + '=' + p[1].place + '*' + p[3].place+'\n'
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform multiplication between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_multiplicative_expression_3(p):
@@ -727,7 +727,7 @@ def p_multiplicative_expression_3(p):
         p[0].code = p[1].code +'\t' + p[3].code + '\t' + p[0].place + '=' + p[1].place + '/' + p[3].place+'\n'
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform division between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_multiplicative_expression_4(p):
@@ -739,7 +739,7 @@ def p_multiplicative_expression_4(p):
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '%' + p[3].place + '\n'
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Modulo operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 #additive-expression:
@@ -770,7 +770,7 @@ def p_additive_expression_2(p):
         pass
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform addition between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 def p_additive_expression_3(p):
@@ -791,7 +791,7 @@ def p_additive_expression_3(p):
         pass
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform substraction between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                       
 #shift-expression:
@@ -811,7 +811,7 @@ def p_relational_expression_2(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : < operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_relational_expression_3(p):
@@ -821,7 +821,7 @@ def p_relational_expression_3(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : < operator >annot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
     
 def p_relational_expression_4(p):
@@ -831,7 +831,7 @@ def p_relational_expression_4(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : <= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 def p_relational_expression_5(p):
@@ -841,7 +841,7 @@ def p_relational_expression_5(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : >= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 
@@ -872,7 +872,7 @@ def p_equality_expression_2(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : == operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 def p_equality_expression_3(p):
@@ -882,7 +882,7 @@ def p_equality_expression_3(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : != operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
                   
 #and-expression:
@@ -914,7 +914,7 @@ def p_logical_and_expression_2(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print 'Error at line %s : && operator can only be applied to boolean operands' % p.lineno(2)
 
 #logical-or-expression:
@@ -931,7 +931,7 @@ def p_logical_or_expression_2(p):
         p[0].type=Type('BOOL')
     else:
         p[0]=errorAttr(p[0])
-        if p[1].type!='ERROR' and p[3].type!='ERROR':
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print 'Error at line %s : || operator can only be applied to boolean operands' % p.lineno(2)
 
 
@@ -951,7 +951,7 @@ def p_conditional_expression_2(p):
         #have to choose statement based on conditional evaluation
         pass
     else:
-        if p[1].type!='ERROR' and p[3].type!='ERROR' and p[5].type!='ERROR':
+        if p[1].type!=Type(Type('ERROR')) and p[3].type!=Type(Type('ERROR')) and p[5].type!=Type(Type('ERROR')):
             print 'Error at line %s : ? ternary operator can only be applied to boolean operands' % p.lineno(2)
         p[0]=errorAttribute(p[0])
         
@@ -979,7 +979,7 @@ def p_assignment_expression_2(p):
         if p[2]=='=':
             if find_type(p[1])!=find_type(p[3]):
                 p[0]=errorAttr(p[0])
-                p[1].type='ERROR'
+                p[1].type=Type(Type('ERROR'))
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
         else:
             if p[2]=='*=':
@@ -987,7 +987,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type='ERROR'
+                    p[1].type=Type(Type('ERROR'))
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='/=':
@@ -995,7 +995,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type='ERROR'
+                    p[1].type=Type(Type('ERROR'))
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='+=':
@@ -1005,7 +1005,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type='ERROR'
+                    p[1].type=Type(Type('ERROR'))
                     print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
 
             if p[2]=='-=':
@@ -1015,7 +1015,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type='ERROR'
+                    p[1].type=Type(Type('ERROR'))
                     print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))  
                                                                        
 #assignment-operator: one of
