@@ -576,24 +576,31 @@ def p_constant_expression_opt(p):
     #try-block
 def p_statement_1(p):
     ''' statement : labeled_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_2(p):
     ''' statement : expression_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_3(p):
     ''' statement : compound_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_5(p):
     ''' statement : iteration_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_6(p):
     ''' statement : jump_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 def p_statement_7(p):
     ''' statement : declaration_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 
 #labeled-statement:
@@ -602,30 +609,47 @@ def p_statement_7(p):
     #default : statement
 def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
+    global env 
+    t = Symbol(p[1])
+    t.type = Type("LABEL")
+    if not env.put(t):
+        print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
+    p[0] = deepcopy(p[3])
     pass 
 def p_labeled_statement_2(p):
     ''' labeled_statement : CASE constant_expression COLON statement '''
+    p[0] = Attribute()
+    p[0].type = p[4].type 
     pass 
 def p_labeled_statement_3(p):
     ''' labeled_statement : DEFAULT COLON statement ''' 
+    p[0] = deepcopy(p[3])
     pass 
 
 #expression-statement:
     #expressionopt ;
 def p_expression_statement_1(p):
     ''' expression_statement : SEMICOLON ''' 
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass 
 def p_expression_statement_2(p):
     ''' expression_statement : expression SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = p[1].type 
     pass 
 
 #compound-statement:
     #{ statement-seqopt }
 def p_compound_statement_1(p):
     ''' compound_statement : LBRACE RBRACE '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass 
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE statement_seq RBRACE '''
+    p[0] = Attribute()
+    p[0].type = p[1].type
     pass 
 
 #statement-seq:
@@ -633,9 +657,16 @@ def p_compound_statement_2(p):
     #statement-seq statement
 def p_statement_seq_1(p):
     ''' statement_seq : statement ''' 
+    p[0] = Attribute()
+    p[0].type = p[1].type
     pass 
 def p_statement_seq_2(p):
     ''' statement_seq : statement_seq statement'''
+    p[0] = Attribute()
+    if p[1].type == Type("VOID") and p[2].type == Type("VOID"):
+        p[0].type = Type("VOID")
+    else :
+        p[0].type = Type("ERROR")
     pass 
 
 #selection-statement:
@@ -644,12 +675,36 @@ def p_statement_seq_2(p):
     #switch ( condition ) statement
 def p_selection_statement_1(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
     pass 
 def p_selection_statement_2(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement ELSE statement '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        if p[5].type == Type("VOID") and p[7].type == Type("VOID"):
+            p[0].type = Type("VOID")
+        else :
+            p[0].type = Type("ERROR")
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
     pass 
 def p_selection_statement_3(p):
     ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
     pass 
 
 #condition:
@@ -657,9 +712,16 @@ def p_selection_statement_3(p):
     #type-specifier-seq declarator = assignment-expression
 def p_condition_1(p):
     ''' condition : expression ''' 
+    p[0] = Attribute()
+    if p[0].type != Type("ERROR"):
+        p[0].type = Type("BOOL")
+    else :
+        p[0].type = Type("ERROR")
     pass 
 def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
+    p[0] = Attribute()
+    ## Himanshu check here whether declarator = assignment_expression is a valid type . If yes the p[0].type = Type("BOOL") else p[0].type = Type("ERROR")
     pass 
 
 #iteration-statement:
@@ -668,21 +730,53 @@ def p_condition_2(p):
     #for ( for-init-statement conditionopt ; expressionopt ) statement
 def p_iteration_statement_1(p):
     ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
     pass 
 def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
+    p[0] = Attribute()
+    if p[5].type == Type("BOOL"):
+        p[0].type = p[2].type 
+    else :
+        if p[5].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(5)))
+        p[0].type = Type("ERROR")
     pass 
 def p_iteration_statement_3(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
+    p[0] = Attribute()
+    if p[4].type == Type("BOOL"):
+        p[0].type = p[8].type 
+    else :
+        if p[4].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(4)))
+        p[0].type = Type("ERROR")
     pass 
 def p_iteration_statement_4(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
+    p[0] = Attribute()
+    if p[4].type == Type("BOOL"):
+        p[0].type = p[7].type 
+    else :
+        if p[4].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(4)))
+        p[0].type = Type("ERROR")
     pass 
 def p_iteration_statement_5(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
+    p[0] = Attribute()
+    p[0].type = p[7].type 
     pass 
 def p_iteration_statement_6(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+    p[0] = Attribute()
+    p[0].type = p[6].type 
     pass 
 
 #for-init-statement:
@@ -690,9 +784,13 @@ def p_iteration_statement_6(p):
     #simple-declaration
 def p_for_init_statement_1(p):
     ''' for_init_statement : expression_statement ''' 
+    p[0] = Attribute()
+    p[0].type = p[1].type 
     pass 
 def p_for_init_statement_2(p):
     ''' for_init_statement : simple_declaration '''
+    p[0] = Attribute()
+    p[0].type = p[1].type 
     pass 
 
 #jump-statement:
@@ -702,21 +800,30 @@ def p_for_init_statement_2(p):
     #goto identifier ;
 def p_jump_statement_1(p):
     ''' jump_statement : BREAK ''' 
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_2(p):
     ''' jump_statement : CONTINUE '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = p[2].type 
     pass 
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
     pass 
 
 #declaration-statement:
     #block-declaration
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
+    p[0] = deepcopy(p[1])
     pass
 ## }}}
 
@@ -1161,10 +1268,14 @@ def p_class_name(p):
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
     ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass
 
 def p_class_specifier_2(p):
     ''' class_specifier : new_scope class_head LBRACE RBRACE finish_scope'''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass
   
 #class-head:
