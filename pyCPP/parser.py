@@ -2,26 +2,7 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
-#start='translation_unit'
 success = True
-
-
-
-
-#  ---------------------------------------------------------------
-#  ABSTRACT SYNTAX TREE - NODES
-#  ---------------------------------------------------------------
-
-
-# abstract out the generic methods in this class
-
-# define new child classes for each token (non-terminal symbol) type and inherit from Node
-
-# is it necessary to define separate nodes for Type System?
-
-
-
-# define functions for each production rule and their attribute grammer/action
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -60,14 +41,9 @@ def initAttr(a):
       a.value=None
       a.offset= 0
       a.code=''
-      
-
-
-
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 
 ########### Start ################
-
 
 def p_translation_unit(p):
     ''' translation_unit : 
@@ -115,8 +91,6 @@ def p_declaration_seq_1(p):
 def p_declaration_seq_2(p):
     ''' declaration_seq : declaration_seq declaration  '''
     pass
-
-
 
 #################### EXPRESSIONS ###################
 
@@ -739,7 +713,6 @@ def p_declaration_statement(p):
 
 ####################################################
 
-
 #################### DECLARATIONS ##################
 
 #declaration:
@@ -1160,7 +1133,6 @@ def p_initializer_list(p):
                     | initializer_list COMMA initializer_clause ''' 
     pass 
 
-
 ##### CLASSES #####     
 
 #class-name:
@@ -1389,7 +1361,6 @@ def p_access_specifier(p):
                     | PROTECTED ''' 
     pass 
 
-
 ############# SPECIAL MEMBER FUNCTIONS ################
 
 #conversion-function-id:
@@ -1410,9 +1381,11 @@ def p_conversion_type_id_2(p):
 
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
-def p_conversion_declarator(p):
-    ''' conversion_declarator : ptr_operator %prec NOPAREN
-                              | ptr_operator conversion_declarator %prec LPAREN'''
+def p_conversion_declarator_1(p):
+    ''' conversion_declarator : ptr_operator %prec NOPAREN '''
+    pass 
+def p_conversion_declarator_2(p):
+    ''' conversion_declarator : ptr_operator conversion_declarator %prec LPAREN'''
     pass 
 
 #ctor-initializer:
@@ -1453,10 +1426,12 @@ def p_mem_initializer_id(p):
 ##    pass 
 
 ######### OVERLOADING ###########
+
 #operator-function-id:
     #operator operator
 def p_operator_function_id(p) : 
     ''' operator_function_id : OPERATOR operator '''
+
     pass 
 
 def p_operator(p):
@@ -1497,17 +1472,13 @@ def p_operator(p):
 ######################################
 
 ########### EXCEPTION HANDLING #######
-#try_block :
-    #try compound_statement handler_seq
-
-#exception_specification :
-    #throw ( type-id-listopt )
 
 ###################################### 
 
 ########### PREPROCESSING DIRECTIVES ###
 
 ########################################
+
 lex.lex()
 yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
