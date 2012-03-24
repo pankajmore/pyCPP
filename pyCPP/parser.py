@@ -260,8 +260,9 @@ def p_postfix_expression_2(p):
         print "Error in line %s : Cannot access index of non-array ",% p.lineno(2)
         p[0]=initAttribute(p[0])
     else: # for now only handling 1-d arrays
-        if p[0].type ==None or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or (p[0].attr.has_key('symbol') and p[0].attr['symobl'].attr.has_key('is_function')):
-            print "Error in line %s : Unidentified type of array ",% p.lineno(2)
+        if p[0].type ==None or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or not is_primitive(p[0]):
+            if p[0]!=None:
+                print "Error in line %s : Unidentified type of array ",% p.lineno(2)
             p[0]=initAttribute(p[0])
         else:
             if not p[3].type==Type('INT'):
@@ -284,7 +285,8 @@ def p_postfix_expression_3(p):
         print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==None:
-        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
+        if p[0].type!=None:
+            print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     else:
 	p[0].attr={}
@@ -303,7 +305,8 @@ def p_postfix_expression_4(p):
         print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==None:
-        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
+        if p[0].type!=None:
+            print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     else:
         if p[1].attr['symbol'].attr['numParameters']!=p[3].attr['numParameters']:
@@ -324,11 +327,12 @@ def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
                     
     p[0]=deepcopy(p[1])
-    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')) and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
+    if is_primitive(p[1]) and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"
     else:
-        print 'Error in line %s : PostIncrement ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
+        if p[1].type!=None:                                                                                                     
+            print 'Error in line %s : PostIncrement ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
     pass 
 
@@ -339,7 +343,8 @@ def p_postfix_expression_6(p):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"
     else:
-        print 'Error in line %s : PostDecrement -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
+        if p[1].type!=None:                                                                                                     
+            print 'Error in line %s : PostDecrement -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
     pass 
 
@@ -426,7 +431,8 @@ def p_unary_expression_2(p):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
     else:
-        print 'Error in line %s : PreIncrement ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
+        if p[2].type!=None:
+            print 'Error in line %s : PreIncrement ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
     pass         
     
@@ -438,7 +444,8 @@ def p_unary_expression_3(p):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1" + "\n"
     else:
-        print 'Error in line %s : PreIncrement -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
+        if p[2].type!=None:
+            print 'Error in line %s : PreIncrement -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
     pass 
 
@@ -451,7 +458,8 @@ def p_unary_expression_4(p):
             pass
         else:
             p[0]=initAttribute(p[0])
-            print 'Error in line %s : Unary + operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
+            if p[2].type!=None:
+                print 'Error in line %s : Unary + operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
 
     if p[1]=='-':
         if is_primitive(p[2]) and (p[2].type.link=='FLOAT' or p[2].type.link=='INT'):
@@ -459,7 +467,8 @@ def p_unary_expression_4(p):
 	    p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "-" +  p[2].place +"\n"
         else:
             p[0]=initAttribute(p[0])
-            print 'Error in line %s : Unary - operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
+            if p[2].type!=None:        
+                print 'Error in line %s : Unary - operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
 
     if p[1]=='!':
         if p[2].type.link=='BOOL' and is_primitive(p[2]):
@@ -467,21 +476,24 @@ def p_unary_expression_4(p):
 	    p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "not" +  p[2].place +"\n"
         else:
             p[0]=initAttribute(p[0])
-            print 'Error in line %s : Unary ! operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
+            if p[2].type!=None:
+                print 'Error in line %s : Unary ! operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
     if p[1]=='*':
         if isinstance(p[2].type,Type):
             p[0].type=p[2].type.link
             #find value of *p[2].value and store in p[0]
         else:
             p[0]=initAttribute(p[0])
-            print 'Error in line %s : Unary * operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
+            if p[2].type!=None:
+                print 'Error in line %s : Unary * operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
     if p[1]=='&':
         if p[2].type.link in ['FLOAT','INT','BOOL','CHAR'] and is_primitive(p[1]):
             p[0].type=Type(p[2].type)
             #find value of &p[2].value and store in p[0]
         else:
             p[0]=initAttribute(p[0])
-            print 'Error in line %s : Unary & operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
+            if p[2].type!=None:
+                print 'Error in line %s : Unary & operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
     if p[1]=='~':
         pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
     
@@ -508,12 +520,36 @@ def p_unary_expression_7(p):
 
 #unary-operator: one of
 #* & + - ! ~
-def p_unary_operator(p):
-    ''' unary_operator : PLUS 
-                    | MINUS 
-                    | EXCLAMATION 
-                    | TILDE '''
-    pass 
+##def p_unary_operator_1(p):
+##    ''' unary_operator : TIMES
+##    '''
+##    p[0] = '*'
+##
+##def p_unary_operator_2(p):
+##    '''unary_operator : AMPERSAND
+##    '''
+##    p[0] = '&'
+
+def p_unary_operator_3(p):
+    '''unary_operator : PLUS
+    '''
+    p[0] = '+'
+
+def p_unary_operator_4(p):
+    '''unary_operator : MINUS 
+    '''
+    p[0] = '-'
+
+def p_unary_operator_5(p):
+    '''unary_expression : EXCLAMATION 
+    '''
+    p[0] = '!'
+
+def p_unary_operator_6(p):
+    '''unary_expression : TILDE
+    '''
+    p[0] = '~'
+
 
 #new-expression:
     #::opt new new-placementopt new-type-id new-initializeropt
@@ -590,43 +626,139 @@ def p_delete_expression(p):
 #cast-expression:
     #unary-expression
     #( type-id ) cast-expression
-def p_cast_expression(p):
-    ''' cast_expression : unary_expression 
-                    | LPAREN type_id RPAREN cast_expression '''
+def p_cast_expression_1(p):
+    ''' cast_expression : unary_expression'''
+    p[0]=deepcopy(p[1])
+
+
+def p_cast_expression_2(p):
+    '''cast_expression : LPAREN type_id RPAREN cast_expression '''
+        p[0]=deepcopy(p[4])
+        #TODO : Add support for type conversion with pointers i.e (int*), (char*), etc.
+        if p[4].type=p[2].type:
+            if p[2].type.link == 'FLOAT' and p[4].type.link=='INT' and is_primitive(p[4])and is_primitive(p[0]) :
+                p[0].type='FLOAT'
+            elif p[2].type.link == 'INT' and p[4].type.link=='FLOAT' and is_primitive(p[4])and is_primitive(p[0]):
+                p[4.type='INT'
+            elif p[2].value.link == 'INT' and p[4].type.link=='CHAR' and is_primitive(p[4])and is_primitive(p[0]):
+                p[4].type='INT'
+            elif p[2].type.link == 'CHAR' and p[4].type.link=='INT' and is_primitive(p[4])and is_primitive(p[0]):
+                p[4].type='CHAR'                
+            else:
+                p[0]=initAttribute(p[0])
+                if p[2].type!=None and p[4].type!=None:
+                    print "Error in line %s : Illegal Type conversion from %s to %s ",%(p.lineno(1),find_type(p[4]),find_type([2]))
+            
+        
     pass 
 
-#pm-expression:
-    #cast-expression
-    #pm-expression .* cast-expression
-    #pm-expression ->* cast-expression
-def p_pm_expression(p):
-    ''' pm_expression : cast_expression 
-                    | pm_expression DOT TIMES cast_expression
-                    | pm_expression ARROW TIMES cast_expression '''                        ### Add .* and ->* to operators and change here 
-    pass 
 
 #multiplicative-expression:
     #pm-expression
     #multiplicative-expression * pm-expression
     #multiplicative-expression / pm-expression
     #multiplicative-expression % pm-expression
-def p_multiplicative_expression(p):
-    ''' multiplicative_expression : pm_expression 
-                    | multiplicative_expression TIMES pm_expression
-                    | multiplicative_expression DIV pm_expression 
-                    | multiplicative_expression MODULO pm_expression '''
-    pass 
+                  
+def p_multiplicative_expression_1(p):
+    ''' multiplicative_expression : cast_expression'''
+    p[0]=deepcopy(p[1])
+    
+def p_multiplicative_expression_2(p):
+    ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
+    p[0]=deepcopy(p[1])
+    if p[1].type.link=='INT' and p[3].type.link=='INT' and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('INT')
+        p[0].place = newTemp()
+        p[0].code = p[1].code +'\t' + p[3].code +'\t'+ p[0].place + '=' + p[1].place + '*' + p[3].place+'\n'
+    elif p[1].type.link in ['FLOAT','INT'] and p[3].type.link in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('FLOAT')
+        p[0].place=newTemp()
+        p[0].code = p[1].code +'\t' + p[3].code +'\t' + p[0].place + '=' + p[1].place + '*' + p[3].place+'\n'
+    else:
+        p[0]=initAttribute(p[0])
+        if p[1].type!=None and p[3].type!=None:
+            print "Error in line %s : Cannot perform multiplication between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+
+def p_multiplicative_expression_3(p):
+    ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type.link=='INT' and p[3].type.link=='INT' and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('INT')
+        p[0].place = newTemp()
+        p[0].code = p[1].code +'\t' + p[3].code +'\t'+ p[0].place + '=' + p[1].place + '/' + p[3].place+'\n'
+    elif p[1].type.link in ['FLOAT','INT'] and p[3].type.link in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('FLOAT')
+        p[0].place=newTemp()
+        p[0].code = p[1].code +'\t' + p[3].code + '\t' + p[0].place + '=' + p[1].place + '/' + p[3].place+'\n'
+    else:
+        p[0]=initAttribute(p[0])
+        if p[1].type!=None and p[3].type!=None:
+            print "Error in line %s : Cannot perform division between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+
+def p_multiplicative_expression_4(p)
+    ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type.link=='INT' and p[3].type.link=='INT' and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('INT')
+        p[0].place = newTemp()
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '%' + p[3].place + '\n'
+    else:
+        p[0]=initAttribute(p[0])
+        if p[1].type!=None and p[3].type!=None:
+            print "Error in line %s : Modulo operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
 #additive-expression:
     #multiplicative-expression
     #additive-expression + multiplicative-expression
     #additive-expression - multiplicative-expression
-def p_additive_expression(p):
-    ''' additive_expression : multiplicative_expression 
-                    | additive_expression PLUS multiplicative_expression 
-                    | additive_expression MINUS multiplicative_expression '''
-    pass 
 
+def p_additive_expression_1(p):
+    ''' additive_expression : multiplicative_expression'''
+    p[0]=deepcopy(p[1])
+
+
+def p_additive_expression_2(p):
+    ''' additive_expression : additive_expression PLUS multiplicative_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type.link=='INT' and p[3].type.link=='INT'and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('INT')
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'        
+    elif p[1].type.link in ['FLOAT','INT'] and p[3].type.link in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('FLOAT')
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
+    elif isinstance(p[1].type,Type) and p[3].type.link=='INT' and is_primitive(p[1]) and is_primitive(p[3]):
+        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
+        pass
+    elif isinstance(p[3].type,Type) and p[1].type.link=='INT' and is_primitive(p[1]) and is_primitive(p[3]):
+        p[0]=deepcopy(p[3])
+        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
+        pass
+    else:
+        p[0]=initAttribute(p[0])
+        if p[1].type!=None and p[3].type!=None:
+            print "Error in line %s : Cannot perform addition between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+                  
+def p_additive_expression_3(p):
+    ''' additive_expression : additive_expression MINUS multiplicative_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type.link=='INT' and p[3].type.link=='INT'and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('INT')
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'        
+    elif p[1].type.link in ['FLOAT','INT'] and p[3].type.link in ['FLOAT','INT'] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('FLOAT')
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
+    elif isinstance(p[1].type,Type) and p[3].type.link=='INT' and is_primitive(p[1]) and is_primitive(p[3]):
+        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
+        pass
+    elif isinstance(p[3].type,Type) and p[1].type.link=='INT' and is_primitive(p[1]) and is_primitive(p[3]):
+        p[0]=deepcopy(p[3])
+        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
+        pass
+    else:
+        p[0]=initAttribute(p[0])
+        if p[1].type!=None and p[3].type!=None:
+            print "Error in line %s : Cannot perform substraction between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+                      
 #shift-expression:
     #additive-expression
     #shift-expression << additive-expression
