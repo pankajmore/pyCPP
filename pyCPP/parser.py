@@ -1,32 +1,13 @@
 from lexer import *
 import ply.yacc as yacc
-import * from symbol
+from symbol import *
 from copy import deepcopy
-#start='translation_unit'
+
+## {{{
 success = True
-
-#TODO : SATVIK replace all colon colon and dot dot dot by SCOPE
-# also fix the ASSIGN error in dummy.cpp
-
-
-
-#  ---------------------------------------------------------------
-#  ABSTRACT SYNTAX TREE - NODES
-#  ---------------------------------------------------------------
-
-
-# abstract out the generic methods in this class
-
-# define new child classes for each token (non-terminal symbol) type and inherit from Node
-
-# is it necessary to define separate nodes for Type System?
-
-
-
-# define functions for each production rule and their attribute grammer/action
-class Type:
+class Type(object):
     def __init__(self,next):
-        self.link = next
+        self.next = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -40,17 +21,18 @@ class Type:
         if result is NotImplemented:
             return result
         return not result
+    def __repr__(self):
+        return str(self.next)
 
 
 
 
-MaxPar=10
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 env=Environment(None)
-class Attribute:
+class Attribute(object):
       def __init__(self):
             self.type = None
-	    self.attr={}    
+            self.attr={}    
             self.value=None    
             self.offset = 0
 	    self.code=''
@@ -63,15 +45,13 @@ def initAttr(a):
       a.offset= 0
       a.code=''
       a.place=None
-      
-
-
 
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+## }}}
 
 ########### Start ################
 
-
+## {{{
 def p_translation_unit(p):
     ''' translation_unit : 
                          | declaration_seq'''
@@ -87,6 +67,29 @@ def p_translation_unit(p):
     #declaration
     #declaration-seq declaration
     
+def NewScope():
+    global env 
+    env = Environment(env)
+
+def PopScope():
+    global env  
+    env = env.prev 
+
+def p_new_scope(p):
+    '''new_scope : '''
+    NewScope()
+
+def p_finish_scope(p):
+    '''finish_scope : '''
+    PopScope()
+
+def p_function_scope(t):
+    '''function_scope : '''
+    functionScope()
+
+def p_unset_function_scope(t):
+    '''unset_function_scope : '''
+    unsetFunctionScope()
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -96,10 +99,10 @@ def p_declaration_seq_2(p):
     ''' declaration_seq : declaration_seq declaration  '''
     pass
 
-
-
+## }}}
 #################### EXPRESSIONS ###################
 
+## {{{
 def p_literal_1(p):
     '''literal : INUMBER '''
     p[0]=Attribute()
@@ -196,11 +199,15 @@ def p_id_expression_1(p):
     #conversion-function-id
     #~ class-name
     #template-id
-def p_unqualified_id(p):
-    ''' unqualified_id : IDENTIFIER %prec RPAREN
-                    | operator_function_id 
-                    | conversion_function_id 
-                    | TILDE class_name '''
+def p_unqualified_id_1(p):
+    ''' unqualified_id : IDENTIFIER %prec RPAREN '''
+    pass
+def p_unqualified_id_2(p):
+    ''' unqualified_id : operator_function_id '''
+def p_unqualified_id_3(p):
+    ''' unqualified_id : conversion_function_id ''' 
+def p_unqualified_id_4(p):
+    ''' unqualified_id : TILDE class_name '''
     pass 
 
 #### TODO : To add production rule for templateopt as well when template is introduced. ###
@@ -349,7 +356,7 @@ def p_postfix_expression_6(p):
     pass 
 
 def p_postfix_expression_6(p):
-    ''' postfix_expression : postfix_expression DOT id_expression'''
+    ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
     pass
 
 ##def p_postfix_expression_5(p):
@@ -382,9 +389,11 @@ def p_expression_list_2(p):
         p[0].attr['parameterList'].append(deepcopy(p[3]))
         p[0].code=p[1].code+'\t'+  p[3].code                                                                                                   
 
-def p_expression_list_opt(p):
-    ''' expression_list_opt : 
-                    | expression_list '''
+def p_expression_list_opt_1(p):
+    ''' expression_list_opt : '''
+    pass 
+def p_expression_list_opt_2(p):
+    ''' expression_list_opt : expression_list '''
     pass 
 
 #pseudo-destructor-name:
@@ -409,7 +418,7 @@ def p_expression_list_opt(p):
     #new-expression
     #delete-expression
 def p_unary_expression(p):
-    ''' unary_expression : postfix_expression 
+    ''' unary_expression : postfix_expression %prec INUMBER
                     | PLUS_PLUS cast_expression 
                     | MINUS_MINUS cast_expression 
                     | unary_operator cast_expression 
@@ -883,11 +892,13 @@ def p_constant_expression_opt(p):
     ''' constant_expression_opt : 
                     | constant_expression '''
     pass 
+## }}}
 
 ####################################################
 
 #################### STATEMENTS ####################
 
+## {{{
 #statement:
     #labeled-statement
     #expression-statement
@@ -897,85 +908,223 @@ def p_constant_expression_opt(p):
     #jump-statement
     #declaration-statement
     #try-block
-def p_statement(p):
-    ''' statement : labeled_statement
-                | expression_statement
-                | compound_statement 
-                | selection_statement
-                | iteration_statement
-                | jump_statement
-                | declaration_statement '''
+def p_statement_1(p):
+    ''' statement : labeled_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_2(p):
+    ''' statement : expression_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_3(p):
+    ''' statement : compound_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_4(p):
+    ''' statement : selection_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_5(p):
+    ''' statement : iteration_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_6(p):
+    ''' statement : jump_statement '''
+    p[0] = deepcopy(p[1])
+    pass 
+def p_statement_7(p):
+    ''' statement : declaration_statement '''
+    p[0] = deepcopy(p[1])
     pass 
 
 #labeled-statement:
     #identifier : statement
     #case constant-expression : statement
     #default : statement
-def p_labeled_statement(p):
-    ''' labeled_statement : IDENTIFIER COLON statement 
-                | CASE constant_expression COLON statement 
-                | DEFAULT COLON statement ''' 
+def p_labeled_statement_1(p):
+    ''' labeled_statement : IDENTIFIER COLON statement ''' 
+    global env 
+    t = Symbol(p[1])
+    t.type = Type("LABEL")
+    if not env.put(t):
+        print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
+    p[0] = deepcopy(p[3])
+    pass 
+def p_labeled_statement_2(p):
+    ''' labeled_statement : CASE constant_expression COLON statement '''
+    p[0] = Attribute()
+    p[0].type = p[4].type 
+    pass 
+def p_labeled_statement_3(p):
+    ''' labeled_statement : DEFAULT COLON statement ''' 
+    p[0] = deepcopy(p[3])
     pass 
 
 #expression-statement:
     #expressionopt ;
-def p_expression_statement(p):
-    ''' expression_statement : SEMICOLON 
-                    | expression SEMICOLON '''
+def p_expression_statement_1(p):
+    ''' expression_statement : SEMICOLON ''' 
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
+    pass 
+def p_expression_statement_2(p):
+    ''' expression_statement : expression SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = p[1].type 
     pass 
 
 #compound-statement:
     #{ statement-seqopt }
-def p_compound_statement(p):
-    ''' compound_statement : LBRACE statement_seq RBRACE 
-                    | LBRACE RBRACE '''
+def p_compound_statement_1(p):
+    ''' compound_statement : LBRACE RBRACE '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
+    pass 
+def p_compound_statement_2(p):
+    ''' compound_statement : LBRACE statement_seq RBRACE '''
+    p[0] = Attribute()
+    p[0].type = p[1].type
     pass 
 
 #statement-seq:
     #statement
     #statement-seq statement
-def p_statement_seq(p):
-    ''' statement_seq : statement 
-                | statement_seq statement'''
+def p_statement_seq_1(p):
+    ''' statement_seq : statement ''' 
+    p[0] = Attribute()
+    p[0].type = p[1].type
+    pass 
+def p_statement_seq_2(p):
+    ''' statement_seq : statement_seq statement'''
+    p[0] = Attribute()
+    if p[1].type == Type("VOID") and p[2].type == Type("VOID"):
+        p[0].type = Type("VOID")
+    else :
+        p[0].type = Type("ERROR")
     pass 
 
 #selection-statement:
     #if ( condition ) statement
     #if ( condition ) statement else statement
     #switch ( condition ) statement
-def p_selection_statement(p):
-    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX
-                    | IF LPAREN condition RPAREN statement ELSE statement 
-                    | SWITCH LPAREN condition RPAREN statement '''
+def p_selection_statement_1(p):
+    ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_selection_statement_2(p):
+    ''' selection_statement : IF LPAREN condition RPAREN statement ELSE statement '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        if p[5].type == Type("VOID") and p[7].type == Type("VOID"):
+            p[0].type = Type("VOID")
+        else :
+            p[0].type = Type("ERROR")
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_selection_statement_3(p):
+    ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
     pass 
 
 #condition:
     #expression
     #type-specifier-seq declarator = assignment-expression
-def p_condition(p):
-    ''' condition : expression 
-                | type_specifier_seq declarator ASSIGN assignment_expression '''
+def p_condition_1(p):
+    ''' condition : expression ''' 
+    p[0] = Attribute()
+    if p[0].type != Type("ERROR"):
+        p[0].type = Type("BOOL")
+    else :
+        p[0].type = Type("ERROR")
+    pass 
+def p_condition_2(p):
+    ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
+    p[0] = Attribute()
+    ## Himanshu check here whether declarator = assignment_expression is a valid type . If yes the p[0].type = Type("BOOL") else p[0].type = Type("ERROR")
     pass 
 
 #iteration-statement:
     #while ( condition ) statement
     #do statement while ( expression ) ;
     #for ( for-init-statement conditionopt ; expressionopt ) statement
-def p_iteration_statement(p):
-    ''' iteration_statement : WHILE LPAREN condition RPAREN statement 
-                    | DO statement WHILE LPAREN condition RPAREN SEMICOLON 
-                    | FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement
-                    | FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement
-                    | FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement
-                    | FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+def p_iteration_statement_1(p):
+    ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
+    p[0] = Attribute()
+    if p[3].type == Type("BOOL"):
+        p[0].type = p[5].type 
+    else :
+        if p[3].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(3)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_iteration_statement_2(p):
+    ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
+    p[0] = Attribute()
+    if p[5].type == Type("BOOL"):
+        p[0].type = p[2].type 
+    else :
+        if p[5].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(5)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_iteration_statement_3(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
+    p[0] = Attribute()
+    if p[4].type == Type("BOOL"):
+        p[0].type = p[8].type 
+    else :
+        if p[4].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(4)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_iteration_statement_4(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
+    p[0] = Attribute()
+    if p[4].type == Type("BOOL"):
+        p[0].type = p[7].type 
+    else :
+        if p[4].type != Type("ERROR"):
+            print("Type error at" + str(p.lineno(4)))
+        p[0].type = Type("ERROR")
+    pass 
+def p_iteration_statement_5(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
+    p[0] = Attribute()
+    p[0].type = p[7].type 
+    pass 
+def p_iteration_statement_6(p):
+    ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+    p[0] = Attribute()
+    p[0].type = p[6].type 
     pass 
 
 #for-init-statement:
     #expression-statement
     #simple-declaration
-def p_for_init_statement(p):
-    ''' for_init_statement : expression_statement 
-                    | simple_declaration '''
+def p_for_init_statement_1(p):
+    ''' for_init_statement : expression_statement ''' 
+    p[0] = Attribute()
+    p[0].type = p[1].type 
+    pass 
+def p_for_init_statement_2(p):
+    ''' for_init_statement : simple_declaration '''
+    p[0] = Attribute()
+    p[0].type = p[1].type 
     pass 
 
 #jump-statement:
@@ -983,24 +1132,40 @@ def p_for_init_statement(p):
     #continue ;
     #return expressionopt ;
     #goto identifier ;
-def p_jump_statement(p):
-    ''' jump_statement : BREAK 
-                    | CONTINUE 
-                    | RETURN expression SEMICOLON 
-                    | RETURN SEMICOLON '''
+def p_jump_statement_1(p):
+    ''' jump_statement : BREAK ''' 
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
+    pass 
+def p_jump_statement_2(p):
+    ''' jump_statement : CONTINUE '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
+    pass 
+def p_jump_statement_3(p):
+    ''' jump_statement : RETURN expression SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = p[2].type 
+    pass 
+def p_jump_statement_4(p):
+    ''' jump_statement : RETURN SEMICOLON '''
+    p[0] = Attribute()
+    p[0].type = Type("VOID") 
     pass 
 
 #declaration-statement:
     #block-declaration
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
+    p[0] = deepcopy(p[1])
     pass
+## }}}
 
 ####################################################
 
-
 #################### DECLARATIONS ##################
 
+## {{{
 #declaration:
     #block-declaration
     #function-definition
@@ -1195,9 +1360,11 @@ def p_elaborated_type_specifier(p):
 #def p_linkage_specialization_2(p):
 #    ''' linkage_specialization : EXTERN LIT_STR declaration '''
 #    pass
+## }}}
   
 ##### DECLARATORS #####
 
+## {{{
 #init-declarator-list:
     #init-declarator
     #init-declarator-list , init-declarator
@@ -1418,25 +1585,31 @@ def p_initializer_list(p):
     ''' initializer_list : initializer_clause
                     | initializer_list COMMA initializer_clause ''' 
     pass 
-
+## }}}
 
 ##### CLASSES #####     
 
+## {{{
 #class-name:
     #identifier
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
+    p[0] = p[1] 
     pass
 
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
-    ''' class_specifier : class_head LBRACE member_specification RBRACE '''
+    ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass
 
 def p_class_specifier_2(p):
-    ''' class_specifier : class_head LBRACE RBRACE '''
+    ''' class_specifier : new_scope class_head LBRACE RBRACE finish_scope'''
+    p[0] = Attribute()
+    p[0].type = Type("VOID")
     pass
   
 #class-head:
@@ -1444,9 +1617,18 @@ def p_class_specifier_2(p):
     #class-key nested-name-specifier identifier base-clauseopt
     #class-key nested-name-specifier template template-id base-clauseopt
 def p_class_head(p):
-    ''' class_head : class_key base_clause_opt 
-                    | class_key IDENTIFIER base_clause_opt '''
-    pass
+    ''' class_head : class_key IDENTIFIER base_clause_opt '''
+    global env
+    cl = Symbol(p[2])
+    cl.type = p[1].type 
+    cl.attrs["inherits"] = p[3]
+    table = env.table
+    temp = SymbolTable()
+    for s in cl.attrs["inherits"]:
+        temp = temp.combine(s)
+    cl.attrs["scope"] = env.table 
+    env.prev.put(cl)
+    p[0] = cl 
 
 ##def p_class_head(p):
 ##    ''' class_head : class_key base_clause_opt 
@@ -1459,22 +1641,30 @@ def p_class_head(p):
     #struct
     #union
 
-def p_class_key(p):
-    ''' class_key : CLASS 
-                    | STRUCT '''
-    pass
+def p_class_key_1(p):
+    ''' class_key : CLASS '''
+    p[0] = Attribute()
+    p[0].type = Type("CLASS")
+    
+
+def p_class_key_2(p):
+    ''' class_key : STRUCT '''
+    p[0] = Attribute()
+    p[0].type = Type("STRUCT")
 
 def p_error(p):
     global success
     success = False
     print("Whoa. We're hosed")
-    print("Syntax error at token " + str(p.type) + " of value " + str(p.value) + " at line number " + str(p.lineno))
+    print("Syntax error at token " + str(p))
+    #print("Syntax error at token " + str() + " of value " + str(p.value) + " at line number " + str(p.lineno))
 
 #member-specification:
     #member-declaration member-specificationopt
     #access-specifier : member-specificationopt
 def p_member_specification_1(p):
     '''member_specification : member_declaration '''
+
     pass
   
 def p_member_specification_2(p):
@@ -1495,14 +1685,19 @@ def p_member_specification_4(p):
     #::opt nested-name-specifier templateopt unqualified-id ;
     #using-declaration
     #template-declaration
-def p_member_declaration(p):
-    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
-		    | decl_specifier_seq SEMICOLON
-                    | member_declarator_list SEMICOLON
-		    | SEMICOLON
-                    | function_definition SEMICOLON
-                    | function_definition '''
-    pass
+def p_member_declaration_1(p):
+    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON ''' 
+def p_member_declaration_2(p):
+    ''' member_declaration : decl_specifier_seq SEMICOLON '''
+def p_member_declaration_3(p):
+    ''' member_declaration : member_declarator_list SEMICOLON '''
+def p_member_declaration_4(p):
+    ''' member_declaration : SEMICOLON '''
+def p_member_declaration_5(p):
+    ''' member_declaration : function_definition SEMICOLON '''
+def p_member_declaration_6(p):
+    ''' member_declaration : function_definition '''
+
 
 ##def p_member_declaration(p):
 ##    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON 
@@ -1559,32 +1754,53 @@ def p_member_declarator_4(p):
 def p_constant_initializer(p):
     ''' constant_initializer : ASSIGN constant_expression '''
     pass 
+## }}}
 
 ######## DERIVED CLASSES ##############
 
+## {{{
 #base-clause:
     #: base-specifier-list
-def p_base_clause_opt(p):
-    ''' base_clause_opt : 
-                    | COLON base_specifier_list '''
-    pass 
+def p_base_clause_opt_1(p):
+    ''' base_clause_opt : '''
+    p[0] = []
+def p_base_clause_opt_2(p):
+    ''' base_clause_opt : COLON base_specifier_list '''
+    p[0] = p[2]
+
 
 #base-specifier-list:
     #base-specifier
     #base-specifier-list , base-specifier
-def p_base_specifier_list(p):
-    ''' base_specifier_list : base_specifier 
-                    | base_specifier_list COMMA base_specifier '''
+def p_base_specifier_list_1(p):
+    ''' base_specifier_list : base_specifier_list COMMA base_specifier '''
+    p[0] = p[1] + p[3]
+    pass 
+def p_base_specifier_list_2(p):
+    ''' base_specifier_list : base_specifier ''' 
+    p[0] = [p[1]]
     pass 
 
 #base-specifier:
     #::opt nested-name-specifieropt class-name
     #virtual access-specifieropt ::opt nested-name-specifieropt class-name
     #access-specifier virtualopt ::opt nested-name-specifieropt class-name
-def p_base_specifier(p):
-    ''' base_specifier : class_name 
-                    | access_specifier class_name '''
+def p_base_specifier_1(p):
+    ''' base_specifier : class_name '''
+    global env 
+    if env.get(p[2]):
+        p[0] = copy(env.get(p[1]).attrs['scope'])
+    else :
+        print("Identifier" + str(p[1]) + "not defined")
     pass 
+def p_base_specifier_2(p):
+    ''' base_specifier : access_specifier class_name '''
+    global env 
+    if env.get(p[2]):
+        p[0] = copy(env.get(p[2]).attrs['scope'])
+    else :
+        print("Identifier" + str(p[2]) + "not defined")
+    pass
 
 ##def p_base_specifier(p):
 ##    ''' base_specifier : SCOPE class_name 
@@ -1605,10 +1821,11 @@ def p_access_specifier(p):
                     | PRIVATE 
                     | PROTECTED ''' 
     pass 
-
+## }}}
 
 ############# SPECIAL MEMBER FUNCTIONS ################
 
+## {{{
 #conversion-function-id:
     #operator conversion-type-id
 def p_conversion_function_id(p):
@@ -1627,9 +1844,11 @@ def p_conversion_type_id_2(p):
 
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
-def p_conversion_declarator(p):
-    ''' conversion_declarator : ptr_operator %prec NOPAREN
-                              | ptr_operator conversion_declarator %prec LPAREN'''
+def p_conversion_declarator_1(p):
+    ''' conversion_declarator : ptr_operator %prec NOPAREN '''
+    pass 
+def p_conversion_declarator_2(p):
+    ''' conversion_declarator : ptr_operator conversion_declarator %prec LPAREN'''
     pass 
 
 #ctor-initializer:
@@ -1668,12 +1887,16 @@ def p_mem_initializer_id(p):
 ##                    | nested_name_specifier_opt class_name  
 ##                    | IDENTIFIER '''
 ##    pass 
+### }}}
 
 ######### OVERLOADING ###########
+
+## {{{
 #operator-function-id:
     #operator operator
 def p_operator_function_id(p) : 
     ''' operator_function_id : OPERATOR operator '''
+
     pass 
 
 def p_operator(p):
@@ -1708,29 +1931,26 @@ def p_operator(p):
                 | LPAREN RPAREN 
                 | LBRACKET RBRACKET  '''
     pass 
+### }}}
 
 ########### TEMPLATES ################
 
 ######################################
 
 ########### EXCEPTION HANDLING #######
-#try_block :
-    #try compound_statement handler_seq
-
-#exception_specification :
-    #throw ( type-id-listopt )
 
 ###################################### 
 
 ########### PREPROCESSING DIRECTIVES ###
 
 ########################################
+
 lex.lex()
 yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:

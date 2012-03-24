@@ -1,26 +1,5 @@
-//**************************************
-// Name: Code Example - function overloading / polymorphisim
-// Description:A concept we went over today in class.
-// By: Jared Bruni
-//
-//
-// Inputs:None
-//
-// Returns:None
-//
-//Assumes:None
-//
-//Side Effects:None
-//**************************************
-/* example of function overloading/polymorphisim
-written by Jared Bruni
-www.LostSideDead.com
-*/
-
-//void func1(char* str);
-//void func1(int val);
 float a;
-class hello {
+class hello() {
 }
 int main()
     {
