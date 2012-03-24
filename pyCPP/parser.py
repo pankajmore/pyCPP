@@ -260,7 +260,7 @@ def p_postfix_expression_2(p):
         print "Error in line %s : Cannot access index of non-array ",% p.lineno(2)
         p[0]=initAttribute(p[0])
     else: # for now only handling 1-d arrays
-        if p[0].type ==None or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or p[0].attr.has_key('is_function'):
+        if p[0].type ==None or p[0].type==Type('CLASS') or p[0].type==Type('STRUCT') or (p[0].attr.has_key('symbol') and p[0].attr['symobl'].attr.has_key('is_function')):
             print "Error in line %s : Unidentified type of array ",% p.lineno(2)
             p[0]=initAttribute(p[0])
         else:
@@ -271,6 +271,7 @@ def p_postfix_expression_2(p):
 		p[0].place=newTemp()
                 p[0].code+=p[1].code + "\t" + p[3].code + "\t" + p[0].place + " = " + p[1].place + "["+p[3].place+"]"+"\n"
 		p[0].type=p[1].type.link
+                p[0].attr={}
 
                 # Determine p[0].value
                 # p[0].value= p[1].value[p[3].value]
@@ -279,17 +280,14 @@ def p_postfix_expression_2(p):
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
     p[0]=deepcopy(p[1])
-    if not p[1].attr.has_key('is_function'):
-        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].attr['name'])
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
+        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==None:
-        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['name'])
+        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     else:
-        del p[0].attr['is_function']
-        del p[0].attr['numParameters']
-        if p[1].attr.has_key('is_function'):
-            del p[0].attr['parameterList']
+	p[0].attr={}
     pass
 
 #def p_postfix_expression_4(p):
@@ -301,31 +299,32 @@ def p_postfix_expression_4(p):
     #Default arguments not supported as of now
     #Implicit type conversion not supported as of now
     p[0]=deepcopy(p[1])
-    if not p[1].attr.has_key('is_function'):
-        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].id)
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
+        print "Error in line %s : Cannot use () on non-function %s ",% (p.lineno(2),p[1].attr['symbol'].name)
+        p[0]=initAttribute(p[0])
+    elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==None:
+        print "Error in line %s : Unidentified type of function %s",% (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=initAttribute(p[0])
     else:
-        del p[0].attr['is_function']
-        if p[1].attr['numParameters']!=p[3].attr['numParameters']:
-            print "Error in line %s : Function %s requires %s arguments, given %s arguments ",%( p.lineno(2), p[1].attr['name'],p[1].attr['numParameters'],p[3].attr['numParameters'])
+        if p[1].attr['symbol'].attr['numParameters']!=p[3].attr['numParameters']:
+            print "Error in line %s : Function %s requires %s arguments, given %s arguments ",%( p.lineno(2), p[1].attr['symbol'].name,p[1].attr['symbol'].attr['numParameters'],p[3].attr['numParameters'])
             p[0]=initAttribute(p[0])
         else:
             tmp=0
-            for i in range(p[0].attr['numParameters']):
-                if p[1].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
-                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s ",%( p.lineno(2), str(i+1), p[1].attr['name'], find_type(p[1].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i])
+            for i in range(p[1].attr['symbol'].attr['numParameters']):
+                if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
+                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s ",%( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i])
                     tmp=1
                 if tmp==1:
                     p[0]=initAttribute(p[0]) 
 	    if tmp==0:
-                del p[0].attr['numParameters']
-                del p[0].attr['parameterList']
+                p[0].attr={}
 
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
                     
     p[0]=deepcopy(p[1])
-    if (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')) and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"
     else:
@@ -336,7 +335,7 @@ def p_postfix_expression_5(p):
 def p_postfix_expression_6(p):
     ''' postfix_expression : postfix_expression MINUS_MINUS '''
     p[0]=deepcopy(p[1])
-    if (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')) and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
         p[0].place=newTemp()
 	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"
     else:
@@ -360,16 +359,23 @@ def p_postfix_expression_6(p):
     #expression-list , assignment-expression
 def p_expression_list_1(p):
     ''' expression_list : assignment_expression'''
-    p[0]=deepcopy(p[1])
-    p[0].attr['parameterList']=[deepcopy(p[1])]
-    p[0].attr['numParameters']=1
-    p[0].type='VOID'
+    if p[1].type==None:
+        p[0]=initAttribute(p[0])
+    else:
+	p[0]=deepcopy(p[1])
+	p[0].attr['parameterList']=[deepcopy(p[1])]
+	p[0].attr['numParameters']=1
+	p[0].type=Type('VOID')
 
 def p_expression_list_2(p):
     ''' expression_list : expression_list COMMA assignment_expression '''
-    p[0]=deepcopy(p[1])
-    p[0].attr['numParameters']+=1
-    p[0].attr['parameterList'].append(deepcopy(p[3]))
+    if p[1].type==None or p[3].type==None:
+        p[0]=initAttribute(p[0])
+    else:                                                                                                     
+        p[0]=deepcopy(p[1])
+        p[0].attr['numParameters']+=1
+        p[0].attr['parameterList'].append(deepcopy(p[3]))
+        p[0].code=p[1].code+'\t'+  p[3].code                                                                                                   
 
 def p_expression_list_opt(p):
     ''' expression_list_opt : 
@@ -416,9 +422,9 @@ ef p_unary_expression_1(p):
 def p_unary_expression_2(p):
     ''' unary_expression : PLUS_PLUS cast_expression'''
     p[0]=deepcopy(p[1])
-    if (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function') and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
         p[0].place=newTemp()
-	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"
+	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
     else:
         print 'Error in line %s : PreIncrement ++ operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
@@ -428,9 +434,9 @@ def p_unary_expression_2(p):
 def p_unary_expression_3(p):
     ''' unary_expression : MINUS_MINUS cast_expression '''
     p[0]=deepcopy(p[1])
-    if (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function') and (p[0].type.link=='FLOAT' or p[0].type.link=='INT' or isinstance(p[0].type,Type)):
         p[0].place=newTemp()
-	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"
+	p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1" + "\n"
     else:
         print 'Error in line %s : PreIncrement -- operator can not be applied to %s',% (p.lineno(2),find_type(p[1]))
         p[0]=initAttribute(p[0])
@@ -441,37 +447,36 @@ def p_unary_expression_4(p):
     global Sizes
     p[0]=deepcopy(p[2])
     if p[1]=='+':
-        if p[2].type.link=='FLOAT' or p[2].type.link=='INT':
+        if is_primitive(p[2]) and (p[2].type.link=='FLOAT' or p[2].type.link=='INT' ):
             pass
         else:
             p[0]=initAttribute(p[0])
             print 'Error in line %s : Unary + operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
 
     if p[1]=='-':
-        if p[2].type.link=='FLOAT' or p[2].type.link=='INT':
+        if is_primitive(p[2]) and (p[2].type.link=='FLOAT' or p[2].type.link=='INT'):
             p[0].place=newTemp()
-	    p[0].code = p[2].code+ "\t"+ p[0].place + "="+"0" + "-" +  p[2].place +"\n"
+	    p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "-" +  p[2].place +"\n"
         else:
             p[0]=initAttribute(p[0])
             print 'Error in line %s : Unary - operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
 
     if p[1]=='!':
-        if p[2].type.link=='BOOL':
-            #generate intermediate code
-	    pass
-            
+        if p[2].type.link=='BOOL' and is_primitive(p[2]):
+            p[0].place=newTemp()
+	    p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "not" +  p[2].place +"\n"
         else:
             p[0]=initAttribute(p[0])
             print 'Error in line %s : Unary ! operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
     if p[1]=='*':
-        if isinstance(p[2].type,Type) :
+        if isinstance(p[2].type,Type):
             p[0].type=p[2].type.link
             #find value of *p[2].value and store in p[0]
         else:
             p[0]=initAttribute(p[0])
             print 'Error in line %s : Unary * operator can not be applied to %s',% (p.lineno(1),find_type(p[2]))
     if p[1]=='&':
-        if p[2].type.link in ['FLOAT','INT','BOOL','CHAR']:
+        if p[2].type.link in ['FLOAT','INT','BOOL','CHAR'] and is_primitive(p[1]):
             p[0].type=Type(p[2].type)
             #find value of &p[2].value and store in p[0]
         else:
@@ -485,14 +490,11 @@ def p_unary_expression_5(p):
     ''' unary_expression : SIZEOF unary_expression '''
     p[0]=Attribute()
     p[0].type='INT'
-    p[0].value=p[2].width
 
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
     p[0]=Attribute()
     p[0].type='INT'
-    p[0].value=p[3].width
-
 
 #Will see whether to include the below  two productions in the grammer or not
 def p_unary_expression_7(p):
