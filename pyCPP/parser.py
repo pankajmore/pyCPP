@@ -2298,7 +2298,7 @@ def p_base_specifier_2(p):
     #private
     #protected
     #public
-def p_access_specifier(p):
+def p_access_specifier_1(p):
     ''' access_specifier : PUBLIC 
                     | PRIVATE 
                     | PROTECTED ''' 
