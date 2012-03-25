@@ -1333,10 +1333,12 @@ def p_declaration_statement(p):
 
 def p_declaration_1(p):
     ''' declaration : block_declaration '''
+    p[0] = deepcopy(p[1])
     pass
   
 def p_declaration_2(p):
     ''' declaration : function_definition '''
+    p[0]= deepcopy(p[1])
     pass
 
 
@@ -1354,16 +1356,34 @@ def p_declaration_2(p):
 
 def p_block_declaration(p):
     ''' block_declaration : simple_declaration '''
+    p[0] = deepcopy(p[1])
     pass
   
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
-def p_simple_declaration(p):
-    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON
-                           | IDENTIFIER init_declarator_list SEMICOLON
-                           | decl_specifier_seq SEMICOLON '''
+def p_simple_declaration_1(p):
+    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr = deepcopy(p[2].attr)
+    pass
+
+def p_simple_declaration_2(p):
+    ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr = deepcopy(p[2].attr)
+    pass
+
+def p_simple_declaration_3(p):
+    ''' simple_declaration : decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
     pass
 
 #decl-specifier-seq:
