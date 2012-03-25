@@ -1840,9 +1840,16 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
-    p[0] = p[1] 
-    pass
-
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = Symbol(str(p[1]))
+    if not env.put(t) :
+        print("ERROR : Identifier " + str(p[1])+"is already defined at line number " + str(p.lineno(1)))
+        p[0].type = Type("ERROR")
+    p[0].attr["symbol"] = t
+    
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
