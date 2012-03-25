@@ -1368,7 +1368,8 @@ def p_simple_declaration_1(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
-    p[0].attr = deepcopy(p[2].attr)
+    #p[0].attr = deepcopy(p[2].attr)
+    p[0].attr["declaration"] = 1
     pass
 
 def p_simple_declaration_2(p):
@@ -1376,7 +1377,8 @@ def p_simple_declaration_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
-    p[0].attr = deepcopy(p[2].attr)
+    #p[0].attr = deepcopy(p[2].attr)
+    p[0].attr["declaration"] = 1
     pass
 
 def p_simple_declaration_3(p):
@@ -1385,6 +1387,7 @@ def p_simple_declaration_3(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
+    p[0].attr["declaration"] = 1
     pass
 
 #decl-specifier-seq:
@@ -1464,10 +1467,15 @@ def p_function_specifier(p):
     #elaborated-type-specifier
     #cv-qualifier
 
-def p_type_specifier(p):
-    ''' type_specifier : simple_type_specifier 
-                        | class_specifier '''
+def p_type_specifier_1(p):
+    ''' type_specifier : simple_type_specifier '''
+    p[0] = deepcopy(p[1])
+    pass
+
+def p_type_specifier_2(p):
+    ''' type_specifier : class_specifier '''
                         #| elaborated_type_specifier '''
+    p[0] = deepcopy(p[1])
     pass 
 ## HELPER 
 
@@ -1507,26 +1515,44 @@ def p_type_specifier(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("BOOL")
     pass 
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("CHAR")
     pass
 
 def p_simple_type_specifier_4(p):
     ''' simple_type_specifier : INT '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INT")
     pass
 
 def p_simple_type_specifier_5(p):
     ''' simple_type_specifier : FLOAT '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("FLOAT")
     pass
 
 def p_simple_type_specifier_6(p):
     ''' simple_type_specifier : DOUBLE '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("DOUBLE")
     pass
 
 def p_simple_type_specifier_7(p):
     ''' simple_type_specifier : VOID '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
     pass 
 
 #type-name:
@@ -1534,8 +1560,9 @@ def p_simple_type_specifier_7(p):
     #enum-name    
     #typedef-name
 
-def p_type_name(p):
+def p_type_name_1(p):
     ''' type_name : class_name ''' 
+    p[0] = deepcopy(p[1])
     pass 
 
 #elaborated-type-specifier:
@@ -1545,6 +1572,10 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key IDENTIFIER'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    
     pass
 
 
