@@ -265,7 +265,7 @@ def p_unqualified_id_1(p):
     ''' unqualified_id : IDENTIFIER %prec RPAREN '''
     global env
     p[0] = Attribute()
-    p[0] = initAttr()
+    p[0] = initAttr(p[0])
     t = env.get(str(p[1]))
     if t==None:
         t = Symbol(str(p[1]))
@@ -1675,7 +1675,7 @@ def p_init_declarator_list_2(p):
     ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
     p[0] = deepcopy(p[1])
     for key in p[3].attr["init_declarator_list"]:
-        p[0].attr["init_declarator_list"][key] = p[3].attr["init_declarator_list"][key]
+        p[0].attr["init_declarator_list"].append(key)
     if p[3].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
@@ -1757,14 +1757,14 @@ def p_ptr_operator_1(p):
     p[0] = '*'
 
 def p_ptr_operator_2(p):
-    ''' ptr_operator : xAMPERSAND '''
+    ''' ptr_operator : AMPERSAND '''
     p[0] = '&'
 
 #cv-qualifier-seq:
     #cv-qualifier cv-qualifier-seqopt
 def p_cv_qualifier_seq_opt(p):
     ''' cv_qualifier_seq_opt : '''
-    pass 
+    p[0] = None
 
 #cv-qualifier:
     #const
@@ -1801,38 +1801,63 @@ def p_type_id(p):
 
 #type-specifier-seq:
     #type-specifier type-specifier-seqopt
-def p_type_specifier_seq(p):
-    ''' type_specifier_seq : type_specifier 
-                    | type_specifier type_specifier_seq '''
-    pass 
+def p_type_specifier_seq_1(p):
+    ''' type_specifier_seq : type_specifier '''
+    p[0] = deepcopy(p[1])
+
+def p_type_specifier_seq_2(p):
+    ''' type_specifier_seq : type_specifier type_specifier_seq '''
+    p[0] = deepcopy(p[1])
+    p[0].type= Type(p[2].type)
+    if p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 #abstract-declarator:
     #ptr-operator abstract-declaratoropt
     #direct-abstract-declarator
-def p_abstract_declarator(p):
-    ''' abstract_declarator : ptr_operator abstract_declarator_opt
-                    | direct_abstract_declarator '''
+def p_abstract_declarator_1(p):
+    ''' abstract_declarator : ptr_operator abstract_declarator_opt '''
     pass
 
-def p_abstract_declarator_opt(p):
-    ''' abstract_declarator_opt :
-                    | abstract_declarator '''
+def p_abstract_declarator_2(p):
+    ''' abstract_declarator : direct_abstract_declarator '''
+    pass
+
+def p_abstract_declarator_opt_1(p):
+    ''' abstract_declarator_opt : '''
+    p[0] = None
+    
+def p_abstract_declarator_opt_2(p):
+    ''' abstract_declarator_opt : abstract_declarator '''
     pass
 
 #direct-abstract-declarator:
     #direct-abstract-declaratoropt ( parameter-declaration-clause ) cv-qualifier-seqopt exception-specificationopt
     #direct-abstract-declaratoropt [ constant-expressionopt ]
     #( abstract-declarator )
-def p_direct_abstract_declarator(p):
-    ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt 
-                    | direct_abstract_declarator_opt LBRACKET constant_expression_opt RBRACKET 
-                    | LPAREN abstract_declarator RPAREN '''
+def p_direct_abstract_declarator_1(p):
+    ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    pass
+
+def p_direct_abstract_declarator_2(p):
+    ''' direct_abstract_declarator : LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    pass
+
+def p_direct_abstract_declarator_3(p):
+    ''' direct_abstract_declarator : direct_abstract_declarator_opt LBRACKET constant_expression_opt RBRACKET '''
+    pass
+
+def p_direct_abstract_declarator_4(p):
+    ''' direct_abstract_declarator : LPAREN abstract_declarator RPAREN '''
     pass 
 
-def p_direct_abstract_declarator_opt(p):
-    ''' direct_abstract_declarator_opt :
-                    | direct_abstract_declarator '''
-    pass 
+def p_direct_abstract_declarator_opt_1(p):
+    ''' direct_abstract_declarator_opt : '''
+    p[0] = None
+    
+def p_direct_abstract_declarator_opt_2(p):
+    ''' direct_abstract_declarator_opt : direct_abstract_declarator '''
+    p[0] = deepcopy(p[1]) 
 
 #parameter-declaration-clause:
     #parameter-declaration-listopt ...opt
@@ -1928,29 +1953,44 @@ def p_function_body(p):
     #= initializer-clause
     #( expression-list )
 
-def p_initializer_opt(p):
-    ''' initializer_opt : 
-                    | ASSIGN initializer_clause
-                    | LPAREN expression_list RPAREN ''' 
+def p_initializer_opt_1(p):
+    ''' initializer_opt : '''
+    p[0] = None
+    
+def p_initializer_opt_2(p):
+    ''' initializer_opt : ASSIGN initializer_clause '''
+    pass
+
+def p_initializer_opt_3(p):
+    ''' initializer_opt : LPAREN expression_list RPAREN ''' 
     pass
 
 #initializer-clause:
     #assignment-expression
     #{ initializer-list ,opt }
     #{ }
-def p_initializer_clause(p):
-    ''' initializer_clause : assignment_expression 
-                    | LBRACE initializer_list RBRACE 
-                    | LBRACE RBRACE '''
+def p_initializer_clause_1(p):
+    ''' initializer_clause : assignment_expression '''
+    pass
+
+def p_initializer_clause_2(p):
+    ''' initializer_clause : LBRACE initializer_list RBRACE '''
+    pass
+
+def p_initializer_clause_3(p):
+    ''' initializer_clause : LBRACE RBRACE '''
     pass 
 
 #initializer-list:
     #initializer-clause
     #initializer-list , initializer-clause
-def p_initializer_list(p):
-    ''' initializer_list : initializer_clause
-                    | initializer_list COMMA initializer_clause ''' 
-    pass 
+def p_initializer_list_1(p):
+    ''' initializer_list : initializer_clause '''
+    p[0] = deepcopy(p[1])
+    
+def p_initializer_list_2(p):
+    ''' initializer_list : initializer_list COMMA initializer_clause ''' 
+    p[0] = deepcopy(p[1])
 ## }}}
 
 ##### CLASSES #####     
