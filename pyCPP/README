@@ -4,3 +4,8 @@
 OLD =>        hello();
     will by default have void type but to remove ambiguity we only allow functions with explicit return type 
 NEW =>        void hello()
+
+* write now we can't have multiple declaration specifier
+    eg.
+        const long int a;
+        we can't have declaration like this

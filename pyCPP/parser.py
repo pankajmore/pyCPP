@@ -8,6 +8,7 @@ success = True
 class Type(object):
     def __init__(self,next):
         self.next = next
+        self.name = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -1389,10 +1390,17 @@ def p_simple_declaration_3(p):
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
-def p_decl_specifier_seq(p):
-    ''' decl_specifier_seq : decl_specifier 
-                        | decl_specifier_seq decl_specifier '''
+def p_decl_specifier_seq_1(p):
+    ''' decl_specifier_seq : decl_specifier '''
+    p[0] = deepcopy(p[1])
     pass
+
+#def p_decl_specifier_seq_2(p):
+#    ''' decl_specifier_seq : decl_specifier_seq decl_specifier '''
+#    p[0] = Attribute()
+#    p[0] = initAttr(p[0])
+#    p[0].type = 
+#    pass
 
 #decl-specifier:
     #storage-class-specifier
@@ -1401,10 +1409,19 @@ def p_decl_specifier_seq(p):
     #friend
     #typedef
 
-def p_decl_specifier(p):
-    ''' decl_specifier : storage_class_specifier 
-                        | type_specifier 
-                        | function_specifier '''
+def p_decl_specifier_1(p):
+    ''' decl_specifier : storage_class_specifier '''
+    p[0] = deepcopy(p[1])
+    pass
+
+def p_decl_specifier_2(p):
+    ''' decl_specifier : type_specifier '''
+    p[0] = deepcopy(p[1])
+    pass
+
+def p_decl_specifier_3(p):
+    ''' decl_specifier : function_specifier '''
+    p[0] = deepcopy(p[1])
     pass
 
 #storage-class-specifier:
@@ -1414,9 +1431,19 @@ def p_decl_specifier(p):
     #extern
     #mutable
 
-def p_storage_class_specifier(p):
+def p_storage_class_specifier_1(p):
     ''' storage_class_specifier : AUTO'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("AUTO")
     pass 
+
+def p_storage_class_specifier_2(p):
+    ''' storage_class_specifier : EXTERN '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("EXTERN")
+    pass
 
 #function-specifier:
     #inline
@@ -1425,6 +1452,9 @@ def p_storage_class_specifier(p):
 
 def p_function_specifier(p):
     ''' function_specifier : INLINE '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INLINE")
     pass 
 
 #type-specifier:
