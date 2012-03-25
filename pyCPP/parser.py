@@ -2,12 +2,13 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
-
+num_temporaries=0
 ## {{{
 success = True
 class Type(object):
     def __init__(self,next):
         self.next = next
+        self.name = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -37,6 +38,7 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=None
+        self.error = False
 
 def initAttr(a):
     a.type=None 
@@ -45,6 +47,7 @@ def initAttr(a):
     a.offset= 0
     a.code=''
     a.place=None
+    a.error = False
     return a
 
 def errorAttr(a):
@@ -56,6 +59,35 @@ def errorAttr(a):
     a.place=None
     return a
 
+def newTemp():
+      global num_temporaries
+      #Returns a new temporary named _T<num>
+      temp = "_T00"
+      temp1 = "_T"
+      temp2 = str(num_temporaries / 10)
+      temp3 = str(num_temporaries % 10)
+      temp = temp1 + temp2 + temp3
+      num_temporaries = num_temporaries + 1
+      return temp
+
+def find_recursively(p):
+    if isinstance(p,Type)
+        return find_recursively(p.link)
+    else:
+        return p
+
+def find_type_recursively(p):
+    if isinstance(p,Type):
+        return '*' + find_type_recursively(p.link)
+    else:
+        return p
+    
+def find_type(p):
+    if p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function'):
+        return 'FUNCTION ' + p.attr['symbol'].name+' -> ' + find_type_recursively(p.type.link)
+    else:
+        return find_type_recursively(p.type.link)
+        
 def is_primitive(p):
     if not (p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function')):
         return True
@@ -423,10 +455,11 @@ def p_expression_list_2(p):
 
 def p_expression_list_opt_1(p):
     ''' expression_list_opt : '''
-    pass 
+    p[0]=None
+
 def p_expression_list_opt_2(p):
     ''' expression_list_opt : expression_list '''
-    pass 
+    p[0]=deepcopy(p[1])
 
 #pseudo-destructor-name:
     #::opt nested-name-specifieropt type-name :: ~ type-name
@@ -486,7 +519,6 @@ def p_unary_expression_3(p):
 
 def p_unary_expression_4(p):
     ''' unary_expression : unary_operator cast_expression '''
-    global Sizes
     p[0]=deepcopy(p[2])
     if p[1]=='+':
         if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT') ):
@@ -533,15 +565,29 @@ def p_unary_expression_4(p):
         pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
     
 #Will need to rewrite SIZEOF functions
+  
 def p_unary_expression_5(p):
     ''' unary_expression : SIZEOF unary_expression '''
     p[0]=Attribute()
-    p[0].type='INT'
+    typ=find_recursively(p[2].type)    
+    if is_primitive(p[2]) and typ in ['INT','FLOAT','CHAR','BOOL']:
+        p[0].type='INT'
+    else:
+        p[0]=errorAttr(p[0])
+        if p[2].type !== Type('ERROR'):
+            print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[2]))
 
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
     p[0]=Attribute()
-    p[0].type='INT'
+    typ=find_recursively(p[3].type)    
+    if is_primitive(p[3]) and typ in ['INT','FLOAT','CHAR','BOOL']:
+        p[0].type='INT'
+    else:
+        p[0]=errorAttr(p[0])
+        if p[3].type !== Type('ERROR'):
+            print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[3]))
+
 
 #Will see whether to include the below  two productions in the grammer or not
 def p_unary_expression_7(p):
@@ -674,18 +720,15 @@ def p_cast_expression_2(p):
         if p[2].type== Type('FLOAT') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]) :
             p[0].type='FLOAT'
         elif p[2].type == Type('INT') and p[4].type==Type('FLOAT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='INT'
+            p[0].type='INT'
         elif p[2].type == Type('INT') and p[4].type==Type('CHAR') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='INT'
+            p[0].type='INT'
         elif p[2].type == Type('CHAR') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='CHAR'                
+            p[0].type='CHAR'                
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
                 print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
-            
-        
-    pass 
 
 
 #multiplicative-expression:
@@ -979,7 +1022,7 @@ def p_assignment_expression_2(p):
         if p[2]=='=':
             if find_type(p[1])!=find_type(p[3]):
                 p[0]=errorAttr(p[0])
-                p[1].type=Type(Type('ERROR'))
+                p[1].type=Type('ERROR')
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
         else:
             if p[2]=='*=':
@@ -987,7 +1030,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='/=':
@@ -995,7 +1038,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='+=':
@@ -1005,7 +1048,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
 
             if p[2]=='-=':
@@ -1015,7 +1058,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))  
                                                                        
 #assignment-operator: one of
@@ -1033,21 +1076,32 @@ def p_assignment_operator(p):
 #expression:
     #assignment-expression
     #expression , assignment-expression
-def p_expression(p):
-    ''' expression : assignment_expression 
-                    | expression COMMA assignment_expression '''
-    pass 
+
+def p_expression_1(p):
+    ''' expression : assignment_expression '''                
+    p[0]=deepcopy(p[1])
+
+def p_expression_2(p):
+    ''' expression : expression COMMA assignment_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type==Type('ERROR') or p[2].type==Type('ERROR'):
+        p[0].type=Type('ERROR')
+    else:
+        p[0].type=Type('VOID')
 
 #constant-expression:
     #conditional-expression
 def p_constant_expression(p):
     ''' constant_expression : conditional_expression ''' 
-    pass 
+    p[0]=deepcopy(p[1])
 
-def p_constant_expression_opt(p):
-    ''' constant_expression_opt : 
-                    | constant_expression '''
-    pass 
+def p_constant_expression_opt_1(p):
+    ''' constant_expression_opt : '''
+    p[0]=None
+
+def p_constant_expression_opt_1(p):
+    ''' constant_expression_opt : constant_expression '''
+    p[0]=deepcopy(p[1])    
 ## }}}
 
 ####################################################
@@ -1227,7 +1281,7 @@ def p_iteration_statement_1(p):
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
-    pass 
+
 def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
     p[0] = Attribute()
@@ -1333,12 +1387,12 @@ def p_declaration_statement(p):
 
 def p_declaration_1(p):
     ''' declaration : block_declaration '''
-    pass
-  
+    p[0] = deepcopy(p[1])
+      
 def p_declaration_2(p):
     ''' declaration : function_definition '''
-    pass
-
+    p[0]= deepcopy(p[1])
+    
 
 ### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
@@ -1352,27 +1406,61 @@ def p_declaration_2(p):
     #using-declaration
     #using-directive
 
-def p_block_declaration(p):
+def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
-    pass
-  
+    p[0] = deepcopy(p[1])
+    
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
-def p_simple_declaration(p):
-    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON
-                           | IDENTIFIER init_declarator_list SEMICOLON
-                           | decl_specifier_seq SEMICOLON '''
+def p_simple_declaration_1(p):
+    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    p[0].attr["declaration"] = 1
+    if p[1].type == Type("ERROR") or p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
+def p_simple_declaration_2(p):
+    ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    t = env.get(str(p[1])
+    if t == None :
+        print("Error : decl_specifier " + str(p[1]) + "is not defined.")
+        p[0].type = Type("ERROR")
+    p[0].type = t.type
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    p[0].attr["declaration"] = 1
+    if p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
+def p_simple_declaration_3(p):
+    ''' simple_declaration : decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
-    pass
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr["declaration"] = 1
+    if p[1].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
-def p_decl_specifier_seq(p):
-    ''' decl_specifier_seq : decl_specifier 
-                        | decl_specifier_seq decl_specifier '''
-    pass
+def p_decl_specifier_seq_1(p):
+    ''' decl_specifier_seq : decl_specifier '''
+    p[0] = deepcopy(p[1])
+    
+#def p_decl_specifier_seq_2(p):
+#    ''' decl_specifier_seq : decl_specifier_seq decl_specifier '''
+#    p[0] = Attribute()
+#    p[0] = initAttr(p[0])
+#    p[0].type = 
+#    pass
 
 #decl-specifier:
     #storage-class-specifier
@@ -1381,12 +1469,18 @@ def p_decl_specifier_seq(p):
     #friend
     #typedef
 
-def p_decl_specifier(p):
-    ''' decl_specifier : storage_class_specifier 
-                        | type_specifier 
-                        | function_specifier '''
-    pass
-
+def p_decl_specifier_1(p):
+    ''' decl_specifier : storage_class_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_decl_specifier_2(p):
+    ''' decl_specifier : type_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_decl_specifier_3(p):
+    ''' decl_specifier : function_specifier '''
+    p[0] = deepcopy(p[1])
+    
 #storage-class-specifier:
     #auto
     #register
@@ -1394,10 +1488,18 @@ def p_decl_specifier(p):
     #extern
     #mutable
 
-def p_storage_class_specifier(p):
+def p_storage_class_specifier_1(p):
     ''' storage_class_specifier : AUTO'''
-    pass 
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("AUTO")
+    
+def p_storage_class_specifier_2(p):
+    ''' storage_class_specifier : EXTERN '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("EXTERN")
+    
 #function-specifier:
     #inline
     #virtual
@@ -1405,8 +1507,10 @@ def p_storage_class_specifier(p):
 
 def p_function_specifier(p):
     ''' function_specifier : INLINE '''
-    pass 
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INLINE")
+    
 #type-specifier:
     #simple-type-specifier
     #class-specifier
@@ -1414,11 +1518,15 @@ def p_function_specifier(p):
     #elaborated-type-specifier
     #cv-qualifier
 
-def p_type_specifier(p):
-    ''' type_specifier : simple_type_specifier 
-                        | class_specifier '''
+def p_type_specifier_1(p):
+    ''' type_specifier : simple_type_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_type_specifier_2(p):
+    ''' type_specifier : class_specifier '''
                         #| elaborated_type_specifier '''
-    pass 
+    p[0] = deepcopy(p[1])
+ 
 ## HELPER 
 
 #def p_double_colon_opt(p):
@@ -1457,36 +1565,48 @@ def p_type_specifier(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
-    pass 
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("BOOL")
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("CHAR")
 
 def p_simple_type_specifier_4(p):
     ''' simple_type_specifier : INT '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INT")
 
 def p_simple_type_specifier_5(p):
     ''' simple_type_specifier : FLOAT '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("FLOAT")
 
 def p_simple_type_specifier_6(p):
     ''' simple_type_specifier : DOUBLE '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("DOUBLE")
 
 def p_simple_type_specifier_7(p):
     ''' simple_type_specifier : VOID '''
-    pass 
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
 
 #type-name:
     #class-name
     #enum-name    
     #typedef-name
 
-def p_type_name(p):
+def p_type_name_1(p):
     ''' type_name : class_name ''' 
-    pass 
+    p[0] = deepcopy(p[1])
 
 #elaborated-type-specifier:
     #class-key ::opt nested-name-specifieropt identifier
@@ -1495,7 +1615,18 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key IDENTIFIER'''
-    pass
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    t = Symbol(str(p[2]))
+    t.type = p[1].type
+    t.attr["class_id"] = 1
+    if not env.put(t) :
+        print("Error : Identifier " + str(p[2]) + "already defined" + " line no  " + str(p.lineno(2)))
+        p[0].type = Type("ERROR")
+    p[0].attr["symbol"] = t
+    
 
 
 ##def p_elaborated_type_specifier(p):
@@ -1524,15 +1655,24 @@ def p_elaborated_type_specifier(p):
 #init-declarator-list:
     #init-declarator
     #init-declarator-list , init-declarator
-def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator
-                            | init_declarator_list COMMA init_declarator '''
-    pass 
+def p_init_declarator_list_1(p):
+    ''' init_declarator_list : init_declarator '''
+    p[0] = deepcopy(p[1])
+    
+def p_init_declarator_list_2(p):
+    ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
+    p[0] = deepcopy(p[1])
+    for key in p[3].attr["init_declarator_list"]:
+        p[0].attr["init_declarator_list"][key] = p[3].attr["init_declarator_list"][key]
+    if p[3].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
     pass 
 
 #declarator:
@@ -1754,7 +1894,7 @@ def p_class_name(p):
     p[0] = Attribute()
     global env 
     val = env.get(p[1])
-    p[0].value = val 
+    p[0].attr["symbol"] = val 
     if val is not None:
         if val.type == Type("CLASS") :
             p[0].type = Type("CLASS")
@@ -1764,7 +1904,7 @@ def p_class_name(p):
     else : 
         print ("Error : Line no " +str(p.lineno(1))+ str(p[1]) + " not defined ")
         p[0].type = Type("ERROR")
-
+    
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
