@@ -267,15 +267,16 @@ def p_unqualified_id_1(p):
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    t = env.get(str(p[1]))
-    if t==None:
-        t = Symbol(str(p[1]))
-        if not env.put(t):
-            print("Error : Identifier "+str(p[1])+"already defined. Line number "+str(p.lineno(1)))
-            p[0].type = Type("ERROR")
-    else :
-        p[0].type = t.type
-    p[0].attr["symbol"] = t
+    #t = env.get(str(p[1]))
+    #if t==None:
+        #t = Symbol(str(p[1]))
+        #if not env.put(t):
+        #    print("Error : Identifier "+str(p[1])+"already defined. Line number #"+str(p.lineno(1)))
+        #    p[0].type = Type("ERROR")
+    #else :
+        #p[0].type = t.type
+    #p[0].attr["symbol"] = t
+    p[0].name = str(p[1])
     
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
@@ -1428,13 +1429,34 @@ def p_block_declaration_1(p):
 
 def p_simple_declaration_1(p):
     ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON '''
+    global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    if p[1].type == Type("ERROR") or p[2].type == Type("ERROR") :
+    if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
+    elif p[0].type != Type("ERROR") :
+        for t in p[0].attr["init_declarator_list"] :
+            t1 = Symbol(t.name)
+            t1.type = p[0].type
+            if t.isfunction == 1:
+                t1.attr["isfunction"] = 1
+                t1.isfunction = 1
+                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
+            elif t.isArray == 1:
+                t1.attr["isArray"]=1
+                t1.isArray = 1
+                t1.attr["width"] = t.attr["width"]
+            if t.attr["initialized"] == 1:
+                t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
+                t1.attr["initialized"] =1
+            if t.type != Type("ERROR"):
+                if not env.put(t1):
+                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
+                    t.type = Type("ERROR")
+            
     
 def p_simple_declaration_2(p):
     ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
@@ -1448,9 +1470,28 @@ def p_simple_declaration_2(p):
     p[0].type = t.type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    if p[2].type == Type("ERROR") :
-        p[0].type = Type("ERROR")
-    
+    #if p[1].type == Type("ERROR") :
+    #    p[0].type = Type("ERROR")
+    if p[0].type != Type("ERROR") :
+        for t in p[0].attr["init_declarator_list"] :
+            t1 = Symbol(t.name)
+            t1.type = p[0].type
+            if t.isfunction == 1:
+                t1.attr["isfunction"] = 1
+                t1.isfunction = 1
+                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
+            elif t.isArray == 1:
+                t1.attr["isArray"]=1
+                t1.isArray = 1
+                t1.attr["width"] = t.attr["width"]
+            if t.attr["initialized"] == 1:
+                t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
+                t1.attr["initialized"] =1
+            if t.type != Type("ERROR"):
+                if not env.put(t1):
+                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
+                    t.type = Type("ERROR")
+                    
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
@@ -1670,23 +1711,41 @@ def p_elaborated_type_specifier(p):
     #init-declarator-list , init-declarator
 def p_init_declarator_list_1(p):
     ''' init_declarator_list : init_declarator '''
-    p[0] = deepcopy(p[1])
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr["init_declarator_list"] = [deepcopy(p[1])]
     
 def p_init_declarator_list_2(p):
     ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
     p[0] = deepcopy(p[1])
-    for key in p[3].attr["init_declarator_list"]:
-        p[0].attr["init_declarator_list"].append(key)
-    if p[3].type == Type("ERROR"):
-        p[0].type = Type("ERROR")
+    #for key in p[3].attr["init_declarator_list"]:
+     #   p[0].attr["init_declarator_list"].append(deepcopy(key))
+    p[0].attr["init_declarator_list"].append(deepcopy(p[3]))
+    #if p[3].type == Type("ERROR"):
+    #    p[0].type = Type("ERROR")
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
-    p[0] = Attribute()
-    p[0] = initAttr(p[0])
-    pass 
+    #p[0] = Attribute()
+    #p[0] = initAttr(p[0])
+    p[0] = deepcopy(p[1])
+    if p[2] == None:
+        p[0].attr["initialized"] = 0
+    elif p[2] == "LPAREN":
+        print "Feature not supported at present."
+        p[0].type == Type("ERROR")
+    elif p[2].type == Type("ASSIGN"):
+        if p[1].isfunction == 1 :
+            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
+            p[0].type = Type("ERROR")
+            #t.type = Type("ERROR")
+        p[0].attr["initialized"] = 1
+        p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
+    elif p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    #p[0].attr["init_declarator_list"] = [t]
 
 #declarator:
     #direct-declarator
@@ -1715,7 +1774,7 @@ def p_direct_declarator_1(p):
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p[0] = deepcopy(p[1])
-    p[0].attr["isFunction"] = 1
+    p[0].isfunction = 1
     if p[3]==None:
         p[0].attr["parameterList"] = []
         p[0].attr["numParameters"] = 0
@@ -1728,7 +1787,7 @@ def p_direct_declarator_2(p):
 def p_direct_declarator_3(p):
     ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
     p[0] = deepcopy(p[1])
-    p[0].attr["isArray"] = 1
+    p[0].isArray = 1
     if p[3] == None:
         p[0].attr["width"] = 0
     else :
@@ -1959,11 +2018,17 @@ def p_initializer_opt_1(p):
     
 def p_initializer_opt_2(p):
     ''' initializer_opt : ASSIGN initializer_clause '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("ASSIGN")
+    p[0].attr["initializer_clause"] = deepcopy(p[2])
+    if p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 def p_initializer_opt_3(p):
     ''' initializer_opt : LPAREN expression_list RPAREN ''' 
-    pass
+    p[0] = "LPAREN"
+    
 
 #initializer-clause:
     #assignment-expression
@@ -1971,7 +2036,7 @@ def p_initializer_opt_3(p):
     #{ }
 def p_initializer_clause_1(p):
     ''' initializer_clause : assignment_expression '''
-    pass
+    p[0] = deepcopy(p[1])
 
 def p_initializer_clause_2(p):
     ''' initializer_clause : LBRACE initializer_list RBRACE '''
