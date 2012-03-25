@@ -145,6 +145,7 @@ def p_finish_scope(p):
     '''finish_scope : '''
     PopScope()
 
+# Is another type of new_scope required ?
 def p_function_scope(t):
     '''function_scope : '''
     functionScope()
@@ -1908,7 +1909,6 @@ def p_parameter_declaration_1(p):
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].isfunction == 1):
-        error = 1
         print "\nError : Functions as arguments to functions not supported\n"
 
 def p_parameter_declaration_2(p):
@@ -1930,11 +1930,11 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator function-try-block
 
 def p_function_definition_1(p):
-    ''' function_definition : declarator function_body '''
+    ''' function_definition : new_scope declarator function_body finish_scope'''
     pass
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  declarator function_body '''
+    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
     pass
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
