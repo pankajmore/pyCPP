@@ -263,7 +263,19 @@ def p_id_expression_1(p):
     #template-id
 def p_unqualified_id_1(p):
     ''' unqualified_id : IDENTIFIER %prec RPAREN '''
-    pass
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr()
+    t = env.get(str(p[1]))
+    if t==None:
+        t = Symbol(str(p[1]))
+        if not env.put(t):
+            print("Error : Identifier "+str(p[1])+"already defined. Line number "+str(p.lineno(1)))
+            p[0].type = Type("ERROR")
+    else :
+        p[0].type = t.type
+    p[0].attr["symbol"] = t
+    
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
 def p_unqualified_id_3(p):
@@ -1680,11 +1692,15 @@ def p_init_declarator(p):
     #ptr-operator declarator
 def p_declarator_1(p):
     ''' declarator : direct_declarator %prec NOPAREN'''
-    pass
+    p[0] = deepcopy(p[1])
   
 def p_declarator_2(p):
     ''' declarator : ptr_operator declarator '''
-    pass 
+    p[0] = deepcopy(p[2])
+    if p[1]=='*' :
+        p[0].type = Type(p[1].type)
+    elif p[1] == '&' :
+        p[0].type = Type("ERROR")
 
 #direct-declarator:
     #declarator-id
@@ -1693,7 +1709,7 @@ def p_declarator_2(p):
     #( declarator )
 def p_direct_declarator_1(p):
     ''' direct_declarator : declarator_id '''
-    pass
+    p[0] = deepcopy(p[1])
   
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
@@ -1720,10 +1736,13 @@ def p_direct_declarator_4(p):
 ##    pass 
 
 
-def p_ptr_operator(p):
-    ''' ptr_operator : TIMES 
-                    | AMPERSAND '''
-    pass
+def p_ptr_operator_1(p):
+    ''' ptr_operator : TIMES '''
+    p[0] = '*'
+
+def p_ptr_operator_2(p):
+    ''' ptr_operator : xAMPERSAND '''
+    p[0] = '&'
 
 #cv-qualifier-seq:
     #cv-qualifier cv-qualifier-seqopt
@@ -1745,7 +1764,7 @@ def p_cv_qualifier_seq_opt(p):
 
 def p_declarator_id(p):
     ''' declarator_id : id_expression '''
-    pass 
+    p[0] = deepcopy(p[1])
 
 
 ##def p_declarator_id(p):
