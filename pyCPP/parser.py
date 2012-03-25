@@ -1751,20 +1751,38 @@ def p_direct_abstract_declarator_opt(p):
 #parameter-declaration-clause:
     #parameter-declaration-listopt ...opt
     #parameter-declaration-list , ...
-def p_parameter_declaration_clause(p):
-    ''' parameter_declaration_clause : 
-                    | parameter_declaration_list 
-                    | parameter_declaration_list ELLIPSIS
-                    | parameter_declaration_list COMMA ELLIPSIS '''
-    pass 
+def p_parameter_declaration_clause_1(p):
+    ''' parameter_declaration_clause : '''
+    pass
+
+def p_parameter_declaration_clause_2(p):
+    ''' parameter_declaration_clause : parameter_declaration_list '''
+    p[0] = deepcopy(p[1])
+
+def p_parameter_declaration_clause_3(p):
+    ''' parameter_declaration_clause : parameter_declaration_list ELLIPSIS '''
+    p[0] = deepcopy(p[1])
+
+def p_parameter_declaration_clause_4(p):
+    ''' parameter_declaration_clause : parameter_declaration_list COMMA ELLIPSIS '''
+    p[0] = deepcopy(p[1])
 
 #parameter-declaration-list:
     #parameter-declaration
     #parameter-declaration-list , parameter-declaration
-def p_parameter_declaration_list(p):
-    ''' parameter_declaration_list : parameter_declaration 
-                    | parameter_declaration_list COMMA parameter_declaration '''
-    pass 
+def p_parameter_declaration_list_1(p):
+    ''' parameter_declaration_list : parameter_declaration '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr['parameterList'] = [deepcopy(p[1])]
+    p[0].attr['numParameters'] = 1
+
+
+def p_parameter_declaration_list_2(p):
+    ''' parameter_declaration_list : parameter_declaration_list COMMA parameter_declaration '''
+    p[0] = deepcopy(p[1])
+    p[0].attr['parameterList'].append(deepcopy(p[3]))
+    p[0].attr['numParameters'] += 1
 
 #parameter-declaration:
     #decl-specifier-seq declarator
@@ -1772,12 +1790,29 @@ def p_parameter_declaration_list(p):
     #decl-specifier-seq abstract-declaratoropt
     #decl-specifier-seq abstract-declaratoropt = assignment-expression
 
-def p_parameter_declaration(p):
-    ''' parameter_declaration : decl_specifier_seq declarator 
-                    | decl_specifier_seq declarator ASSIGN assignment_expression 
-                    | decl_specifier_seq abstract_declarator_opt 
-                    | decl_specifier_seq abstract_declarator_opt ASSIGN assignment_expression ''' 
-    pass
+def p_parameter_declaration_1(p):
+    ''' parameter_declaration : decl_specifier_seq declarator '''
+    p[0] = deepcopy(p[2])
+    p[0].type = p[1].type
+    #p[0].specifier = p[1].specifier
+    #p[0].qualifier = p[1].qualifier
+    if (p[2].isfunction == 1):
+        error = 1
+        print "\nError : Functions as arguments to functions not supported\n"
+
+def p_parameter_declaration_2(p):
+    ''' parameter_declaration : decl_specifier_seq declarator ASSIGN assignment_expression '''
+    print "Assignments in formal parameters not supported"
+
+def p_parameter_declaration_3(p):
+    ''' parameter_declaration : decl_specifier_seq abstract_declarator_opt '''
+    p[0] = deepcopy(p[2])
+    p[0].type = p[1].type
+    #p[0].specifier = p[1].specifier
+
+def p_parameter_declaration_4(p):
+    ''' parameter_declaration : decl_specifier_seq abstract_declarator_opt ASSIGN assignment_expression ''' 
+    print "Assignments in formal parameters not supported"
 
 #function-definition:
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
@@ -1801,7 +1836,7 @@ def p_function_definition_2(p):
     #compound-statement
 def p_function_body(p):
     ''' function_body : compound_statement ''' 
-    pass
+    p[0] = deepcopy(p[1])
 
 #initializer:
     #= initializer-clause
