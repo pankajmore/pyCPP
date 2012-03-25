@@ -1369,8 +1369,8 @@ def p_simple_declaration_1(p):
     p[0].type = p[1].type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    if p[1].error or p[2].error:
-        p[0].error = True
+    if p[1].type == Type("ERROR") or p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
     
 def p_simple_declaration_2(p):
     ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
@@ -1380,12 +1380,12 @@ def p_simple_declaration_2(p):
     t = env.get(str(p[1])
     if t == None :
         print("Error : decl_specifier " + str(p[1]) + "is not defined.")
-        p[0].error= True
+        p[0].type = Type("ERROR")
     p[0].type = t.type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    if p[2].error:
-        p[0].error = True
+    if p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
     
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
@@ -1394,8 +1394,8 @@ def p_simple_declaration_3(p):
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["declaration"] = 1
-    if p[1].error :
-        p[0].error = True
+    if p[1].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
     
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
@@ -1573,7 +1573,7 @@ def p_elaborated_type_specifier(p):
     t.attr["class_id"] = 1
     if not env.put(t) :
         print("Error : Identifier " + str(p[2]) + "already defined" + " line no  " + str(p.lineno(2)))
-        p[0].error = True
+        p[0].type = Type("ERROR")
     p[0].attr["symbol"] = t
     
 
@@ -1604,15 +1604,24 @@ def p_elaborated_type_specifier(p):
 #init-declarator-list:
     #init-declarator
     #init-declarator-list , init-declarator
-def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator
-                            | init_declarator_list COMMA init_declarator '''
-    pass 
+def p_init_declarator_list_1(p):
+    ''' init_declarator_list : init_declarator '''
+    p[0] = deepcopy(p[1])
+    
+def p_init_declarator_list_2(p):
+    ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
+    p[0] = deepcopy(p[1])
+    for key in p[3].attr["init_declarator_list"]:
+        p[0].attr["init_declarator_list"][key] = p[3].attr["init_declarator_list"][key]
+    if p[3].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
     pass 
 
 #declarator:
