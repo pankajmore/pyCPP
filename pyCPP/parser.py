@@ -1101,7 +1101,7 @@ def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
     global env 
     t = Symbol(p[1])
-    t.type = Type("LABEL")
+    t.attrs["islabel"] = True 
     if not env.put(t):
         print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
     p[0] = deepcopy(p[3])
@@ -1751,8 +1751,19 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
-    p[0] = p[1] 
-    pass
+    p[0] = Attribute()
+    global env 
+    val = env.get(p[1])
+    p[0].value = val 
+    if val is not None:
+        if val.type == Type("CLASS") :
+            p[0].type = Type("CLASS")
+        else :
+            print ("Error : Line no " +str(p.lineno(1)) + str(p[1]) + " should be class")
+            p[0].type = Type("ERROR")
+    else : 
+        print ("Error : Line no " +str(p.lineno(1))+ str(p[1]) + " not defined ")
+        p[0].type = Type("ERROR")
 
 #class-specifier:
     #class-head { member-specificationopt }
