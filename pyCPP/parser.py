@@ -38,6 +38,7 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=None
+        self.error = False
 
 def initAttr(a):
     a.type=None 
@@ -46,6 +47,7 @@ def initAttr(a):
     a.offset= 0
     a.code=''
     a.place=None
+    a.error = False
     return a
 
 def errorAttr(a):
@@ -1335,13 +1337,11 @@ def p_declaration_statement(p):
 def p_declaration_1(p):
     ''' declaration : block_declaration '''
     p[0] = deepcopy(p[1])
-    pass
-  
+      
 def p_declaration_2(p):
     ''' declaration : function_definition '''
     p[0]= deepcopy(p[1])
-    pass
-
+    
 
 ### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
@@ -1355,11 +1355,10 @@ def p_declaration_2(p):
     #using-declaration
     #using-directive
 
-def p_block_declaration(p):
+def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
     p[0] = deepcopy(p[1])
-    pass
-  
+    
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
@@ -1368,19 +1367,26 @@ def p_simple_declaration_1(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
-    #p[0].attr = deepcopy(p[2].attr)
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    pass
-
+    if p[1].error or p[2].error:
+        p[0].error = True
+    
 def p_simple_declaration_2(p):
     ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = p[1].type
-    #p[0].attr = deepcopy(p[2].attr)
+    t = env.get(str(p[1])
+    if t == None :
+        print("Error : decl_specifier " + str(p[1]) + "is not defined.")
+        p[0].error= True
+    p[0].type = t.type
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
-    pass
-
+    if p[2].error:
+        p[0].error = True
+    
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
@@ -1388,16 +1394,16 @@ def p_simple_declaration_3(p):
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["declaration"] = 1
-    pass
-
+    if p[1].error :
+        p[0].error = True
+    
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
 def p_decl_specifier_seq_1(p):
     ''' decl_specifier_seq : decl_specifier '''
     p[0] = deepcopy(p[1])
-    pass
-
+    
 #def p_decl_specifier_seq_2(p):
 #    ''' decl_specifier_seq : decl_specifier_seq decl_specifier '''
 #    p[0] = Attribute()
@@ -1415,18 +1421,15 @@ def p_decl_specifier_seq_1(p):
 def p_decl_specifier_1(p):
     ''' decl_specifier : storage_class_specifier '''
     p[0] = deepcopy(p[1])
-    pass
-
+    
 def p_decl_specifier_2(p):
     ''' decl_specifier : type_specifier '''
     p[0] = deepcopy(p[1])
-    pass
-
+    
 def p_decl_specifier_3(p):
     ''' decl_specifier : function_specifier '''
     p[0] = deepcopy(p[1])
-    pass
-
+    
 #storage-class-specifier:
     #auto
     #register
@@ -1439,15 +1442,13 @@ def p_storage_class_specifier_1(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("AUTO")
-    pass 
-
+    
 def p_storage_class_specifier_2(p):
     ''' storage_class_specifier : EXTERN '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("EXTERN")
-    pass
-
+    
 #function-specifier:
     #inline
     #virtual
@@ -1458,8 +1459,7 @@ def p_function_specifier(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("INLINE")
-    pass 
-
+    
 #type-specifier:
     #simple-type-specifier
     #class-specifier
@@ -1470,13 +1470,12 @@ def p_function_specifier(p):
 def p_type_specifier_1(p):
     ''' type_specifier : simple_type_specifier '''
     p[0] = deepcopy(p[1])
-    pass
-
+    
 def p_type_specifier_2(p):
     ''' type_specifier : class_specifier '''
                         #| elaborated_type_specifier '''
     p[0] = deepcopy(p[1])
-    pass 
+ 
 ## HELPER 
 
 #def p_double_colon_opt(p):
@@ -1518,42 +1517,36 @@ def p_simple_type_specifier_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("BOOL")
-    pass 
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("CHAR")
-    pass
 
 def p_simple_type_specifier_4(p):
     ''' simple_type_specifier : INT '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("INT")
-    pass
 
 def p_simple_type_specifier_5(p):
     ''' simple_type_specifier : FLOAT '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("FLOAT")
-    pass
 
 def p_simple_type_specifier_6(p):
     ''' simple_type_specifier : DOUBLE '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("DOUBLE")
-    pass
 
 def p_simple_type_specifier_7(p):
     ''' simple_type_specifier : VOID '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("VOID")
-    pass 
 
 #type-name:
     #class-name
@@ -1563,7 +1556,6 @@ def p_simple_type_specifier_7(p):
 def p_type_name_1(p):
     ''' type_name : class_name ''' 
     p[0] = deepcopy(p[1])
-    pass 
 
 #elaborated-type-specifier:
     #class-key ::opt nested-name-specifieropt identifier
@@ -1572,11 +1564,18 @@ def p_type_name_1(p):
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key IDENTIFIER'''
+    global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
+    t = Symbol(str(p[2]))
+    t.type = p[1].type
+    t.attr["class_id"] = 1
+    if not env.put(t) :
+        print("Error : Identifier " + str(p[2]) + "already defined" + " line no  " + str(p.lineno(2)))
+        p[0].error = True
+    p[0].attr["symbol"] = t
     
-    pass
 
 
 ##def p_elaborated_type_specifier(p):
