@@ -2,7 +2,7 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
-
+num_temporaries=0
 ## {{{
 success = True
 class Type(object):
@@ -59,6 +59,35 @@ def errorAttr(a):
     a.place=None
     return a
 
+def newTemp():
+      global num_temporaries
+      #Returns a new temporary named _T<num>
+      temp = "_T00"
+      temp1 = "_T"
+      temp2 = str(num_temporaries / 10)
+      temp3 = str(num_temporaries % 10)
+      temp = temp1 + temp2 + temp3
+      num_temporaries = num_temporaries + 1
+      return temp
+
+def find_recursively(p):
+    if isinstance(p,Type)
+        return find_recursively(p.link)
+    else:
+        return p
+
+def find_type_recursively(p):
+    if isinstance(p,Type):
+        return '*' + find_type_recursively(p.link)
+    else:
+        return p
+    
+def find_type(p):
+    if p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function'):
+        return 'FUNCTION ' + p.attr['symbol'].name+' -> ' + find_type_recursively(p.type.link)
+    else:
+        return find_type_recursively(p.type.link)
+        
 def is_primitive(p):
     if not (p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function')):
         return True
@@ -426,10 +455,11 @@ def p_expression_list_2(p):
 
 def p_expression_list_opt_1(p):
     ''' expression_list_opt : '''
-    pass 
+    p[0]=None
+
 def p_expression_list_opt_2(p):
     ''' expression_list_opt : expression_list '''
-    pass 
+    p[0]=deepcopy(p[1])
 
 #pseudo-destructor-name:
     #::opt nested-name-specifieropt type-name :: ~ type-name
@@ -489,7 +519,6 @@ def p_unary_expression_3(p):
 
 def p_unary_expression_4(p):
     ''' unary_expression : unary_operator cast_expression '''
-    global Sizes
     p[0]=deepcopy(p[2])
     if p[1]=='+':
         if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT') ):
@@ -536,15 +565,29 @@ def p_unary_expression_4(p):
         pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
     
 #Will need to rewrite SIZEOF functions
+  
 def p_unary_expression_5(p):
     ''' unary_expression : SIZEOF unary_expression '''
     p[0]=Attribute()
-    p[0].type='INT'
+    typ=find_recursively(p[2].type)    
+    if is_primitive(p[2]) and typ in ['INT','FLOAT','CHAR','BOOL']:
+        p[0].type='INT'
+    else:
+        p[0]=errorAttr(p[0])
+        if p[2].type !== Type('ERROR'):
+            print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[2]))
 
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
     p[0]=Attribute()
-    p[0].type='INT'
+    typ=find_recursively(p[3].type)    
+    if is_primitive(p[3]) and typ in ['INT','FLOAT','CHAR','BOOL']:
+        p[0].type='INT'
+    else:
+        p[0]=errorAttr(p[0])
+        if p[3].type !== Type('ERROR'):
+            print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[3]))
+
 
 #Will see whether to include the below  two productions in the grammer or not
 def p_unary_expression_7(p):
@@ -677,18 +720,15 @@ def p_cast_expression_2(p):
         if p[2].type== Type('FLOAT') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]) :
             p[0].type='FLOAT'
         elif p[2].type == Type('INT') and p[4].type==Type('FLOAT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='INT'
+            p[0].type='INT'
         elif p[2].type == Type('INT') and p[4].type==Type('CHAR') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='INT'
+            p[0].type='INT'
         elif p[2].type == Type('CHAR') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[4].type='CHAR'                
+            p[0].type='CHAR'                
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
                 print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
-            
-        
-    pass 
 
 
 #multiplicative-expression:
@@ -982,7 +1022,7 @@ def p_assignment_expression_2(p):
         if p[2]=='=':
             if find_type(p[1])!=find_type(p[3]):
                 p[0]=errorAttr(p[0])
-                p[1].type=Type(Type('ERROR'))
+                p[1].type=Type('ERROR')
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
         else:
             if p[2]=='*=':
@@ -990,7 +1030,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='/=':
@@ -998,7 +1038,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='+=':
@@ -1008,7 +1048,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
 
             if p[2]=='-=':
@@ -1018,7 +1058,7 @@ def p_assignment_expression_2(p):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type(Type('ERROR'))
+                    p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))  
                                                                        
 #assignment-operator: one of
@@ -1036,21 +1076,32 @@ def p_assignment_operator(p):
 #expression:
     #assignment-expression
     #expression , assignment-expression
-def p_expression(p):
-    ''' expression : assignment_expression 
-                    | expression COMMA assignment_expression '''
-    pass 
+
+def p_expression_1(p):
+    ''' expression : assignment_expression '''                
+    p[0]=deepcopy(p[1])
+
+def p_expression_2(p):
+    ''' expression : expression COMMA assignment_expression '''
+    p[0]=deepcopy(p[1])
+    if p[1].type==Type('ERROR') or p[2].type==Type('ERROR'):
+        p[0].type=Type('ERROR')
+    else:
+        p[0].type=Type('VOID')
 
 #constant-expression:
     #conditional-expression
 def p_constant_expression(p):
     ''' constant_expression : conditional_expression ''' 
-    pass 
+    p[0]=deepcopy(p[1])
 
-def p_constant_expression_opt(p):
-    ''' constant_expression_opt : 
-                    | constant_expression '''
-    pass 
+def p_constant_expression_opt_1(p):
+    ''' constant_expression_opt : '''
+    p[0]=None
+
+def p_constant_expression_opt_1(p):
+    ''' constant_expression_opt : constant_expression '''
+    p[0]=deepcopy(p[1])    
 ## }}}
 
 ####################################################
@@ -1104,7 +1155,7 @@ def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
     global env 
     t = Symbol(p[1])
-    t.type = Type("LABEL")
+    t.attrs["islabel"] = True 
     if not env.put(t):
         print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
     p[0] = deepcopy(p[3])
@@ -1230,7 +1281,7 @@ def p_iteration_statement_1(p):
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
-    pass 
+
 def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
     p[0] = Attribute()
@@ -1875,15 +1926,19 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
-    global env
     p[0] = Attribute()
-    p[0] = initAttr(p[0])
-    p[0].type = Type("VOID")
-    t = Symbol(str(p[1]))
-    if not env.put(t) :
-        print("ERROR : Identifier " + str(p[1])+"is already defined at line number " + str(p.lineno(1)))
+    global env 
+    val = env.get(p[1])
+    p[0].attr["symbol"] = val 
+    if val is not None:
+        if val.type == Type("CLASS") :
+            p[0].type = Type("CLASS")
+        else :
+            print ("Error : Line no " +str(p.lineno(1)) + str(p[1]) + " should be class")
+            p[0].type = Type("ERROR")
+    else : 
+        print ("Error : Line no " +str(p.lineno(1))+ str(p[1]) + " not defined ")
         p[0].type = Type("ERROR")
-    p[0].attr["symbol"] = t
     
 #class-specifier:
     #class-head { member-specificationopt }
