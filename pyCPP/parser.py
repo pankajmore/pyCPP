@@ -8,6 +8,7 @@ success = True
 class Type(object):
     def __init__(self,next):
         self.next = next
+        self.name = next
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -37,6 +38,7 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=None
+        self.error = False
 
 def initAttr(a):
     a.type=None 
@@ -45,6 +47,7 @@ def initAttr(a):
     a.offset= 0
     a.code=''
     a.place=None
+    a.error = False
     return a
 
 def errorAttr(a):
@@ -1384,12 +1387,12 @@ def p_declaration_statement(p):
 
 def p_declaration_1(p):
     ''' declaration : block_declaration '''
-    pass
-  
+    p[0] = deepcopy(p[1])
+      
 def p_declaration_2(p):
     ''' declaration : function_definition '''
-    pass
-
+    p[0]= deepcopy(p[1])
+    
 
 ### TODO : Commenting this rule as rule corresponding to namespace_definition has not been added anywhere. Have to add later.###
 #def p_declaration_4(p):
@@ -1403,27 +1406,61 @@ def p_declaration_2(p):
     #using-declaration
     #using-directive
 
-def p_block_declaration(p):
+def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
-    pass
-  
+    p[0] = deepcopy(p[1])
+    
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
 
-def p_simple_declaration(p):
-    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON
-                           | IDENTIFIER init_declarator_list SEMICOLON
-                           | decl_specifier_seq SEMICOLON '''
+def p_simple_declaration_1(p):
+    ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    p[0].attr["declaration"] = 1
+    if p[1].type == Type("ERROR") or p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
+def p_simple_declaration_2(p):
+    ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    t = env.get(str(p[1])
+    if t == None :
+        print("Error : decl_specifier " + str(p[1]) + "is not defined.")
+        p[0].type = Type("ERROR")
+    p[0].type = t.type
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    p[0].attr["declaration"] = 1
+    if p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
+def p_simple_declaration_3(p):
+    ''' simple_declaration : decl_specifier_seq SEMICOLON '''
                            #| init_declarator_list SEMICOLON '''
-    pass
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].attr["declaration"] = 1
+    if p[1].type == Type("ERROR") :
+        p[0].type = Type("ERROR")
+    
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
-def p_decl_specifier_seq(p):
-    ''' decl_specifier_seq : decl_specifier 
-                        | decl_specifier_seq decl_specifier '''
-    pass
+def p_decl_specifier_seq_1(p):
+    ''' decl_specifier_seq : decl_specifier '''
+    p[0] = deepcopy(p[1])
+    
+#def p_decl_specifier_seq_2(p):
+#    ''' decl_specifier_seq : decl_specifier_seq decl_specifier '''
+#    p[0] = Attribute()
+#    p[0] = initAttr(p[0])
+#    p[0].type = 
+#    pass
 
 #decl-specifier:
     #storage-class-specifier
@@ -1432,12 +1469,18 @@ def p_decl_specifier_seq(p):
     #friend
     #typedef
 
-def p_decl_specifier(p):
-    ''' decl_specifier : storage_class_specifier 
-                        | type_specifier 
-                        | function_specifier '''
-    pass
-
+def p_decl_specifier_1(p):
+    ''' decl_specifier : storage_class_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_decl_specifier_2(p):
+    ''' decl_specifier : type_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_decl_specifier_3(p):
+    ''' decl_specifier : function_specifier '''
+    p[0] = deepcopy(p[1])
+    
 #storage-class-specifier:
     #auto
     #register
@@ -1445,10 +1488,18 @@ def p_decl_specifier(p):
     #extern
     #mutable
 
-def p_storage_class_specifier(p):
+def p_storage_class_specifier_1(p):
     ''' storage_class_specifier : AUTO'''
-    pass 
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("AUTO")
+    
+def p_storage_class_specifier_2(p):
+    ''' storage_class_specifier : EXTERN '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("EXTERN")
+    
 #function-specifier:
     #inline
     #virtual
@@ -1456,8 +1507,10 @@ def p_storage_class_specifier(p):
 
 def p_function_specifier(p):
     ''' function_specifier : INLINE '''
-    pass 
-
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INLINE")
+    
 #type-specifier:
     #simple-type-specifier
     #class-specifier
@@ -1465,11 +1518,15 @@ def p_function_specifier(p):
     #elaborated-type-specifier
     #cv-qualifier
 
-def p_type_specifier(p):
-    ''' type_specifier : simple_type_specifier 
-                        | class_specifier '''
+def p_type_specifier_1(p):
+    ''' type_specifier : simple_type_specifier '''
+    p[0] = deepcopy(p[1])
+    
+def p_type_specifier_2(p):
+    ''' type_specifier : class_specifier '''
                         #| elaborated_type_specifier '''
-    pass 
+    p[0] = deepcopy(p[1])
+ 
 ## HELPER 
 
 #def p_double_colon_opt(p):
@@ -1508,36 +1565,48 @@ def p_type_specifier(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
-    pass 
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("BOOL")
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("CHAR")
 
 def p_simple_type_specifier_4(p):
     ''' simple_type_specifier : INT '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("INT")
 
 def p_simple_type_specifier_5(p):
     ''' simple_type_specifier : FLOAT '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("FLOAT")
 
 def p_simple_type_specifier_6(p):
     ''' simple_type_specifier : DOUBLE '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("DOUBLE")
 
 def p_simple_type_specifier_7(p):
     ''' simple_type_specifier : VOID '''
-    pass 
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
 
 #type-name:
     #class-name
     #enum-name    
     #typedef-name
 
-def p_type_name(p):
+def p_type_name_1(p):
     ''' type_name : class_name ''' 
-    pass 
+    p[0] = deepcopy(p[1])
 
 #elaborated-type-specifier:
     #class-key ::opt nested-name-specifieropt identifier
@@ -1546,7 +1615,18 @@ def p_type_name(p):
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key IDENTIFIER'''
-    pass
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    t = Symbol(str(p[2]))
+    t.type = p[1].type
+    t.attr["class_id"] = 1
+    if not env.put(t) :
+        print("Error : Identifier " + str(p[2]) + "already defined" + " line no  " + str(p.lineno(2)))
+        p[0].type = Type("ERROR")
+    p[0].attr["symbol"] = t
+    
 
 
 ##def p_elaborated_type_specifier(p):
@@ -1575,15 +1655,24 @@ def p_elaborated_type_specifier(p):
 #init-declarator-list:
     #init-declarator
     #init-declarator-list , init-declarator
-def p_init_declarator_list(p):
-    ''' init_declarator_list : init_declarator
-                            | init_declarator_list COMMA init_declarator '''
-    pass 
+def p_init_declarator_list_1(p):
+    ''' init_declarator_list : init_declarator '''
+    p[0] = deepcopy(p[1])
+    
+def p_init_declarator_list_2(p):
+    ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
+    p[0] = deepcopy(p[1])
+    for key in p[3].attr["init_declarator_list"]:
+        p[0].attr["init_declarator_list"][key] = p[3].attr["init_declarator_list"][key]
+    if p[3].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 #init-declarator:
     #declarator initializeropt
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
     pass 
 
 #declarator:
@@ -1802,9 +1891,16 @@ def p_initializer_list(p):
     #template-id
 def p_class_name(p):
     ''' class_name : IDENTIFIER '''
-    p[0] = p[1] 
-    pass
-
+    global env
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = Symbol(str(p[1]))
+    if not env.put(t) :
+        print("ERROR : Identifier " + str(p[1])+"is already defined at line number " + str(p.lineno(1)))
+        p[0].type = Type("ERROR")
+    p[0].attr["symbol"] = t
+    
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
