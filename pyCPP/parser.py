@@ -71,7 +71,7 @@ def newTemp():
       return temp
 
 def find_recursively(p):
-    if isinstance(p,Type)
+    if isinstance(p,Type):
         return find_recursively(p.link)
     else:
         return p
@@ -586,7 +586,7 @@ def p_unary_expression_5(p):
         p[0].type='INT'
     else:
         p[0]=errorAttr(p[0])
-        if p[2].type !== Type('ERROR'):
+        if p[2].type == Type('ERROR'):
             print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[2]))
 
 def p_unary_expression_6(p):
@@ -597,7 +597,7 @@ def p_unary_expression_6(p):
         p[0].type='INT'
     else:
         p[0]=errorAttr(p[0])
-        if p[3].type !== Type('ERROR'):
+        if p[3].type == Type('ERROR'):
             print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[3]))
 
 
@@ -1111,7 +1111,7 @@ def p_constant_expression_opt_1(p):
     ''' constant_expression_opt : '''
     p[0]=None
 
-def p_constant_expression_opt_1(p):
+def p_constant_expression_opt_2(p):
     ''' constant_expression_opt : constant_expression '''
     p[0]=deepcopy(p[1])    
 ## }}}
@@ -1440,8 +1440,8 @@ def p_simple_declaration_2(p):
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    t = env.get(str(p[1])
-    if t == None :
+    t = env.get(str(p[1]))
+    if (t == None):
         print("Error : decl_specifier " + str(p[1]) + "is not defined.")
         p[0].type = Type("ERROR")
     p[0].type = t.type
@@ -1713,11 +1713,27 @@ def p_direct_declarator_1(p):
   
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
-    pass
+    p[0] = deepcopy(p[1])
+    p[0].attr["isFunction"] = 1
+    if p[3]==None:
+        p[0].attr["parameterList"] = []
+        p[0].attr["numParameters"] = 0
+    else :
+        p[0].attr["parameterList"] = deepcopy(p[3].attr["parameterList"])
+        p[0].attr["numParameters"] = p[3].attr["numParameters"]
+        if p[3].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
   
 def p_direct_declarator_3(p):
     ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
-    pass
+    p[0] = deepcopy(p[1])
+    p[0].attr["isArray"] = 1
+    if p[3] == None:
+        p[0].attr["width"] = 0
+    else :
+        p[0].attr["width"] = p[3].place
+        if p[3].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
   
 def p_direct_declarator_4(p):
     ''' direct_declarator : LPAREN declarator RPAREN '''
@@ -1823,7 +1839,7 @@ def p_direct_abstract_declarator_opt(p):
     #parameter-declaration-list , ...
 def p_parameter_declaration_clause_1(p):
     ''' parameter_declaration_clause : '''
-    pass
+    p[0] = None
 
 def p_parameter_declaration_clause_2(p):
     ''' parameter_declaration_clause : parameter_declaration_list '''
