@@ -3,7 +3,7 @@ import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
 num_temporaries=0
-## {{{
+## TODO : return type of function should match the actual function type
 success = True
 class Type(object):
     def __init__(self,next):
@@ -159,25 +159,31 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     functionScope()
-    t = env.prev.get(str(p[-1]))
+    # get the attribute here
+    t = env.prev.get(p[-1].attr['name'])
     if t is not None:
-        if t.type != p[-1].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-                if t.attr['parameterList'][i].id == None:
-                    print ("\nVariable name for parameter missing\n")
-                #if not env.put(t.attr['parameterList'][i]):
+        # need the entry of attribute in symbol
+        print "der"
+        #if t.type != p[-1].type :
+            #print ("\nFunction's type not consistent\n")
+        #if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            #print ("\nFunction overloading not supported\n")
+        #else:
+            #for i in range(t.attr['numParameters']):
+                #if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                    #print ("\nFunction overloading by different types not supported\n")
+                #if t.attr['parameterList'][i].id == None:
+                    #print ("\nVariable name for parameter missing\n")
+                #if not env.put(t.attr['parameterList'][i].attr['name']):
                     #print ("\nError : parameter is already in the symbol table\n")
+                # also put the type
     else:
         for i in range(p[-1].attr['numParameters']):
-            pass
-            #if not env.put(p[-1].attr['parameterList'][i]):
-                    #print ("\nError : parameter is already in the symbol table\n")
+            print "here"
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
 
 
 def p_unset_function_scope(p):
@@ -2024,7 +2030,8 @@ def p_direct_declarator_1(p):
     ''' direct_declarator : declarator_id '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-  
+
+# function declaration rule
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p.set_lineno(0,p.lineno(1))
@@ -2285,18 +2292,6 @@ def p_function_definition_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
-    t = env.get(str(p[3]))
-    if t is not None:
-        if t.type != p[3].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[3].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[3].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-    else:
-        pass
     #code generation
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
