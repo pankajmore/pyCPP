@@ -1788,7 +1788,7 @@ def p_direct_declarator_1(p):
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p[0] = deepcopy(p[1])
-    p[0].isfunction = 1
+    p[0].atrr['isFunction'] = 1
     if p[3]==None:
         p[0].attr["parameterList"] = []
         p[0].attr["numParameters"] = 0
@@ -1981,7 +1981,7 @@ def p_parameter_declaration_1(p):
     p[0].type = p[1].type
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
-    if (p[2].isfunction == 1):
+    if (p[2].attr['isFunction'] == 1):
         print "\nError : Functions as arguments to functions not supported\n"
 
 def p_parameter_declaration_2(p):
