@@ -48,6 +48,9 @@ class SymbolTable(object):
             return self.symbols[name]
         else :
             return None 
+    ## If symbol with given key exists then delete it and returns the symbol else returns None . 
+    def delete(self,name):
+        return self.symbols.pop(name,None)
     def __repr__(self):
         return str(self.symbols)
     ## Note : changes the current symbol table 
