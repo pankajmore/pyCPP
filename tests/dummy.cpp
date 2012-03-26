@@ -1,6 +1,7 @@
 
 int main()
 {
-int abc123 ;
-x=y+z;
+int a;
+int b;
+a =a + b;
 }

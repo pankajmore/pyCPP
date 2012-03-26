@@ -1678,12 +1678,12 @@ def p_mark_type(p):
     t = env.get(str(p[-1]))
     if t==None:
         p[0] = "ERROR"
-        DeclType = Type("ERROR")
+        #DeclType = Type("ERROR")
     elif t.type == Type("CLASS"):
         DeclType = Type(str(p[-1]))
     else :
         p[0] = "ERROR"
-        DeclType = Type("ERROR")
+        #DeclType = Type("ERROR")
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
@@ -1984,12 +1984,12 @@ def p_init_declarator(p):
             print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
             p[0].type = Type("ERROR")
             #t.type = Type("ERROR")
-        elif p[1].attr.has_key("isArray") and tl.attr.has_key("isArray"):
-            if p[1].attr["width"] < tl.attr["num_element"] and p[1].attr["width"]!=0:
+        #elif p[1].attr.has_key("isArray") and tl.attr.has_key("isArray"):
+        #    if p[1].attr["width"] < tl.attr["num_element"] and p[1].attr["width"]!=0:
                 #t.type = Type("ERROR")
-        elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
+        #elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
             #t.type = Type("ERROR")
-        if tl.type != DeclType :
+        #if tl.type != DeclType :
             #t.type = Type("ERROR")
         
     #p[0].attr["init_declarator_list"] = [t]
