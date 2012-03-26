@@ -250,11 +250,12 @@ def p_primary_expression_6(p):
     t = env.get(p[1].attr['name'])
     if t==None:
         p[0].type = Type("ERROR")
-	print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(2), p[1].attr['name'])
+	print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(1), p[1].attr['name'])
     else :
         p[0].attr['symbol'] = t
 	p[0].type=t.type
 	#print str(t.name),str(t.type)
+    p.set_lineno(0,p.lineno(1))
 
 #id-expression:
     #unqualified-id
@@ -262,7 +263,7 @@ def p_primary_expression_6(p):
 def p_id_expression_1(p):
     ''' id_expression : unqualified_id '''
     p[0]=deepcopy(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 ##def p_id_expression_2(p):
 ##    ''' id_expression : qualified_id '''
@@ -289,9 +290,11 @@ def p_unqualified_id_1(p):
         #p[0].type = t.type
     #p[0].attr["symbol"] = t
     p[0].attr["name"] = str(p[1])
+    p.set_lineno(0,p.lineno(1))
     
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
+    p.set_lineno(0,p.lineno(1))
 def p_unqualified_id_3(p):
     ''' unqualified_id : conversion_function_id ''' 
 def p_unqualified_id_4(p):
