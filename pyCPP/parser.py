@@ -1141,7 +1141,7 @@ def check_implicit_2(p,q):
 def p_assignment_expression_2(p):
     ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
     p[0] = Attribute()
-    p[0].type='VOID'
+    p[0].type=p[1].type
         
     if p[2]=='=':
         if check_implicit_1(p[1],p[3]):
