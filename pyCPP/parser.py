@@ -276,7 +276,7 @@ def p_unqualified_id_1(p):
     #else :
         #p[0].type = t.type
     #p[0].attr["symbol"] = t
-    p[0].name = str(p[1])
+    p[0].attr["name"] = str(p[1])
     
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
