@@ -30,6 +30,7 @@ class Type(object):
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 env=Environment(None)
+DeclType = None
 class Attribute(object):
     def __init__(self):
         self.type = None
@@ -263,7 +264,7 @@ def p_id_expression_1(p):
     #~ class-name
     #template-id
 def p_unqualified_id_1(p):
-    ''' unqualified_id : IDENTIFIER %prec RPAREN '''
+    ''' unqualified_id : IDENTIFIER mark_type %prec RPAREN '''
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1437,30 +1438,30 @@ def p_simple_declaration_1(p):
     p[0].attr["declaration"] = 1
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
-    elif p[0].type != Type("ERROR") :
-        for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.attr["name"])
-            t1.type = p[0].type
-            if t.attr.has_key("isFunction"):
-                t1.attr["isFunction"] = 1
-                #t1.isfunction = 1
-                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.attr.has_key("isArray"):
-                t1.attr["isArray"]=1
-                #t1.isArray = 1
-                t1.attr["width"] = t.attr["width"]
-            if t.attr["initialized"] == 1:
-                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
-                t1.attr["initialized"] =1
-            if t.type != Type("ERROR") :
-                if not env.put(t1):
-                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
-                    t.type = Type("ERROR")
-            else :
-                t.type = Type("ERROR")
+#    elif p[0].type != Type("ERROR") :
+#        for t in p[0].attr["init_declarator_list"] :
+#            t1 = Symbol(t.attr["name"])
+#            t1.type = p[0].type
+#            if t.attr.has_key("isFunction"):
+#                t1.attr["isFunction"] = 1
+#                #t1.isfunction = 1
+#                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
+#            elif t.attr.has_key("isArray"):
+#                t1.attr["isArray"]=1
+#                #t1.isArray = 1
+#                t1.attr["width"] = t.attr["width"]
+#            if t.attr["initialized"] == 1:
+#                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
+#                t1.attr["initialized"] =1
+#            if t.type != Type("ERROR") :
+#                if not env.put(t1):
+#                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
+#                    t.type = Type("ERROR")
+#            else :
+#                t.type = Type("ERROR")
     
 def p_simple_declaration_2(p):
-    ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    ''' simple_declaration : IDENTIFIER mark_type init_declarator_list SEMICOLON %prec INUMBER '''
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1473,27 +1474,27 @@ def p_simple_declaration_2(p):
     p[0].attr["declaration"] = 1
     #if p[1].type == Type("ERROR") :
     #    p[0].type = Type("ERROR")
-    if p[0].type != Type("ERROR") :
-        for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.attr["name"])
-            t1.type = p[0].type
-            if t.attr.has_key("isFunction"):
-                t1.attr["isFunction"] = 1
+#    if p[0].type != Type("ERROR") :
+#        for t in p[0].attr["init_declarator_list"] :
+#            t1 = Symbol(t.attr["name"])
+#            t1.type = p[0].type
+#            if t.attr.has_key("isFunction"):
+#                t1.attr["isFunction"] = 1
                 #t1.isfunction = 1
-                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.attr.has_key("isArray"):
-                t1.attr["isArray"]=1
+#                t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
+#            elif t.attr.has_key("isArray"):
+#                t1.attr["isArray"]=1
                 #t1.isArray = 1
-                t1.attr["width"] = t.attr["width"]
-            if t.attr["initialized"] == 1:
-                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
-                t1.attr["initialized"] =1
-            if t.type != Type("ERROR") :
-                if not env.put(t1):
-                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
-                    t.type = Type("ERROR")
-            else :
-                t.type = Type("ERROR")
+#                t1.attr["width"] = t.attr["width"]
+#            if t.attr["initialized"] == 1:
+#                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
+#                t1.attr["initialized"] =1
+#            if t.type != Type("ERROR") :
+#                if not env.put(t1):
+#                    print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
+#                    t.type = Type("ERROR")
+#            else :
+#                t.type = Type("ERROR")
                     
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
@@ -1504,12 +1505,28 @@ def p_simple_declaration_3(p):
     p[0].attr["declaration"] = 1
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
+        
     
+def p_mark_type(p):
+    ''' mark_type : %prec INUMBER'''
+    global DeclType
+    global env
+    t = env.get(str(p[-1]))
+    if t==None:
+        p[0] = "ERROR"
+        DeclType = Type("ERROR")
+    elif t.type == Type("CLASS"):
+        DeclType = Type(str(p[-1]))
+    else :
+        p[0] = "ERROR"
+        DeclType = Type("ERROR")
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
 def p_decl_specifier_seq_1(p):
     ''' decl_specifier_seq : decl_specifier '''
+    global DeclType
+    DeclType = deepcopy(p[1].type)
     p[0] = deepcopy(p[1])
     
 #def p_decl_specifier_seq_2(p):
@@ -1738,7 +1755,7 @@ def p_init_declarator(p):
         p[0].attr["initialized"] = 0
     elif p[2] == "LPAREN":
         print "Feature not supported at present."
-        p[0].type == Type("ERROR")
+        p[0].type = Type("ERROR")
     elif p[2].type == Type("ASSIGN"):
         if p[1].isfunction == 1 :
             print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
@@ -1761,6 +1778,35 @@ def p_init_declarator(p):
         #p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
     elif p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
+    global DeclType
+    global env
+    t = Symbol(p[1].attr["name"])
+    t.type = deepcopy(DeclType)
+    t.attr = deepcopy(p[1].attr)
+    if not env.put(t):
+        print("ERROR: Identifier "+t.name+"already defined. At line number : "+str(p.lineno(1)))
+        t.type = Type("ERROR")
+        p[0].type = Type("ERROR")
+    elif p[2] == None :
+        t.attr["initialized"] = 0
+    elif p[2] == "LPAREN":
+        print "Feature not supported at present. "
+        p[0].type = Type("ERROR")
+        t.type = Type("ERROR")
+    elif p[2].type == Type("ASSIGN"):
+        tl = p[2].attr["initializer"]
+        if p[1].attr.has_key("isFunction") :
+            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
+            p[0].type = Type("ERROR")
+            t.type = Type("ERROR")
+        elif p[1].attr.has_key("isArray") and tl.attr.has_key("isArray"):
+            if p[1].attr["width"] < tl.attr["num_element"] and p[1].attr["width"]!=0:
+                t.type = Type("ERROR")
+        elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
+            t.type = Type("ERROR")
+        if tl.type != DeclType :
+            t.type = Type("ERROR")
+        
     #p[0].attr["init_declarator_list"] = [t]
 
 #declarator:
@@ -2156,13 +2202,13 @@ def p_class_name(p):
 def p_class_specifier_1(p):
     ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
     p[0] = Attribute()
-    p[0].type = Type("VOID")
+    p[0].type = Type(p[2].name)
     pass
 
 def p_class_specifier_2(p):
     ''' class_specifier : new_scope class_head LBRACE RBRACE finish_scope'''
     p[0] = Attribute()
-    p[0].type = Type("VOID")
+    p[0].type = Type(p[2].name)
     pass
   
 #class-head:
