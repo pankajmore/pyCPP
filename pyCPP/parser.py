@@ -137,6 +137,12 @@ def PopScope():
     global env  
     env = env.prev 
 
+def functionScope():
+    NewScope()
+    
+def unsetFunctionScope():
+    PopScope()
+
 def p_new_scope(p):
     '''new_scope : '''
     NewScope()
@@ -145,12 +151,31 @@ def p_finish_scope(p):
     '''finish_scope : '''
     PopScope()
 
-# Is another type of new_scope required ?
-def p_function_scope(t):
+def p_function_scope(p):
     '''function_scope : '''
     functionScope()
+    t = env.prev.get(str(p[-1]))
+    if t is not None:
+        if t.type != p[-1].type :
+            print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        else:
+            for i in range(t.attr['numParameters']):
+                if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                    print ("\nFunction overloading by different types not supported\n")
+                if t.attr['parameterList'][i].id == None:
+                    print ("\nVariable name for parameter missing\n")
+                #if not env.put(t.attr['parameterList'][i]):
+                    #print ("\nError : parameter is already in the symbol table\n")
+    else:
+        for i in range(p[-1].attr['numParameters']):
+            pass
+            #if not env.put(p[-1].attr['parameterList'][i]):
+                    #print ("\nError : parameter is already in the symbol table\n")
 
-def p_unset_function_scope(t):
+
+def p_unset_function_scope(p):
     '''unset_function_scope : '''
     unsetFunctionScope()
 
@@ -2012,23 +2037,12 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
+# ATUL : delcarator should not put symbol table entries for parameterList
 def p_function_definition_1(p):
-    ''' function_definition : declarator new_scope function_body finish_scope'''
+    ''' function_definition : declarator function_scope function_body unset_function_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
-    t = env.get(str(p[2]))
-    if t is not None:
-        if t.type != p[2].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[2].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[2].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-    else:
-        pass
     #code generation
 
 
@@ -2036,7 +2050,7 @@ def p_function_definition_1(p):
 
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
+    ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2511,7 +2525,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
