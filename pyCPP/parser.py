@@ -23,7 +23,10 @@ class Type(object):
             return result
         return not result
     def __repr__(self):
-        return str(self.next)
+	if isinstance(self.next,Type):
+        	return "*" + str(self.next)
+	else:
+		return str(self.next)
 
 
 
@@ -38,7 +41,7 @@ class Attribute(object):
         self.value=None    
         self.offset = 0
         self.code=''
-        self.place=None
+        self.place=''
         self.error = False
 
 def initAttr(a):
@@ -73,21 +76,21 @@ def newTemp():
 
 def find_recursively(p):
     if isinstance(p,Type):
-        return find_recursively(p.link)
+        return find_recursively(p.next)
     else:
         return p
 
 def find_type_recursively(p):
     if isinstance(p,Type):
-        return '*' + find_type_recursively(p.link)
+        return '*' + find_type_recursively(p.next)
     else:
         return p
     
 def find_type(p):
     if p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('isFunction'):
-        return 'FUNCTION ' + p.attr['symbol'].name+' -> ' + find_type_recursively(p.type.link)
+        return 'FUNCTION ' + p.attr['symbol'].name+' -> ' + find_type_recursively(p.type.next)
     else:
-        return find_type_recursively(p.type.link)
+        return find_type_recursively(p.type.next)
         
 def is_primitive(p):
     if not (p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('isFunction')):
@@ -138,6 +141,12 @@ def PopScope():
     global env  
     env = env.prev 
 
+def functionScope():
+    NewScope()
+    
+def unsetFunctionScope():
+    PopScope()
+
 def p_new_scope(p):
     '''new_scope : '''
     NewScope()
@@ -146,12 +155,31 @@ def p_finish_scope(p):
     '''finish_scope : '''
     PopScope()
 
-# Is another type of new_scope required ?
-def p_function_scope(t):
+def p_function_scope(p):
     '''function_scope : '''
     functionScope()
+    t = env.prev.get(str(p[-1]))
+    if t is not None:
+        if t.type != p[-1].type :
+            print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        else:
+            for i in range(t.attr['numParameters']):
+                if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                    print ("\nFunction overloading by different types not supported\n")
+                if t.attr['parameterList'][i].id == None:
+                    print ("\nVariable name for parameter missing\n")
+                #if not env.put(t.attr['parameterList'][i]):
+                    #print ("\nError : parameter is already in the symbol table\n")
+    else:
+        for i in range(p[-1].attr['numParameters']):
+            pass
+            #if not env.put(p[-1].attr['parameterList'][i]):
+                    #print ("\nError : parameter is already in the symbol table\n")
 
-def p_unset_function_scope(t):
+
+def p_unset_function_scope(p):
     '''unset_function_scope : '''
     unsetFunctionScope()
 
@@ -221,7 +249,7 @@ def p_literal_6(p):
 def p_primary_expression_1(p):
     ''' primary_expression : literal '''
     p[0]=deepcopy(p[1])
-    pass
+    
   
 ##def p_primary_expression_2(p):
 ##    ''' primary_expression : SCOPE IDENTIFIER '''
@@ -243,7 +271,16 @@ def p_primary_expression_5(p):
 def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
     p[0]=deepcopy(p[1])
-    pass 
+    global env
+    p[0] = Attribute()
+    t = env.get(p[1].attr['name'])
+    if t==None:
+        p[0].type = Type("ERROR")
+	print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(2), p[1].attr['name'])
+    else :
+        p[0].attr['symbol'] = t
+	p[0].type=t.type
+	#print str(t.name),str(t.type)
 
 #id-expression:
     #unqualified-id
@@ -340,7 +377,7 @@ def p_postfix_expression_1(p):
 def p_postfix_expression_2(p):
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
     p[0] = deepcopy(p[1])
-    if not (isinstance(p[0].type,Type) and isinstance(p[1].type.link,Type)):
+    if not (isinstance(p[0].type,Type) and isinstance(p[1].type.next,Type)):
         print "Error in line %s : Cannot access index of non-array " % p.lineno(2)
         p[0]=errorAttr(p[0])
     else: # for now only handling 1-d arrays
@@ -355,7 +392,7 @@ def p_postfix_expression_2(p):
             else:
                 p[0].place=newTemp()
                 p[0].code+=p[1].code + "\t" + p[3].code + "\t" + p[0].place + " = " + p[1].place + "["+p[3].place+"]"+"\n"
-                p[0].type=p[1].type.link
+                p[0].type=p[1].type.next
                 p[0].attr={}
 
   
@@ -410,7 +447,7 @@ def p_postfix_expression_5(p):
     if is_primitive(p[1]) and (p[0].typeerrorAttr=='FLOAT' or p[0].type==Type('INT')) :
         p[0].place=newTemp()
         p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"
-    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.link,Type):
+    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
     #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"                                                                                               
     else:
@@ -425,7 +462,7 @@ def p_postfix_expression_6(p):
     if is_primitive(p[1]) and (p[0].type==Type('FLOAT') or p[0].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"
-    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.link,Type):
+    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
     #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"                                                                                                     
     else:
@@ -507,7 +544,7 @@ def p_unary_expression_2(p):
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
-    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.link,Type):
+    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
     #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"                                                                                                        
     else:
@@ -523,7 +560,7 @@ def p_unary_expression_3(p):
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1" + "\n"
-    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.link,Type):
+    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
     #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1"                
     else:
@@ -561,8 +598,8 @@ def p_unary_expression_4(p):
             if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary ! operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='*':
-        if isinstance(p[2].type,Type) and isinstance(p[2].type.link,Type):
-            p[0].type=p[2].type.link
+        if isinstance(p[2].type,Type) and isinstance(p[2].type.next,Type):
+            p[0].type=p[2].type.next
             #find value of *p[2].value and store in p[0]
         else:
             p[0]=errorAttr(p[0])
@@ -819,10 +856,10 @@ def p_additive_expression_2(p):
     elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
-    elif isinstance(p[1].type,Type) and isinstance(p[1].type.link,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
-    elif isinstance(p[3].type,Type) and isinstance(p[3].type.link,Type) and p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
@@ -840,10 +877,10 @@ def p_additive_expression_3(p):
     elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
-    elif isinstance(p[1].type,Type) and isinstance(p[1].type.link,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
-    elif isinstance(p[3].type,Type) and isinstance(p[3].type.link,Type) and  p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and  p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
@@ -1035,7 +1072,8 @@ def p_assignment_expression_2(p):
 
     else:
         if p[2]=='=':
-            if find_type(p[1])!=find_type(p[3]):
+	    print str(p[1].type),str(p[3].type)
+            if p[1].type!=p[3].type:
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
@@ -1059,7 +1097,7 @@ def p_assignment_expression_2(p):
             if p[2]=='+=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
                     pass                                                                  
-                elif isinstance(p[1].type,Type) and isinstance(p[1].type.link,Type) and p[3].type=='INT' and is_primitive(p[3]):
+                elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
@@ -1069,7 +1107,7 @@ def p_assignment_expression_2(p):
             if p[2]=='-=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
                     pass                                                                  
-                elif isinstance(p[1].type,Type) and isinstance(p[1].type.link,Type) and p[3].type=='INT' and is_primitive(p[3]):
+                elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
                     pass
                 else:
                     p[0]=errorAttr(p[0])
@@ -1170,7 +1208,7 @@ def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
     global env 
     t = Symbol(p[1])
-    t.attrs["islabel"] = True 
+    t.attr["islabel"] = True 
     if not env.put(t):
         print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
     p[0] = deepcopy(p[3])
@@ -1195,7 +1233,10 @@ def p_expression_statement_1(p):
 def p_expression_statement_2(p):
     ''' expression_statement : expression SEMICOLON '''
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else:
+        p[0].type = Type("VOID") 
     pass 
 
 #compound-statement:
@@ -1208,7 +1249,10 @@ def p_compound_statement_1(p):
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE statement_seq RBRACE '''
     p[0] = Attribute()
-    p[0].type = p[1].type
+    if p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 
 #statement-seq:
@@ -1217,7 +1261,10 @@ def p_compound_statement_2(p):
 def p_statement_seq_1(p):
     ''' statement_seq : statement ''' 
     p[0] = Attribute()
-    p[0].type = p[1].type
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 def p_statement_seq_2(p):
     ''' statement_seq : statement_seq statement'''
@@ -1236,7 +1283,10 @@ def p_selection_statement_1(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1259,7 +1309,10 @@ def p_selection_statement_3(p):
     ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1280,8 +1333,10 @@ def p_condition_1(p):
 def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
     p[0] = Attribute()
-    ## Himanshu check here whether declarator = assignment_expression is a valid type . If yes the p[0].type = Type("BOOL") else p[0].type = Type("ERROR")
-    pass 
+    if p[1].type==p[4].type and p[1].type is not None and p[4].type is not None:
+        p[0].type=Type('BOOL')
+    else:
+        p[0].type=Type('ERROR')
 
 #iteration-statement:
     #while ( condition ) statement
@@ -1291,7 +1346,10 @@ def p_iteration_statement_1(p):
     ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1301,7 +1359,10 @@ def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
     p[0] = Attribute()
     if p[5].type == Type("BOOL"):
-        p[0].type = p[2].type 
+        if p[2].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[5].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(5)))
@@ -1311,7 +1372,10 @@ def p_iteration_statement_3(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
-        p[0].type = p[8].type 
+        if p[8].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
@@ -1321,7 +1385,10 @@ def p_iteration_statement_4(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
-        p[0].type = p[7].type 
+        if p[7].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
@@ -1330,12 +1397,18 @@ def p_iteration_statement_4(p):
 def p_iteration_statement_5(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
     p[0] = Attribute()
-    p[0].type = p[7].type 
+    if p[7].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 def p_iteration_statement_6(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
     p[0] = Attribute()
-    p[0].type = p[6].type 
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 
 #for-init-statement:
@@ -1344,12 +1417,12 @@ def p_iteration_statement_6(p):
 def p_for_init_statement_1(p):
     ''' for_init_statement : expression_statement ''' 
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    p[0].type = Type("VOID")
     pass 
 def p_for_init_statement_2(p):
     ''' for_init_statement : simple_declaration '''
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    p[0].type = Type("VOID") 
     pass 
 
 #jump-statement:
@@ -1370,7 +1443,7 @@ def p_jump_statement_2(p):
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
     p[0] = Attribute()
-    p[0].type = p[2].type 
+    p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
@@ -1382,7 +1455,11 @@ def p_jump_statement_4(p):
     #block-declaration
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
-    p[0] = deepcopy(p[1])
+    p[0] = Attribute()
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass
 ## }}}
 
@@ -1549,6 +1626,7 @@ def p_decl_specifier_1(p):
     
 def p_decl_specifier_2(p):
     ''' decl_specifier : type_specifier '''
+    print str(p[1].type)
     p[0] = deepcopy(p[1])
     
 def p_decl_specifier_3(p):
@@ -2050,23 +2128,12 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
+# ATUL : delcarator should not put symbol table entries for parameterList
 def p_function_definition_1(p):
-    ''' function_definition : declarator new_scope function_body finish_scope'''
+    ''' function_definition : declarator function_scope function_body unset_function_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
-    t = env.get(str(p[2]))
-    if t is not None:
-        if t.type != p[2].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[2].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[2].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-    else:
-        pass
     #code generation
 
 
@@ -2074,7 +2141,7 @@ def p_function_definition_1(p):
 
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
+    ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2220,12 +2287,12 @@ def p_class_head(p):
     global env
     cl = Symbol(p[2])
     cl.type = p[1].type 
-    cl.attrs["inherits"] = p[3]
+    cl.attr["inherits"] = p[3]
     table = env.table
     temp = SymbolTable()
-    for s in cl.attrs["inherits"]:
+    for s in cl.attr["inherits"]:
         temp = temp.combine(s)
-    cl.attrs["scope"] = env.table 
+    cl.attr["scope"] = env.table 
     env.prev.put(cl)
     p[0] = cl 
 
@@ -2388,7 +2455,7 @@ def p_base_specifier_1(p):
     ''' base_specifier : class_name '''
     global env 
     if env.get(p[1]):
-        p[0] = copy(env.get(p[1]).attrs['scope'])
+        p[0] = copy(env.get(p[1]).attr['scope'])
     else :
         print("Identifier" + str(p[1]) + "not defined")
     pass 
@@ -2396,7 +2463,7 @@ def p_base_specifier_2(p):
     ''' base_specifier : access_specifier class_name '''
     global env 
     if env.get(p[2]):
-        p[0] = copy(env.get(p[2]).attrs['scope'])
+        p[0] = copy(env.get(p[2]).attr['scope'])
     else :
         print("Identifier" + str(p[2]) + "not defined")
     pass
@@ -2549,7 +2616,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
