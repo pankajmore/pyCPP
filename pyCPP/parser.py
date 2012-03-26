@@ -1678,12 +1678,12 @@ def p_mark_type(p):
     t = env.get(str(p[-1]))
     if t==None:
         p[0] = "ERROR"
-        DeclType = Type("ERROR")
+        #DeclType = Type("ERROR")
     elif t.type == Type("CLASS"):
         DeclType = Type(str(p[-1]))
     else :
         p[0] = "ERROR"
-        DeclType = Type("ERROR")
+        #DeclType = Type("ERROR")
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
