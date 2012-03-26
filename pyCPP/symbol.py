@@ -70,7 +70,7 @@ class Symbol(object):
         self.keyword = False 
         self.type = None 
         self.error = False 
-        self.attrs = {}
+        self.attr = {}
         self.table = None
     def __repr__(self):
         if not self.keyword:
