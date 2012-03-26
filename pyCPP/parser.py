@@ -1447,7 +1447,7 @@ def p_simple_declaration_1(p):
         p[0].type = Type("ERROR")
     elif p[0].type != Type("ERROR") :
         for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.name)
+            t1 = Symbol(t.attr["name"])
             t1.type = p[0].type
             if t.attr.has_key("isFunction"):
                 t1.attr["isFunction"] = 1
@@ -1460,7 +1460,7 @@ def p_simple_declaration_1(p):
             if t.attr["initialized"] == 1:
                 t1.attr["initializer"] = deepcopy(t.attr["initializer"])
                 t1.attr["initialized"] =1
-            if t.type != Type("ERROR") and p[1].type == t.attr["initializer"].type:
+            if t.type != Type("ERROR") :
                 if not env.put(t1):
                     print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
                     t.type = Type("ERROR")
@@ -1483,7 +1483,7 @@ def p_simple_declaration_2(p):
     #    p[0].type = Type("ERROR")
     if p[0].type != Type("ERROR") :
         for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.name)
+            t1 = Symbol(t.attr["name"])
             t1.type = p[0].type
             if t.attr.has_key("isFunction"):
                 t1.attr["isFunction"] = 1
@@ -1494,12 +1494,14 @@ def p_simple_declaration_2(p):
                 #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
-                t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
+                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
                 t1.attr["initialized"] =1
-            if t.type != Type("ERROR"):
+            if t.type != Type("ERROR") :
                 if not env.put(t1):
                     print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
                     t.type = Type("ERROR")
+            else :
+                t.type = Type("ERROR")
                     
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
@@ -1989,7 +1991,7 @@ def p_parameter_declaration_1(p):
     p[0].type = p[1].type
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
-    if (p[2].attr['isFunction'] == 1):
+    if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):
         print "\nError : Functions as arguments to functions not supported\n"
 
 def p_parameter_declaration_2(p):
@@ -2011,7 +2013,7 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator function-try-block
 
 def p_function_definition_1(p):
-    ''' function_definition : new_scope declarator function_body finish_scope'''
+    ''' function_definition : declarator new_scope function_body finish_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2034,7 +2036,7 @@ def p_function_definition_1(p):
 
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  new_scope declarator function_body finish_scope'''
+    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2509,7 +2511,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
