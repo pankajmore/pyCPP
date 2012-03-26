@@ -160,24 +160,27 @@ def p_function_scope(p):
     '''function_scope : '''
     functionScope()
     t = env.prev.get(p[-1].attr['name'])
-    print t
-    if t is not None:
+    if t is not None: # function declartion already seen
         # need the entry of attribute in symbol
-        print "der"
+# TODO : Check type consistency
+        #print p[-1].type
         #if t.type != p[-1].type :
-            #print ("\nFunction's type not consistent\n")
-        #if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            #print ("\nFunction overloading not supported\n")
-        #else:
-            #for i in range(t.attr['numParameters']):
-                #if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                    #print ("\nFunction overloading by different types not supported\n")
-                #if t.attr['parameterList'][i].id == None:
-                    #print ("\nVariable name for parameter missing\n")
-                #if not env.put(t.attr['parameterList'][i].attr['name']):
-                    #print ("\nError : parameter is already in the symbol table\n")
-                # also put the type
-    else:
+        #    print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        for i in range(t.attr['numParameters']):
+            if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                print ("\nFunction overloading by different types not supported\n")
+            if t.attr['parameterList'][i].attr['name'] == None:
+                print ("\nVariable name for parameter missing\n")
+            # refactor the duplicate code
+            # storing the formal parameters in table not the parameters during function declaration
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
+
+    else: # function declaration has not been seen
         for i in range(p[-1].attr['numParameters']):
             print "here"
             s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
@@ -2300,7 +2303,6 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-# ATUL : delcarator should not put symbol table entries for parameterList
 def p_function_definition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
