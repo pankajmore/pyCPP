@@ -281,7 +281,7 @@ def p_primary_expression_6(p):
     else :
         p[0].attr['symbol'] = t
 	p[0].type=t.type
-	#print str(t.name),str(t.type)
+	print str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
     
 #id-expression:
@@ -1716,7 +1716,7 @@ def p_decl_specifier_1(p):
 def p_decl_specifier_2(p):
     ''' decl_specifier : type_specifier '''
     p.set_lineno(0,p.lineno(1))
-    print str(p[1].type)
+    
     p[0] = deepcopy(p[1])
     
 def p_decl_specifier_3(p):
