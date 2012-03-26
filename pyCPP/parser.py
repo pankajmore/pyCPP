@@ -1143,30 +1143,37 @@ def p_constant_expression_opt_2(p):
     #try-block
 def p_statement_1(p):
     ''' statement : labeled_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_2(p):
     ''' statement : expression_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_3(p):
     ''' statement : compound_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_5(p):
     ''' statement : iteration_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_6(p):
     ''' statement : jump_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 def p_statement_7(p):
     ''' statement : declaration_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     pass 
 
@@ -1176,6 +1183,7 @@ def p_statement_7(p):
     #default : statement
 def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
+    p.set_lineno(0,p.lineno(1))
     global env 
     t = Symbol(p[1])
     t.attr["islabel"] = True 
@@ -1185,11 +1193,13 @@ def p_labeled_statement_1(p):
     pass 
 def p_labeled_statement_2(p):
     ''' labeled_statement : CASE constant_expression COLON statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = p[4].type 
     pass 
 def p_labeled_statement_3(p):
     ''' labeled_statement : DEFAULT COLON statement ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[3])
     pass 
 
@@ -1197,11 +1207,13 @@ def p_labeled_statement_3(p):
     #expressionopt ;
 def p_expression_statement_1(p):
     ''' expression_statement : SEMICOLON ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
     pass 
 def p_expression_statement_2(p):
     ''' expression_statement : expression SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1213,11 +1225,13 @@ def p_expression_statement_2(p):
     #{ statement-seqopt }
 def p_compound_statement_1(p):
     ''' compound_statement : LBRACE RBRACE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
     pass 
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE statement_seq RBRACE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1230,6 +1244,7 @@ def p_compound_statement_2(p):
     #statement-seq statement
 def p_statement_seq_1(p):
     ''' statement_seq : statement ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1238,6 +1253,7 @@ def p_statement_seq_1(p):
     pass 
 def p_statement_seq_2(p):
     ''' statement_seq : statement_seq statement'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type == Type("VOID") and p[2].type == Type("VOID"):
         p[0].type = Type("VOID")
@@ -1251,6 +1267,7 @@ def p_statement_seq_2(p):
     #switch ( condition ) statement
 def p_selection_statement_1(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
         if p[5].type == Type("ERROR"):
@@ -1264,6 +1281,7 @@ def p_selection_statement_1(p):
     pass 
 def p_selection_statement_2(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement ELSE statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
         if p[5].type == Type("VOID") and p[7].type == Type("VOID"):
@@ -1277,6 +1295,7 @@ def p_selection_statement_2(p):
     pass 
 def p_selection_statement_3(p):
     ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
         if p[5].type == Type("ERROR"):
@@ -1294,6 +1313,7 @@ def p_selection_statement_3(p):
     #type-specifier-seq declarator = assignment-expression
 def p_condition_1(p):
     ''' condition : expression ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type != Type("ERROR"):
         p[0].type = Type("BOOL")
@@ -1302,6 +1322,7 @@ def p_condition_1(p):
     pass 
 def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type==p[4].type and p[1].type is not None and p[4].type is not None:
         p[0].type=Type('BOOL')
@@ -1314,6 +1335,7 @@ def p_condition_2(p):
     #for ( for-init-statement conditionopt ; expressionopt ) statement
 def p_iteration_statement_1(p):
     ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
         if p[5].type == Type("ERROR"):
@@ -1327,6 +1349,7 @@ def p_iteration_statement_1(p):
 
 def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[5].type == Type("BOOL"):
         if p[2].type == Type("ERROR"):
@@ -1340,6 +1363,7 @@ def p_iteration_statement_2(p):
     pass 
 def p_iteration_statement_3(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
         if p[8].type == Type("ERROR"):
@@ -1353,6 +1377,7 @@ def p_iteration_statement_3(p):
     pass 
 def p_iteration_statement_4(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
         if p[7].type == Type("ERROR"):
@@ -1366,6 +1391,7 @@ def p_iteration_statement_4(p):
     pass 
 def p_iteration_statement_5(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[7].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1374,6 +1400,7 @@ def p_iteration_statement_5(p):
     pass 
 def p_iteration_statement_6(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1386,11 +1413,13 @@ def p_iteration_statement_6(p):
     #simple-declaration
 def p_for_init_statement_1(p):
     ''' for_init_statement : expression_statement ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
     pass 
 def p_for_init_statement_2(p):
     ''' for_init_statement : simple_declaration '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
     pass 
@@ -1402,21 +1431,25 @@ def p_for_init_statement_2(p):
     #goto identifier ;
 def p_jump_statement_1(p):
     ''' jump_statement : BREAK ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_2(p):
     ''' jump_statement : CONTINUE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
     pass 
@@ -1425,6 +1458,7 @@ def p_jump_statement_4(p):
     #block-declaration
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
@@ -1449,10 +1483,12 @@ def p_declaration_statement(p):
 
 def p_declaration_1(p):
     ''' declaration : block_declaration '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
       
 def p_declaration_2(p):
     ''' declaration : function_definition '''
+    p.set_lineno(0,p.lineno(1))
     p[0]= deepcopy(p[1])
     
 
@@ -1470,6 +1506,7 @@ def p_declaration_2(p):
 
 def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 #simple-declaration:
@@ -1477,6 +1514,7 @@ def p_block_declaration_1(p):
 
 def p_simple_declaration_1(p):
     ''' simple_declaration : decl_specifier_seq init_declarator_list SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1509,6 +1547,7 @@ def p_simple_declaration_1(p):
     
 def p_simple_declaration_2(p):
     ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1545,6 +1584,7 @@ def p_simple_declaration_2(p):
                     
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
                            #| init_declarator_list SEMICOLON '''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1558,6 +1598,7 @@ def p_simple_declaration_3(p):
 
 def p_decl_specifier_seq_1(p):
     ''' decl_specifier_seq : decl_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 #def p_decl_specifier_seq_2(p):
@@ -1576,14 +1617,17 @@ def p_decl_specifier_seq_1(p):
 
 def p_decl_specifier_1(p):
     ''' decl_specifier : storage_class_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 def p_decl_specifier_2(p):
     ''' decl_specifier : type_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 def p_decl_specifier_3(p):
     ''' decl_specifier : function_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 #storage-class-specifier:
@@ -1595,12 +1639,14 @@ def p_decl_specifier_3(p):
 
 def p_storage_class_specifier_1(p):
     ''' storage_class_specifier : AUTO'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("AUTO")
     
 def p_storage_class_specifier_2(p):
     ''' storage_class_specifier : EXTERN '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("EXTERN")
@@ -1612,6 +1658,7 @@ def p_storage_class_specifier_2(p):
 
 def p_function_specifier(p):
     ''' function_specifier : INLINE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("INLINE")
@@ -1625,11 +1672,13 @@ def p_function_specifier(p):
 
 def p_type_specifier_1(p):
     ''' type_specifier : simple_type_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 def p_type_specifier_2(p):
     ''' type_specifier : class_specifier '''
                         #| elaborated_type_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
  
 ## HELPER 
@@ -1670,36 +1719,42 @@ def p_type_specifier_2(p):
 
 def p_simple_type_specifier_2(p):
     ''' simple_type_specifier : BOOL '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("BOOL")
 
 def p_simple_type_specifier_3(p):
     ''' simple_type_specifier : CHAR '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("CHAR")
 
 def p_simple_type_specifier_4(p):
     ''' simple_type_specifier : INT '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("INT")
 
 def p_simple_type_specifier_5(p):
     ''' simple_type_specifier : FLOAT '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("FLOAT")
 
 def p_simple_type_specifier_6(p):
     ''' simple_type_specifier : DOUBLE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("DOUBLE")
 
 def p_simple_type_specifier_7(p):
     ''' simple_type_specifier : VOID '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("VOID")
@@ -1711,6 +1766,7 @@ def p_simple_type_specifier_7(p):
 
 def p_type_name_1(p):
     ''' type_name : class_name ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 #elaborated-type-specifier:
@@ -1720,6 +1776,7 @@ def p_type_name_1(p):
     #typename ::opt nested-name-specifier templateopt template-id
 def p_elaborated_type_specifier(p):
     ''' elaborated_type_specifier : class_key IDENTIFIER'''
+    p.set_lineno(0,p.lineno(1))
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1762,12 +1819,14 @@ def p_elaborated_type_specifier(p):
     #init-declarator-list , init-declarator
 def p_init_declarator_list_1(p):
     ''' init_declarator_list : init_declarator '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr["init_declarator_list"] = [deepcopy(p[1])]
     
 def p_init_declarator_list_2(p):
     ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     #for key in p[3].attr["init_declarator_list"]:
      #   p[0].attr["init_declarator_list"].append(deepcopy(key))
@@ -1779,6 +1838,7 @@ def p_init_declarator_list_2(p):
     #declarator initializeropt
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
+    p.set_lineno(0,p.lineno(1))
     #p[0] = Attribute()
     #p[0] = initAttr(p[0])
     p[0] = deepcopy(p[1])
@@ -1816,10 +1876,12 @@ def p_init_declarator(p):
     #ptr-operator declarator
 def p_declarator_1(p):
     ''' declarator : direct_declarator %prec NOPAREN'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
   
 def p_declarator_2(p):
     ''' declarator : ptr_operator declarator '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
     if p[1]=='*' :
         p[0].type = Type(p[1].type)
@@ -1833,10 +1895,12 @@ def p_declarator_2(p):
     #( declarator )
 def p_direct_declarator_1(p):
     ''' direct_declarator : declarator_id '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
   
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     p[0].attr['isFunction'] = 1
     if p[3]==None:
@@ -1850,6 +1914,7 @@ def p_direct_declarator_2(p):
   
 def p_direct_declarator_3(p):
     ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     p[0].attr["isArray"] = 1
     if p[3] == None:
@@ -1861,6 +1926,7 @@ def p_direct_declarator_3(p):
   
 def p_direct_declarator_4(p):
     ''' direct_declarator : LPAREN declarator RPAREN '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 #ptr-operator:
@@ -1878,10 +1944,12 @@ def p_direct_declarator_4(p):
 
 def p_ptr_operator_1(p):
     ''' ptr_operator : TIMES '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = '*'
 
 def p_ptr_operator_2(p):
     ''' ptr_operator : AMPERSAND '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = '&'
 
 #cv-qualifier-seq:
@@ -1904,6 +1972,7 @@ def p_cv_qualifier_seq_opt(p):
 
 def p_declarator_id(p):
     ''' declarator_id : id_expression '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 
@@ -1921,16 +1990,19 @@ def p_declarator_id(p):
     #type-specifier-seq abstract-declaratoropt
 def p_type_id(p):
     ''' type_id : type_specifier_seq abstract_declarator_opt '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 #type-specifier-seq:
     #type-specifier type-specifier-seqopt
 def p_type_specifier_seq_1(p):
     ''' type_specifier_seq : type_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 def p_type_specifier_seq_2(p):
     ''' type_specifier_seq : type_specifier type_specifier_seq '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     p[0].type= Type(p[2].type)
     if p[2].type == Type("ERROR"):
@@ -1941,10 +2013,12 @@ def p_type_specifier_seq_2(p):
     #direct-abstract-declarator
 def p_abstract_declarator_1(p):
     ''' abstract_declarator : ptr_operator abstract_declarator_opt '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_abstract_declarator_2(p):
     ''' abstract_declarator : direct_abstract_declarator '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_abstract_declarator_opt_1(p):
@@ -1953,6 +2027,7 @@ def p_abstract_declarator_opt_1(p):
     
 def p_abstract_declarator_opt_2(p):
     ''' abstract_declarator_opt : abstract_declarator '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 #direct-abstract-declarator:
@@ -1961,18 +2036,22 @@ def p_abstract_declarator_opt_2(p):
     #( abstract-declarator )
 def p_direct_abstract_declarator_1(p):
     ''' direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_direct_abstract_declarator_2(p):
     ''' direct_abstract_declarator : LPAREN parameter_declaration_clause RPAREN cv_qualifier_seq_opt '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_direct_abstract_declarator_3(p):
     ''' direct_abstract_declarator : direct_abstract_declarator_opt LBRACKET constant_expression_opt RBRACKET '''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_direct_abstract_declarator_4(p):
     ''' direct_abstract_declarator : LPAREN abstract_declarator RPAREN '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 def p_direct_abstract_declarator_opt_1(p):
@@ -1981,6 +2060,7 @@ def p_direct_abstract_declarator_opt_1(p):
     
 def p_direct_abstract_declarator_opt_2(p):
     ''' direct_abstract_declarator_opt : direct_abstract_declarator '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
 #parameter-declaration-clause:
@@ -1992,14 +2072,17 @@ def p_parameter_declaration_clause_1(p):
 
 def p_parameter_declaration_clause_2(p):
     ''' parameter_declaration_clause : parameter_declaration_list '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 def p_parameter_declaration_clause_3(p):
     ''' parameter_declaration_clause : parameter_declaration_list ELLIPSIS '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 def p_parameter_declaration_clause_4(p):
     ''' parameter_declaration_clause : parameter_declaration_list COMMA ELLIPSIS '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 #parameter-declaration-list:
@@ -2007,6 +2090,7 @@ def p_parameter_declaration_clause_4(p):
     #parameter-declaration-list , parameter-declaration
 def p_parameter_declaration_list_1(p):
     ''' parameter_declaration_list : parameter_declaration '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr['parameterList'] = [deepcopy(p[1])]
@@ -2015,6 +2099,7 @@ def p_parameter_declaration_list_1(p):
 
 def p_parameter_declaration_list_2(p):
     ''' parameter_declaration_list : parameter_declaration_list COMMA parameter_declaration '''
+    p.set_lineno(0,p.lineno(2))
     p[0] = deepcopy(p[1])
     p[0].attr['parameterList'].append(deepcopy(p[3]))
     p[0].attr['numParameters'] += 1
@@ -2027,6 +2112,7 @@ def p_parameter_declaration_list_2(p):
 
 def p_parameter_declaration_1(p):
     ''' parameter_declaration : decl_specifier_seq declarator '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
     p[0].type = p[1].type
     #p[0].specifier = p[1].specifier
@@ -2036,6 +2122,7 @@ def p_parameter_declaration_1(p):
 
 def p_parameter_declaration_2(p):
     ''' parameter_declaration : decl_specifier_seq declarator ASSIGN assignment_expression '''
+    p.set_lineno(0,p.lineno(1))
     print "Assignments in formal parameters not supported"
 
 def p_parameter_declaration_3(p):
@@ -2054,6 +2141,7 @@ def p_parameter_declaration_4(p):
 
 def p_function_definition_1(p):
     ''' function_definition : declarator new_scope function_body finish_scope'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2077,6 +2165,7 @@ def p_function_definition_1(p):
   
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2104,6 +2193,7 @@ def p_function_definition_2(p):
     #compound-statement
 def p_function_body(p):
     ''' function_body : compound_statement ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
 
 #initializer:
@@ -2116,6 +2206,7 @@ def p_initializer_opt_1(p):
     
 def p_initializer_opt_2(p):
     ''' initializer_opt : ASSIGN initializer_clause '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("ASSIGN")
@@ -2126,6 +2217,7 @@ def p_initializer_opt_2(p):
 #### Rule to be used for assigning object of classes which constructor. ###
 def p_initializer_opt_3(p):
     ''' initializer_opt : LPAREN expression_list RPAREN ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = "LPAREN"
     
 
@@ -2135,6 +2227,7 @@ def p_initializer_opt_3(p):
     #{ }
 def p_initializer_clause_1(p):
     ''' initializer_clause : assignment_expression '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr["initializer_clause"] = [deepcopy(p[1])]
@@ -2144,6 +2237,7 @@ def p_initializer_clause_1(p):
 
 def p_initializer_clause_2(p):
     ''' initializer_clause : LBRACE initializer_list RBRACE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr["isArray"] = 1
@@ -2155,6 +2249,7 @@ def p_initializer_clause_2(p):
 
 def p_initializer_clause_3(p):
     ''' initializer_clause : LBRACE RBRACE '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr["isArray"] = 1
@@ -2166,10 +2261,12 @@ def p_initializer_clause_3(p):
     #initializer-list , initializer-clause
 def p_initializer_list_1(p):
     ''' initializer_list : initializer_clause '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     
 def p_initializer_list_2(p):
     ''' initializer_list : initializer_list COMMA initializer_clause ''' 
+    p.set_lineno(0,p.lineno(2))
     p[0] = deepcopy(p[1])
     if p[1].type == p[3].type :
         p[0].attr["initializer_clause"].append(deepcopy(p[3].attr["initializer_clause"]))
@@ -2367,6 +2464,7 @@ def p_base_clause_opt_1(p):
     p[0] = []
 def p_base_clause_opt_2(p):
     ''' base_clause_opt : COLON base_specifier_list '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = p[2]
 
 
@@ -2375,10 +2473,12 @@ def p_base_clause_opt_2(p):
     #base-specifier-list , base-specifier
 def p_base_specifier_list_1(p):
     ''' base_specifier_list : base_specifier_list COMMA base_specifier '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = p[1] + p[3]
     pass 
 def p_base_specifier_list_2(p):
     ''' base_specifier_list : base_specifier ''' 
+    p.set_lineno(0,p.lineno(1))
     p[0] = [p[1]]
     pass 
 
@@ -2389,6 +2489,7 @@ def p_base_specifier_list_2(p):
 def p_base_specifier_1(p):
     ''' base_specifier : class_name '''
     global env 
+    p.set_lineno(0,p.lineno(1))
     if env.get(p[1]):
         p[0] = copy(env.get(p[1]).attr['scope'])
     else :
@@ -2396,6 +2497,7 @@ def p_base_specifier_1(p):
     pass 
 def p_base_specifier_2(p):
     ''' base_specifier : access_specifier class_name '''
+    p.set_lineno(0,p.lineno(1))
     global env 
     if env.get(p[2]):
         p[0] = copy(env.get(p[2]).attr['scope'])
@@ -2421,6 +2523,7 @@ def p_access_specifier_1(p):
     ''' access_specifier : PUBLIC 
                     | PRIVATE 
                     | PROTECTED ''' 
+    p.set_lineno(0,p.lineno(1))
     pass 
 ## }}}
 
@@ -2431,25 +2534,30 @@ def p_access_specifier_1(p):
     #operator conversion-type-id
 def p_conversion_function_id(p):
     ''' conversion_function_id : OPERATOR conversion_type_id '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 #conversion-type-id:
     #type-specifier-seq conversion-declaratoropt
 def p_conversion_type_id_1(p):
     ''' conversion_type_id : type_specifier_seq %prec NOPAREN'''
+    p.set_lineno(0,p.lineno(1))
     pass
 
 def p_conversion_type_id_2(p):
     ''' conversion_type_id : type_specifier_seq conversion_declarator %prec LPAREN'''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 #conversion-declarator:
     #ptr-operator conversion-declaratoropt
 def p_conversion_declarator_1(p):
     ''' conversion_declarator : ptr_operator %prec NOPAREN '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 def p_conversion_declarator_2(p):
     ''' conversion_declarator : ptr_operator conversion_declarator %prec LPAREN'''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 #ctor-initializer:
@@ -2480,6 +2588,7 @@ def p_mem_initializer(p):
 def p_mem_initializer_id(p):
     ''' mem_initializer_id : class_name 
                     | IDENTIFIER '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 
 
@@ -2497,6 +2606,7 @@ def p_mem_initializer_id(p):
     #operator operator
 def p_operator_function_id(p) : 
     ''' operator_function_id : OPERATOR operator '''
+    p.set_lineno(0,p.lineno(1))
 
     pass 
 
@@ -2531,6 +2641,7 @@ def p_operator(p):
                 | COMMA 
                 | LPAREN RPAREN 
                 | LBRACKET RBRACKET  '''
+    p.set_lineno(0,p.lineno(1))
     pass 
 ### }}}
 
