@@ -1441,13 +1441,13 @@ def p_simple_declaration_1(p):
         for t in p[0].attr["init_declarator_list"] :
             t1 = Symbol(t.name)
             t1.type = p[0].type
-            if t.isfunction == 1:
-                t1.attr["isfunction"] = 1
-                t1.isfunction = 1
+            if t.attr.has_key("isFunction"):
+                t1.attr["isFunction"] = 1
+                #t1.isfunction = 1
                 t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.isArray == 1:
+            elif t.attr.has_key("isArray"):
                 t1.attr["isArray"]=1
-                t1.isArray = 1
+                #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
                 t1.attr["initializer"] = deepcopy(t.attr["initializer"])
@@ -1477,13 +1477,13 @@ def p_simple_declaration_2(p):
         for t in p[0].attr["init_declarator_list"] :
             t1 = Symbol(t.name)
             t1.type = p[0].type
-            if t.isfunction == 1:
-                t1.attr["isfunction"] = 1
-                t1.isfunction = 1
+            if t.attr.has_key("isFunction"):
+                t1.attr["isFunction"] = 1
+                #t1.isfunction = 1
                 t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.isArray == 1:
+            elif t.attr.has_key("isArray"):
                 t1.attr["isArray"]=1
-                t1.isArray = 1
+                #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
                 t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
