@@ -1169,7 +1169,7 @@ def p_labeled_statement_1(p):
     ''' labeled_statement : IDENTIFIER COLON statement ''' 
     global env 
     t = Symbol(p[1])
-    t.attrs["islabel"] = True 
+    t.attr["islabel"] = True 
     if not env.put(t):
         print("Error : Identifier " + str(p[1]) + "already defined" + " line no  " + str(p.lineno(1)))
     p[0] = deepcopy(p[3])
@@ -2174,12 +2174,12 @@ def p_class_head(p):
     global env
     cl = Symbol(p[2])
     cl.type = p[1].type 
-    cl.attrs["inherits"] = p[3]
+    cl.attr["inherits"] = p[3]
     table = env.table
     temp = SymbolTable()
-    for s in cl.attrs["inherits"]:
+    for s in cl.attr["inherits"]:
         temp = temp.combine(s)
-    cl.attrs["scope"] = env.table 
+    cl.attr["scope"] = env.table 
     env.prev.put(cl)
     p[0] = cl 
 
@@ -2342,7 +2342,7 @@ def p_base_specifier_1(p):
     ''' base_specifier : class_name '''
     global env 
     if env.get(p[1]):
-        p[0] = copy(env.get(p[1]).attrs['scope'])
+        p[0] = copy(env.get(p[1]).attr['scope'])
     else :
         print("Identifier" + str(p[1]) + "not defined")
     pass 
@@ -2350,7 +2350,7 @@ def p_base_specifier_2(p):
     ''' base_specifier : access_specifier class_name '''
     global env 
     if env.get(p[2]):
-        p[0] = copy(env.get(p[2]).attrs['scope'])
+        p[0] = copy(env.get(p[2]).attr['scope'])
     else :
         print("Identifier" + str(p[2]) + "not defined")
     pass
