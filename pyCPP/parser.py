@@ -1906,11 +1906,45 @@ def p_parameter_declaration_4(p):
 
 def p_function_definition_1(p):
     ''' function_definition : new_scope declarator function_body finish_scope'''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    #p[0].specifier = 1
+    t = env.get(str(p[2]))
+    if t is not None:
+        if t.type != p[2].type :
+            print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[2].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        else:
+            for i in range(t.attr['numParameters']):
+                if t.attr['parameterList'][i].type != p[2].attr['parameterList'][i].type:
+                    print ("\nFunction overloading by different types not supported\n")
+    else:
+        pass
+    #code generation
+
+
+
+
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
-    pass
+    ''' function_definition : decl_specifier_seq  new_scope declarator function_body finish_scope'''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    #p[0].specifier = 1
+    t = env.get(str(p[3]))
+    if t is not None:
+        if t.type != p[3].type :
+            print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[3].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        else:
+            for i in range(t.attr['numParameters']):
+                if t.attr['parameterList'][i].type != p[3].attr['parameterList'][i].type:
+                    print ("\nFunction overloading by different types not supported\n")
+    else:
+        pass
+    #code generation
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
 #def p_function_definition_3(p):
