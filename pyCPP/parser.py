@@ -1223,7 +1223,10 @@ def p_compound_statement_1(p):
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE statement_seq RBRACE '''
     p[0] = Attribute()
-    p[0].type = p[1].type
+    if p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 
 #statement-seq:
@@ -1232,7 +1235,10 @@ def p_compound_statement_2(p):
 def p_statement_seq_1(p):
     ''' statement_seq : statement ''' 
     p[0] = Attribute()
-    p[0].type = p[1].type
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 def p_statement_seq_2(p):
     ''' statement_seq : statement_seq statement'''
@@ -1251,7 +1257,10 @@ def p_selection_statement_1(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement %prec IFX '''
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1274,7 +1283,10 @@ def p_selection_statement_3(p):
     ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1295,7 +1307,7 @@ def p_condition_1(p):
 def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
     p[0] = Attribute()
-    if p[1].type==p[4].type:
+    if p[1].type==p[4].type and p[1].type is not None and p[4].type is not None:
         p[0].type=Type('BOOL')
     else:
         p[0].type=Type('ERROR')
@@ -1308,7 +1320,10 @@ def p_iteration_statement_1(p):
     ''' iteration_statement : WHILE LPAREN condition RPAREN statement ''' 
     p[0] = Attribute()
     if p[3].type == Type("BOOL"):
-        p[0].type = p[5].type 
+        if p[5].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
@@ -1318,7 +1333,10 @@ def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
     p[0] = Attribute()
     if p[5].type == Type("BOOL"):
-        p[0].type = p[2].type 
+        if p[2].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[5].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(5)))
@@ -1328,7 +1346,10 @@ def p_iteration_statement_3(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
-        p[0].type = p[8].type 
+        if p[8].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
@@ -1338,7 +1359,10 @@ def p_iteration_statement_4(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
     p[0] = Attribute()
     if p[4].type == Type("BOOL"):
-        p[0].type = p[7].type 
+        if p[7].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].type = Type("VOID")
     else :
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
@@ -1347,12 +1371,18 @@ def p_iteration_statement_4(p):
 def p_iteration_statement_5(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
     p[0] = Attribute()
-    p[0].type = p[7].type 
+    if p[7].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 def p_iteration_statement_6(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
     p[0] = Attribute()
-    p[0].type = p[6].type 
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass 
 
 #for-init-statement:
