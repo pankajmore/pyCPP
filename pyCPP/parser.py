@@ -1219,7 +1219,7 @@ def p_compound_statement_1(p):
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE statement_seq RBRACE '''
     p[0] = Attribute()
-    if p[1].type == Type("ERROR"):
+    if p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
