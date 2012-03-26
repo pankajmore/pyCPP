@@ -157,25 +157,28 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     functionScope()
-    # get the attribute here
     t = env.prev.get(p[-1].attr['name'])
-    if t is not None:
+    if t is not None: # function declartion already seen
         # need the entry of attribute in symbol
-        print "der"
+# TODO : Check type consistency
+        #print p[-1].type
         #if t.type != p[-1].type :
-            #print ("\nFunction's type not consistent\n")
-        #if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            #print ("\nFunction overloading not supported\n")
-        #else:
-            #for i in range(t.attr['numParameters']):
-                #if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                    #print ("\nFunction overloading by different types not supported\n")
-                #if t.attr['parameterList'][i].id == None:
-                    #print ("\nVariable name for parameter missing\n")
-                #if not env.put(t.attr['parameterList'][i].attr['name']):
-                    #print ("\nError : parameter is already in the symbol table\n")
-                # also put the type
-    else:
+        #    print ("\nFunction's type not consistent\n")
+        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            print ("\nFunction overloading not supported\n")
+        for i in range(t.attr['numParameters']):
+            if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                print ("\nFunction overloading by different types not supported\n")
+            if t.attr['parameterList'][i].attr['name'] == None:
+                print ("\nVariable name for parameter missing\n")
+            # refactor the duplicate code
+            # storing the formal parameters in table not the parameters during function declaration
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
+
+    else: # function declaration has not been seen
         for i in range(p[-1].attr['numParameters']):
             print "here"
             s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
@@ -558,7 +561,7 @@ def p_unary_expression_1(p):
     
 def p_unary_expression_2(p):
     ''' unary_expression : PLUS_PLUS cast_expression'''
-    p[0]=deepcopy(p[1])
+    p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
@@ -575,7 +578,7 @@ def p_unary_expression_2(p):
 
 def p_unary_expression_3(p):
     ''' unary_expression : MINUS_MINUS cast_expression '''
-    p[0]=deepcopy(p[1])
+    p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1" + "\n"
@@ -1993,8 +1996,10 @@ def p_init_declarator(p):
         else :
             p[0].type = Type("ERROR")
     #t.type = deepcopy(DeclType)
-    if p[1].type == Type("POINTER"):
+    typ = p[1].type
+    while (isinstance(typ,Type)):
         t.type = Type(t.type)
+        typ = typ.next
     t.attr = deepcopy(p[1].attr)
     if not env.put(t):
         print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
@@ -2067,7 +2072,7 @@ def p_declarator_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
     if p[1]=='*' :
-        p[0].type = Type("POINTER")
+        p[0].type = Type(p[2].type)
     elif p[1] == '&' :
         p[0].type = Type("ERROR")
 
@@ -2325,7 +2330,6 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-# ATUL : delcarator should not put symbol table entries for parameterList
 def p_function_definition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
