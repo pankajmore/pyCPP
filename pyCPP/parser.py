@@ -1104,35 +1104,38 @@ def p_assignment_expression_2(p):
     ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
     p[0] = Attribute()
     p[0].type='VOID'
-                  
+        
     if not is_primitive(p[1]) and not is_primitive(p[3]):
-        p[0]=initAttr(p[0])
-        p[1]=initAttr(p[1])
-        print 'Error in line %s : Incompatible assignment operation. Cannot assign function to %s ' % (p.lineno(2),find_type(p[3])) 
+        p[0]=errorAttr(p[0])
+        p[1].type=Type('ERROR')
+        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+            print 'Error in line %s : Incompatible assignment operation. Cannot assign function to %s ' % (p.lineno(2),find_type(p[3])) 
 
     else:
         if p[2]=='=':
 	    print str(p[1].type),str(p[3].type)
             if p[1].type!=p[3].type:
+                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                    print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
                 p[0]=errorAttr(p[0])
-                p[1].type=Type('ERROR')
-                print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
+                p[1].type=Type('ERROR')                
         else:
             if p[2]=='*=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
                     pass
                 else:
+                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                        print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
                     p[0]=errorAttr(p[0])
                     p[1].type=Type('ERROR')
-                    print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
-
             if p[2]=='/=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
                     pass
                 else:
+                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                        print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
                     p[0]=errorAttr(p[0])
                     p[1].type=Type('ERROR')
-                    print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
 
             if p[2]=='+=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
@@ -1140,9 +1143,10 @@ def p_assignment_expression_2(p):
                 elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
                     pass
                 else:
+                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                        print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')
-                    print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
+                    p[1].type=Type('ERROR')            
 
             if p[2]=='-=':
                 if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
@@ -1150,9 +1154,10 @@ def p_assignment_expression_2(p):
                 elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
                     pass
                 else:
+                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                        print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
                     p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')
-                    print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))  
+                    p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
                                               
 #assignment-operator: one of
