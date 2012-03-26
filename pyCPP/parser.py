@@ -3,7 +3,7 @@ import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
 num_temporaries=0
-## {{{
+## TODO : return type of function should match the actual function type
 success = True
 class Type(object):
     def __init__(self,next):
@@ -157,25 +157,31 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     functionScope()
-    t = env.prev.get(str(p[-1]))
+    # get the attribute here
+    t = env.prev.get(p[-1].attr['name'])
     if t is not None:
-        if t.type != p[-1].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-                if t.attr['parameterList'][i].id == None:
-                    print ("\nVariable name for parameter missing\n")
-                #if not env.put(t.attr['parameterList'][i]):
+        # need the entry of attribute in symbol
+        print "der"
+        #if t.type != p[-1].type :
+            #print ("\nFunction's type not consistent\n")
+        #if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            #print ("\nFunction overloading not supported\n")
+        #else:
+            #for i in range(t.attr['numParameters']):
+                #if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                    #print ("\nFunction overloading by different types not supported\n")
+                #if t.attr['parameterList'][i].id == None:
+                    #print ("\nVariable name for parameter missing\n")
+                #if not env.put(t.attr['parameterList'][i].attr['name']):
                     #print ("\nError : parameter is already in the symbol table\n")
+                # also put the type
     else:
         for i in range(p[-1].attr['numParameters']):
-            pass
-            #if not env.put(p[-1].attr['parameterList'][i]):
-                    #print ("\nError : parameter is already in the symbol table\n")
+            print "here"
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
 
 
 def p_unset_function_scope(p):
@@ -304,7 +310,7 @@ def p_id_expression_1(p):
     #~ class-name
     #template-id
 def p_unqualified_id_1(p):
-    ''' unqualified_id : IDENTIFIER mark_type %prec RPAREN '''
+    ''' unqualified_id : IDENTIFIER %prec RPAREN '''
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -1654,7 +1660,7 @@ def p_simple_declaration_1(p):
 #                t.type = Type("ERROR")
     
 def p_simple_declaration_2(p):
-    ''' simple_declaration : IDENTIFIER mark_type init_declarator_list SEMICOLON %prec INUMBER '''
+    ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON %prec INUMBER '''
     p.set_lineno(0,p.lineno(1))
 
     global env
@@ -1703,19 +1709,21 @@ def p_simple_declaration_3(p):
         p[0].type = Type("ERROR")
         
     
-def p_mark_type(p):
-    ''' mark_type : %prec INUMBER'''
-    global DeclType
-    global env
-    t = env.get(str(p[-1]))
-    if t==None:
-        p[0] = "ERROR"
-        #DeclType = Type("ERROR")
-    elif t.type == Type("CLASS"):
-        DeclType = Type(str(p[-1]))
-    else :
-        p[0] = "ERROR"
-        #DeclType = Type("ERROR")
+#def p_mark_type(p):
+#    ''' mark_type : %prec INUMBER'''
+#    global DeclType
+#    global env
+#    t = env.get(str(p[-1]))
+#    if t==None:
+#        p[0] = "ERROR"
+#        print "Symbol None"
+#        #DeclType = Type("ERROR")
+#    elif t.type == Type("CLASS"):
+#        DeclType = Type(str(p[-1]))
+#    else :
+        #print "In else "
+#        p[0] = "ERROR"
+#        DeclType = Type("ERROR")
 #decl-specifier-seq:
     #decl-specifier-seqopt decl-specifier
 
@@ -1949,9 +1957,10 @@ def p_init_declarator_list_1(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr["init_declarator_list"] = [deepcopy(p[1])]
+    p[0].type = p[1].type
     
 def p_init_declarator_list_2(p):
-    ''' init_declarator_list : init_declarator_list COMMA init_declarator '''
+    ''' init_declarator_list : init_declarator_list COMMA mark_1 init_declarator '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
     #for key in p[3].attr["init_declarator_list"]:
@@ -1962,46 +1971,37 @@ def p_init_declarator_list_2(p):
 
 #init-declarator:
     #declarator initializeropt
+def p_mark_1(p):
+    ''' mark_1 : '''
+    p[0] = deepcopy(p[-2])
+    
 def p_init_declarator(p): 
     ''' init_declarator : declarator initializer_opt'''
     p.set_lineno(0,p.lineno(1))
     #p[0] = Attribute()
     #p[0] = initAttr(p[0])
     p[0] = deepcopy(p[1])
-    if p[2] == None:
-        p[0].attr["initialized"] = 0
-    elif p[2] == "LPAREN":
-        print "Feature not supported at present."
-        p[0].type = Type("ERROR")
-    elif p[2].type == Type("ASSIGN"):
-        if p[1].isfunction == 1 :
-            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
-            p[0].type = Type("ERROR")
-            #t.type = Type("ERROR")
-        t = p[2].attr["initializer"]
-        if p[1].attr.has_key("isArray") and t.attr.has_key("isArray") :
-            if p[1].attr["width"] >= t.attr["num_element"] :
-                p[0].attr["initializer"] = deepcopy(t)
-            elif p[1].attr["width"] == 0 :
-                p[0].attr["width"] = t.attr["num_element"]
-                p[0].attr["initializer"] = deepcopy(t)
-            else :
-                p[0].type = Type("ERROR")
-        elif (p[1].attr.has_key("isArray")) or (t.attr.has_key("isArray")):
-            p[0].type = Type("ERROR")
-        else :
-            p[0].attr["initializer"] = deepcopy(t)
-        p[0].attr["initialized"] = 1
-        #p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
-    elif p[2].type == Type("ERROR"):
-        p[0].type = Type("ERROR")
     global DeclType
     global env
     t = Symbol(p[1].attr["name"])
-    t.type = deepcopy(DeclType)
+    if isinstance(p[-1],Attribute) :
+        t.type = p[-1].type
+        p[0].type = p[-1].type
+    else :
+        t1 = env.get(str(p[-1]))
+        if t1 == None:
+            print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+        elif t1.type == Type("CLASS"):
+            t.type = Type(str(p[-1]))
+            p[0].type = t.type
+        else :
+            p[0].type = Type("ERROR")
+    #t.type = deepcopy(DeclType)
+    if p[1].type == Type("POINTER"):
+        t.type = Type(t.type)
     t.attr = deepcopy(p[1].attr)
     if not env.put(t):
-        print("ERROR: Identifier "+t.name+"already defined. At line number : "+str(p.lineno(1)))
+        print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
         #t.type = Type("ERROR")
         p[0].type = Type("ERROR")
     elif p[2] == None :
@@ -2021,8 +2021,41 @@ def p_init_declarator(p):
                 #t.type = Type("ERROR")
         #elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
             #t.type = Type("ERROR")
-        #if tl.type != DeclType :
+        if t.type == tl.type:
+            pass
+        elif t.type == Type("FLOAT") and tl.type in [Type("INT"),Type("CHAR")] :
+            pass
+        elif t.type == Type("INT") and tl.type == Type("CHAR"):
+            pass
+        else :
+            print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)
+    if p[2] == None:
+        p[0].attr["initialized"] = 0
+    elif p[2] == "LPAREN":
+        print "Feature not supported at present."
+        p[0].type = Type("ERROR")
+    elif p[2].type == Type("ASSIGN"):
+        if p[1].attr.has_key("isFunction") :
+            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
+            p[0].type = Type("ERROR")
             #t.type = Type("ERROR")
+        t = p[2].attr["initializer"]
+        if p[1].attr.has_key("isArray") and t.attr.has_key("isArray") :
+            if p[1].attr["width"] >= t.attr["num_element"] :
+                p[0].attr["initializer"] = deepcopy(t)
+            elif p[1].attr["width"] == 0 :
+                p[0].attr["width"] = t.attr["num_element"]
+                p[0].attr["initializer"] = deepcopy(t)
+            else :
+                p[0].type = Type("ERROR")
+        elif (p[1].attr.has_key("isArray")) or (t.attr.has_key("isArray")):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].attr["initializer"] = deepcopy(t)
+        p[0].attr["initialized"] = 1
+        #p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
+    elif p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")    
     #p[0].attr["init_declarator_list"] = [t]
 
 #declarator:
@@ -2038,7 +2071,7 @@ def p_declarator_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
     if p[1]=='*' :
-        p[0].type = Type(p[1].type)
+        p[0].type = Type("POINTER")
     elif p[1] == '&' :
         p[0].type = Type("ERROR")
 
@@ -2051,7 +2084,8 @@ def p_direct_declarator_1(p):
     ''' direct_declarator : declarator_id '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-  
+
+# function declaration rule
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p.set_lineno(0,p.lineno(1))
@@ -2314,18 +2348,6 @@ def p_function_definition_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
-    t = env.get(str(p[3]))
-    if t is not None:
-        if t.type != p[3].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[3].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[3].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-    else:
-        pass
     #code generation
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
