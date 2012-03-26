@@ -1638,7 +1638,7 @@ def p_simple_declaration_2(p):
         print("Error : decl_specifier " + str(p[1]) + "is not defined.")
         p[0].type = Type("ERROR")
     p[0].type = t.type
-    p[0].attr["init_declarator_list"] = deepcopy(p[3].attr["init_declarator_list"])
+    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
     #if p[1].type == Type("ERROR") :
     #    p[0].type = Type("ERROR")
@@ -1986,8 +1986,14 @@ def p_init_declarator(p):
                 #t.type = Type("ERROR")
         #elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
             #t.type = Type("ERROR")
-        #if tl.type != DeclType :
-            #t.type = Type("ERROR")
+        if t.type == tl.type:
+            pass
+        elif t.type == Type("FLOAT") and tl.type in [Type("INT"),Type("CHAR")] :
+            pass
+        elif t.type == Type("INT") and tl.type == Type("CHAR"):
+            pass
+        else :
+            print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)
     if p[2] == None:
         p[0].attr["initialized"] = 0
     elif p[2] == "LPAREN":
