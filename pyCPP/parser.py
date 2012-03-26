@@ -1970,27 +1970,27 @@ def p_init_declarator(p):
     t.attr = deepcopy(p[1].attr)
     if not env.put(t):
         print("ERROR: Identifier "+t.name+"already defined. At line number : "+str(p.lineno(1)))
-        t.type = Type("ERROR")
+        #t.type = Type("ERROR")
         p[0].type = Type("ERROR")
     elif p[2] == None :
         t.attr["initialized"] = 0
     elif p[2] == "LPAREN":
         print "Feature not supported at present. "
         p[0].type = Type("ERROR")
-        t.type = Type("ERROR")
+        #t.type = Type("ERROR")
     elif p[2].type == Type("ASSIGN"):
         tl = p[2].attr["initializer"]
         if p[1].attr.has_key("isFunction") :
             print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
             p[0].type = Type("ERROR")
-            t.type = Type("ERROR")
+            #t.type = Type("ERROR")
         elif p[1].attr.has_key("isArray") and tl.attr.has_key("isArray"):
             if p[1].attr["width"] < tl.attr["num_element"] and p[1].attr["width"]!=0:
-                t.type = Type("ERROR")
+                #t.type = Type("ERROR")
         elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
-            t.type = Type("ERROR")
+            #t.type = Type("ERROR")
         if tl.type != DeclType :
-            t.type = Type("ERROR")
+            #t.type = Type("ERROR")
         
     #p[0].attr["init_declarator_list"] = [t]
 
