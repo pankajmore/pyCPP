@@ -561,7 +561,7 @@ def p_unary_expression_1(p):
     
 def p_unary_expression_2(p):
     ''' unary_expression : PLUS_PLUS cast_expression'''
-    p[0]=deepcopy(p[1])
+    p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
@@ -578,7 +578,7 @@ def p_unary_expression_2(p):
 
 def p_unary_expression_3(p):
     ''' unary_expression : MINUS_MINUS cast_expression '''
-    p[0]=deepcopy(p[1])
+    p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1" + "\n"
