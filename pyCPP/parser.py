@@ -198,20 +198,19 @@ def p_declaration_seq_2(p):
 
 ## }}}
 #################### EXPRESSIONS ###################
-
 ## {{{
 def p_literal_1(p):
     '''literal : INUMBER '''
     p[0]=Attribute()
     p[0].type=Type('INT')
-    p[0].place=int(p[1])
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
     ''' literal : DNUMBER '''
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
-    p[0].place=float(p[1])
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
@@ -232,14 +231,14 @@ def p_literal_5(p):
     ''' literal : TRUE '''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=bool(p[1])
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
     ''' literal : FALSE'''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=bool(p[1])
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
@@ -267,9 +266,7 @@ def p_primary_expression_1(p):
 ##def p_primary_expression_4(p):
 ##    ''' primary_expression : SCOPE qualified_id '''
 ##    pass
-
-def p_primary_expression_5(p):
-    ''' primary_expression : ptr_operator id_expression'''
+    
  
 def p_primary_expression_5(p):
     ''' primary_expression : LPAREN expression RPAREN '''
@@ -288,7 +285,7 @@ def p_primary_expression_6(p):
     else :
         p[0].attr['symbol'] = t
 	p[0].type=t.type
-	print "Identifier reduced : ", str(t.name),str(t.type)
+	#print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
     
 #id-expression:
@@ -629,7 +626,7 @@ def p_unary_expression_4(p):
             if p[2].type!=Type('ERROR'):
                 print 'Error in line %s : Unary * operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='&':
-        if p[2].type in [Type('FLOAT'),Type('INT'),Type('BOOL'),Type('CHAR')] and is_primitive(p[1]):
+        if p[2].type in [Type('FLOAT'),Type('INT'),Type('BOOL'),Type('CHAR')] and is_primitive(p[2]):
             p[0].type=Type(p[2].type)
             #find value of &p[2].value and store in p[0]
         else:
@@ -678,15 +675,15 @@ def p_unary_expression_8(p):
 
 #unary-operator: one of
 #* & + - ! ~
-##def p_unary_operator_1(p):
-##    ''' unary_operator : TIMES
-##    '''
-##    p[0] = '*'
-##
-##def p_unary_operator_2(p):
-##    '''unary_operator : AMPERSAND
-##    '''
-##    p[0] = '&'
+def p_unary_operator_1(p):
+    ''' unary_operator : TIMES
+    '''
+    p[0] = '*'
+
+def p_unary_operator_2(p):
+    '''unary_operator : AMPERSAND
+    '''
+    p[0] = '&'
 
 def p_unary_operator_3(p):
     '''unary_operator : PLUS
@@ -1144,7 +1141,6 @@ def p_assignment_expression_2(p):
     p[0].type='VOID'
         
     if p[2]=='=':
-        #print str(p[1].type),str(p[3].type)
         if check_implicit_1(p[1],p[3]):
                 pass
         else:
