@@ -83,13 +83,13 @@ def find_type_recursively(p):
         return p
     
 def find_type(p):
-    if p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function'):
+    if p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('isFunction'):
         return 'FUNCTION ' + p.attr['symbol'].name+' -> ' + find_type_recursively(p.type.link)
     else:
         return find_type_recursively(p.type.link)
         
 def is_primitive(p):
-    if not (p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('is_function')):
+    if not (p.attr.has_key('symbol') and p.attr['symbol'].attr.has_key('isFunction')):
         return True
     else:
         return False
@@ -361,7 +361,7 @@ def p_postfix_expression_2(p):
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
     p[0]=deepcopy(p[1])
-    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
@@ -380,7 +380,7 @@ def p_postfix_expression_4(p):
     #Default arguments not supported as of now
     #Implicit type conversion not supported as of now
     p[0]=deepcopy(p[1])
-    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('is_function')):
+    if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
@@ -1027,9 +1027,9 @@ def p_assignment_expression_2(p):
     p[0] = Attribute()
     p[0].type='VOID'
                   
-    if p[1].isfunction==1 or p[3].isfunction==1:
-        p[0]=initAttribute(p[0])
-        p[1]=initAttribute(p[1])
+    if not is_primitive(p[1]) and not is_primitive(p[3]):
+        p[0]=initAttr(p[0])
+        p[1]=initAttr(p[1])
         print 'Error in line %s : Incompatible assignment operation. Cannot assign function to %s ' % (p.lineno(2),find_type(p[3])) 
 
     else:
