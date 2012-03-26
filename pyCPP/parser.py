@@ -23,7 +23,10 @@ class Type(object):
             return result
         return not result
     def __repr__(self):
-        return "*" + str(self.next)
+	if isinstance(self.next,Type):
+        	return "*" + str(self.next)
+	else:
+		return str(self.next)
 
 
 
@@ -251,6 +254,7 @@ def p_primary_expression_6(p):
     else :
         p[0].attr['symbol'] = t
 	p[0].type=t.type
+	#print str(t.name),str(t.type)
 
 #id-expression:
     #unqualified-id
@@ -1042,8 +1046,8 @@ def p_assignment_expression_2(p):
 
     else:
         if p[2]=='=':
-	    print p[1].type, p[3].type
-            if find_type(p[1])!=find_type(p[3]):
+	    print str(p[1].type),str(p[3].type)
+            if p[1].type!=p[3].type:
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
@@ -1550,6 +1554,7 @@ def p_decl_specifier_1(p):
     
 def p_decl_specifier_2(p):
     ''' decl_specifier : type_specifier '''
+    print str(p[1].type)
     p[0] = deepcopy(p[1])
     
 def p_decl_specifier_3(p):
