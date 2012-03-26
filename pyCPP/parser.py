@@ -1194,7 +1194,10 @@ def p_expression_statement_1(p):
 def p_expression_statement_2(p):
     ''' expression_statement : expression SEMICOLON '''
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else:
+        p[0].type = Type("VOID") 
     pass 
 
 #compound-statement:
@@ -1343,12 +1346,12 @@ def p_iteration_statement_6(p):
 def p_for_init_statement_1(p):
     ''' for_init_statement : expression_statement ''' 
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    p[0].type = Type("VOID")
     pass 
 def p_for_init_statement_2(p):
     ''' for_init_statement : simple_declaration '''
     p[0] = Attribute()
-    p[0].type = p[1].type 
+    p[0].type = Type("VOID") 
     pass 
 
 #jump-statement:
@@ -1369,7 +1372,7 @@ def p_jump_statement_2(p):
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
     p[0] = Attribute()
-    p[0].type = p[2].type 
+    p[0].type = Type("VOID") 
     pass 
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
@@ -1381,7 +1384,11 @@ def p_jump_statement_4(p):
     #block-declaration
 def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
-    p[0] = deepcopy(p[1])
+    p[0] = Attribute()
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
+    else :
+        p[0].type = Type("VOID")
     pass
 ## }}}
 
