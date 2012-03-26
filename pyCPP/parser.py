@@ -1450,13 +1450,14 @@ def p_simple_declaration_1(p):
                 t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
-                t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
+                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
                 t1.attr["initialized"] =1
-            if t.type != Type("ERROR"):
+            if t.type != Type("ERROR") and p[1].type == t.attr["initializer"].type:
                 if not env.put(t1):
                     print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
                     t.type = Type("ERROR")
-            
+            else :
+                t.type = Type("ERROR")
     
 def p_simple_declaration_2(p):
     ''' simple_declaration : IDENTIFIER init_declarator_list SEMICOLON '''
@@ -1741,8 +1742,21 @@ def p_init_declarator(p):
             print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
             p[0].type = Type("ERROR")
             #t.type = Type("ERROR")
+        t = p[2].attr["initializer"]
+        if p[1].attr.has_key("isArray") and t.attr.has_key("isArray") :
+            if p[1].attr["width"] >= t.attr["num_element"] :
+                p[0].attr["initializer"] = deepcopy(t)
+            elif p[1].attr["width"] == 0 :
+                p[0].attr["width"] = t.attr["num_element"]
+                p[0].attr["initializer"] = deepcopy(t)
+            else :
+                p[0].type = Type("ERROR")
+        elif (p[1].attr.has_key("isArray")) or (t.attr.has_key("isArray")):
+            p[0].type = Type("ERROR")
+        else :
+            p[0].attr["initializer"] = deepcopy(t)
         p[0].attr["initialized"] = 1
-        p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
+        #p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
     elif p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     #p[0].attr["init_declarator_list"] = [t]
@@ -1787,7 +1801,7 @@ def p_direct_declarator_2(p):
 def p_direct_declarator_3(p):
     ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
     p[0] = deepcopy(p[1])
-    p[0].isArray = 1
+    p[0].attr["isArray"] = 1
     if p[3] == None:
         p[0].attr["width"] = 0
     else :
@@ -2055,10 +2069,11 @@ def p_initializer_opt_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("ASSIGN")
-    p[0].attr["initializer_clause"] = deepcopy(p[2])
+    p[0].attr["initializer"] = deepcopy(p[2])
     if p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
+#### Rule to be used for assigning object of classes which constructor. ###
 def p_initializer_opt_3(p):
     ''' initializer_opt : LPAREN expression_list RPAREN ''' 
     p[0] = "LPAREN"
@@ -2070,15 +2085,31 @@ def p_initializer_opt_3(p):
     #{ }
 def p_initializer_clause_1(p):
     ''' initializer_clause : assignment_expression '''
-    p[0] = deepcopy(p[1])
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr["initializer_clause"] = [deepcopy(p[1])]
+    p[0].type = p[1].type
+    if p[1].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 def p_initializer_clause_2(p):
     ''' initializer_clause : LBRACE initializer_list RBRACE '''
-    pass
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr["isArray"] = 1
+    p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
+    p[0].attr["num_element"] = p[2].attr["num_element"]
+    p[0].type = p[2].type
+    if p[2].type == Type("ERROR"):
+        p[0].type = Type("ERROR")
 
 def p_initializer_clause_3(p):
     ''' initializer_clause : LBRACE RBRACE '''
-    pass 
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr["isArray"] = 1
+    p[0].attr["initializer_clause"] = []
+    p[0].attr["num_element"] = 0
 
 #initializer-list:
     #initializer-clause
@@ -2090,6 +2121,10 @@ def p_initializer_list_1(p):
 def p_initializer_list_2(p):
     ''' initializer_list : initializer_list COMMA initializer_clause ''' 
     p[0] = deepcopy(p[1])
+    if p[1].type == p[3].type :
+        p[0].attr["initializer_clause"].append(deepcopy(p[3].attr["initializer_clause"]))
+    else :
+        p[0].type = Type("ERROR")
 ## }}}
 
 ##### CLASSES #####     
