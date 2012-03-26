@@ -1758,7 +1758,7 @@ def p_ptr_operator_1(p):
     p[0] = '*'
 
 def p_ptr_operator_2(p):
-    ''' ptr_operator : xAMPERSAND '''
+    ''' ptr_operator : AMPERSAND '''
     p[0] = '&'
 
 #cv-qualifier-seq:
@@ -2165,7 +2165,7 @@ def p_base_specifier_list_2(p):
 def p_base_specifier_1(p):
     ''' base_specifier : class_name '''
     global env 
-    if env.get(p[2]):
+    if env.get(p[1]):
         p[0] = copy(env.get(p[1]).attrs['scope'])
     else :
         print("Identifier" + str(p[1]) + "not defined")
