@@ -276,7 +276,7 @@ def p_unqualified_id_1(p):
     #else :
         #p[0].type = t.type
     #p[0].attr["symbol"] = t
-    p[0].name = str(p[1])
+    p[0].attr["name"] = str(p[1])
     
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
@@ -1441,13 +1441,13 @@ def p_simple_declaration_1(p):
         for t in p[0].attr["init_declarator_list"] :
             t1 = Symbol(t.name)
             t1.type = p[0].type
-            if t.isfunction == 1:
-                t1.attr["isfunction"] = 1
-                t1.isfunction = 1
+            if t.attr.has_key("isFunction"):
+                t1.attr["isFunction"] = 1
+                #t1.isfunction = 1
                 t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.isArray == 1:
+            elif t.attr.has_key("isArray"):
                 t1.attr["isArray"]=1
-                t1.isArray = 1
+                #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
                 t1.attr["initializer"] = deepcopy(t.attr["initializer"])
@@ -1477,13 +1477,13 @@ def p_simple_declaration_2(p):
         for t in p[0].attr["init_declarator_list"] :
             t1 = Symbol(t.name)
             t1.type = p[0].type
-            if t.isfunction == 1:
-                t1.attr["isfunction"] = 1
-                t1.isfunction = 1
+            if t.attr.has_key("isFunction"):
+                t1.attr["isFunction"] = 1
+                #t1.isfunction = 1
                 t1.attr["parameterList"] = deepcopy(t.attr["parameterList"])
-            elif t.isArray == 1:
+            elif t.attr.has_key("isArray"):
                 t1.attr["isArray"]=1
-                t1.isArray = 1
+                #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
                 t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
@@ -1788,7 +1788,7 @@ def p_direct_declarator_1(p):
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p[0] = deepcopy(p[1])
-    p[0].isfunction = 1
+    p[0].atrr['isFunction'] = 1
     if p[3]==None:
         p[0].attr["parameterList"] = []
         p[0].attr["numParameters"] = 0
@@ -1981,7 +1981,7 @@ def p_parameter_declaration_1(p):
     p[0].type = p[1].type
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
-    if (p[2].isfunction == 1):
+    if (p[2].attr['isFunction'] == 1):
         print "\nError : Functions as arguments to functions not supported\n"
 
 def p_parameter_declaration_2(p):
