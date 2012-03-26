@@ -220,7 +220,7 @@ def p_literal_6(p):
 def p_primary_expression_1(p):
     ''' primary_expression : literal '''
     p[0]=deepcopy(p[1])
-    pass
+    
   
 ##def p_primary_expression_2(p):
 ##    ''' primary_expression : SCOPE IDENTIFIER '''
@@ -242,7 +242,15 @@ def p_primary_expression_5(p):
 def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
     p[0]=deepcopy(p[1])
-    pass 
+    global env
+    p[0] = Attribute()
+    t = env.get(p[1].name)
+    if t==None:
+        p[0].type = Type("ERROR")
+	print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(2), p[1].name)
+    else :
+        p[0].attr['symbol'] = t
+	p[0].type=t.type
 
 #id-expression:
     #unqualified-id
@@ -1788,7 +1796,7 @@ def p_direct_declarator_1(p):
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p[0] = deepcopy(p[1])
-    p[0].atrr['isFunction'] = 1
+    p[0].attr['isFunction'] = 1
     if p[3]==None:
         p[0].attr["parameterList"] = []
         p[0].attr["numParameters"] = 0
