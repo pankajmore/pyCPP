@@ -3,7 +3,7 @@ import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
 num_temporaries=0
-## {{{
+## TODO : return type of function should match the actual function type
 success = True
 class Type(object):
     def __init__(self,next):
@@ -102,14 +102,12 @@ def check_compatibility_relational(p):
     if p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1]) and is_primitive(p[3]):
         return True
     else:
-        print "Error in line %s : Relational operator cannot be applied to %s , %s" %(p.lineno(2),find_type(p[1]),find_type(p[3]))
         return False   
 
 def check_compatibility_equality(p):
     if p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR'),Type('BOOL')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR'),Type('BOOL')] and is_primitive(p[1]) and is_primitive(p[3]):
         return True
     else:
-        print "Error in line %s : Relational operator cannot be applied to %s , %s" %(p.lineno(2),find_type(p[1]),find_type(p[3]))
         return False 
 
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
@@ -159,25 +157,31 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     functionScope()
-    t = env.prev.get(str(p[-1]))
+    # get the attribute here
+    t = env.prev.get(p[-1].attr['name'])
     if t is not None:
-        if t.type != p[-1].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-                if t.attr['parameterList'][i].id == None:
-                    print ("\nVariable name for parameter missing\n")
-                #if not env.put(t.attr['parameterList'][i]):
+        # need the entry of attribute in symbol
+        print "der"
+        #if t.type != p[-1].type :
+            #print ("\nFunction's type not consistent\n")
+        #if t.attr['numParameters'] != p[-1].attr['numParameters'] :
+            #print ("\nFunction overloading not supported\n")
+        #else:
+            #for i in range(t.attr['numParameters']):
+                #if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
+                    #print ("\nFunction overloading by different types not supported\n")
+                #if t.attr['parameterList'][i].id == None:
+                    #print ("\nVariable name for parameter missing\n")
+                #if not env.put(t.attr['parameterList'][i].attr['name']):
                     #print ("\nError : parameter is already in the symbol table\n")
+                # also put the type
     else:
         for i in range(p[-1].attr['numParameters']):
-            pass
-            #if not env.put(p[-1].attr['parameterList'][i]):
-                    #print ("\nError : parameter is already in the symbol table\n")
+            print "here"
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
 
 
 def p_unset_function_scope(p):
@@ -263,10 +267,13 @@ def p_primary_expression_1(p):
 ##def p_primary_expression_4(p):
 ##    ''' primary_expression : SCOPE qualified_id '''
 ##    pass
-  
+
+def p_primary_expression_5(p):
+    ''' primary_expression : ptr_operator id_expression'''
+ 
 def p_primary_expression_5(p):
     ''' primary_expression : LPAREN expression RPAREN '''
-    p[0]=deepcopy(p[1])
+    p[0]=deepcopy(p[2])
     p.set_lineno(0,p.lineno(1))
   
 def p_primary_expression_6(p):
@@ -793,13 +800,13 @@ def p_cast_expression_2(p):
     #TODO : Add support for type conversion with pointers i.e (int*), (char*), etc.
     if p[4].type!=p[2].type:
         if p[2].type== Type('FLOAT') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]) :
-            p[0].type='FLOAT'
+            p[0].type=Type('FLOAT')
         elif p[2].type == Type('INT') and p[4].type==Type('FLOAT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[0].type='INT'
+            p[0].type=Type('INT')
         elif p[2].type == Type('INT') and p[4].type==Type('CHAR') and is_primitive(p[4])and is_primitive(p[0]):
-            p[0].type='INT'
+            p[0].type=Type('INT')
         elif p[2].type == Type('CHAR') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]):
-            p[0].type='CHAR'                
+            p[0].type=Type('CHAR')
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
@@ -820,48 +827,49 @@ def p_multiplicative_expression_1(p):
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
     p[0]=deepcopy(p[1])
-    if p[1].type==Type('INT') and p[3].type==Type('INT') and is_primitive(p[1])and is_primitive(p[3]):
+    if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('CHAR')
+    if p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
-        p[0].place = newTemp()
-        p[0].code = p[1].code +'\t' + p[3].code +'\t'+ p[0].place + '=' + p[1].place + '*' + p[3].place+'\n'
-    elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '*' + p[3].place + '\n'        
+    elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
-        p[0].place=newTemp()
-        p[0].code = p[1].code +'\t' + p[3].code +'\t' + p[0].place + '=' + p[1].place + '*' + p[3].place+'\n'
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '*' + p[3].place + '\n'
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : Cannot perform multiplication between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : Cannot perform multiplication between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
     p[0]=deepcopy(p[1])
-    if p[1].type==Type('INT') and p[3].type==Type('INT') and is_primitive(p[1])and is_primitive(p[3]):
+    if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('CHAR')
+    if p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
-        p[0].place = newTemp()
-        p[0].code = p[1].code +'\t' + p[3].code +'\t'+ p[0].place + '=' + p[1].place + '/' + p[3].place+'\n'
-    elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '/' + p[3].place + '\n'        
+    elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
-        p[0].place=newTemp()
-        p[0].code = p[1].code +'\t' + p[3].code + '\t' + p[0].place + '=' + p[1].place + '/' + p[3].place+'\n'
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '/' + p[3].place + '\n'
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : Cannot perform division between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : Cannot perform division between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_4(p):
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
     p[0]=deepcopy(p[1])
-    if p[1].type==Type('INT') and p[3].type==Type('INT') and is_primitive(p[1])and is_primitive(p[3]):
+    if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('CHAR')
+    if p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
-        p[0].place = newTemp()
-        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '%' + p[3].place + '\n'
+        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '%' + p[3].place + '\n' 
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : Modulo operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : Modulo operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
 
 #additive-expression:
@@ -877,45 +885,49 @@ def p_additive_expression_1(p):
 def p_additive_expression_2(p):
     ''' additive_expression : additive_expression PLUS multiplicative_expression '''
     p[0]=deepcopy(p[1])
-    if p[1].type==Type('INT') and p[3].type==Type('INT')and is_primitive(p[1])and is_primitive(p[3]):
+    if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('CHAR')
+    elif p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'        
-    elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
+    elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
-    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR'))and is_primitive(p[1]) and is_primitive(p[3]):
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
-    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : Cannot perform addition between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : Cannot perform addition between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
                   
 def p_additive_expression_3(p):
     ''' additive_expression : additive_expression MINUS multiplicative_expression '''
     p[0]=deepcopy(p[1])
-    if p[1].type==Type('INT') and p[3].type==Type('INT')and is_primitive(p[1])and is_primitive(p[3]):
+    if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
+        p[0].type=Type('CHAR')
+    elif p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'        
-    elif p[1].type in [Type('FLOAT'),Type('INT')] and p[3].type in [Type('FLOAT'),Type('INT')] and is_primitive(p[1])and is_primitive(p[3]):
+    elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
         p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
-    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
-    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and  p[1].type==Type('INT') and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and  (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
         #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : Cannot perform substraction between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : Cannot perform substraction between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
                       
 #shift-expression:
@@ -936,7 +948,7 @@ def p_relational_expression_2(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : < operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : < operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
     
 def p_relational_expression_3(p):
@@ -947,7 +959,7 @@ def p_relational_expression_3(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : < operator >annot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : > operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
         
 def p_relational_expression_4(p):
@@ -958,7 +970,7 @@ def p_relational_expression_4(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : <= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : <= operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
 
 def p_relational_expression_5(p):
@@ -969,7 +981,7 @@ def p_relational_expression_5(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : >= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : >= operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
 
 #relational-expression:
@@ -1000,7 +1012,7 @@ def p_equality_expression_2(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : == operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : == operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
     
 def p_equality_expression_3(p):
@@ -1011,7 +1023,7 @@ def p_equality_expression_3(p):
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print "Error in line %s : != operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+            print "Error in line %s : != operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
     p.set_lineno(0,p.lineno(2))
     
 #and-expression:
@@ -1099,65 +1111,86 @@ def p_assignment_expression_1(p):
     p[0] = deepcopy(p[1])
     p.set_lineno(0,p.lineno(1))
 
+
+def check_implicit_1(p,q):
+    if not is_primitive(p) or not is_primitive(q):
+       return False
+    elif p.type ==q.type:
+        return True
+    elif p.type == Type('FLOAT') and (q.type== Type('INT') or q.type== Type('CHAR')):
+        return True
+    elif p.type == Type('INT') and  q.type== Type('CHAR'):
+        return True
+    else:
+        return False
+    
+def check_implicit_2(p,q):
+    if not is_primitive(p) or not is_primitive(q):
+       return False
+    elif p.type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p.type ==q.type:
+        return True
+    elif p.type == Type('FLOAT') and (q.type== Type('INT') or q.type== Type('CHAR')):
+        return True
+    elif p.type == Type('INT') and  q.type== Type('CHAR'):
+        return True
+    else:
+        return False
+
+
 #How to check for L-value???
 def p_assignment_expression_2(p):
     ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
     p[0] = Attribute()
     p[0].type='VOID'
         
-    if not is_primitive(p[1]) and not is_primitive(p[3]):
-        p[0]=errorAttr(p[0])
-        p[1].type=Type('ERROR')
-        if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-            print 'Error in line %s : Incompatible assignment operation. Cannot assign function to %s ' % (p.lineno(2),find_type(p[3])) 
-
-    else:
-        if p[2]=='=':
-	    print str(p[1].type),str(p[3].type)
-            if p[1].type!=p[3].type:
-                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                    print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
-                p[0]=errorAttr(p[0])
-                p[1].type=Type('ERROR')                
+    if p[2]=='=':
+        #print str(p[1].type),str(p[3].type)
+        if check_implicit_1(p[1],p[3]):
+                pass
         else:
-            if p[2]=='*=':
-                if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
-                    pass
-                else:
-                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                        print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
-                    p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')
-            if p[2]=='/=':
-                if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
-                    pass
-                else:
-                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                        print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
-                    p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')
+            if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
+            p[0]=errorAttr(p[0])
+            p[1].type=Type('ERROR')                
+    else:
+        if p[2]=='*=':
+            if check_implicit_2(p[1],p[3]):
+                pass 
+            else:
+                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                    print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
+                p[0]=errorAttr(p[0])
+                p[1].type=Type('ERROR')
+        if p[2]=='/=':
+            if check_implicit_2(p[1],p[3]):
+                pass
+            else:
+                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                    print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
+                p[0]=errorAttr(p[0])
+                p[1].type=Type('ERROR')
 
-            if p[2]=='+=':
-                if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
-                    pass                                                                  
-                elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
-                    pass
-                else:
-                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                        print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
-                    p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')            
+        if p[2]=='+=':
+            if check_implicit_2(p[1],p[3]):
+                pass                                                                  
+            elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
+                pass
+            else:
+                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                    print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
+                p[0]=errorAttr(p[0])
+                p[1].type=Type('ERROR')            
 
-            if p[2]=='-=':
-                if (p[1].type==Type('FLOAT') or p[1].type ==Type('INT')) and is_primitive(p[1]) and is_primitive(p[3]) and p[1].type==p[3].type :
-                    pass                                                                  
-                elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and p[3].type=='INT' and is_primitive(p[3]):
-                    pass
-                else:
-                    if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                        print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
-                    p[0]=errorAttr(p[0])
-                    p[1].type=Type('ERROR')                    
+        if p[2]=='-=':
+            if check_implicit_2(p[1],p[3]):
+                pass                                                                  
+            elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
+                pass
+            else:
+                if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
+                    print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
+                p[0]=errorAttr(p[0])
+                p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
                                               
 #assignment-operator: one of
@@ -2053,7 +2086,8 @@ def p_direct_declarator_1(p):
     ''' direct_declarator : declarator_id '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-  
+
+# function declaration rule
 def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p.set_lineno(0,p.lineno(1))
@@ -2146,6 +2180,8 @@ def p_declarator_id(p):
     #type-specifier-seq abstract-declaratoropt
 def p_type_id(p):
     ''' type_id : type_specifier_seq abstract_declarator_opt '''
+    p[0]=Attribute()
+    p[0].type=p[1].type
     p.set_lineno(0,p.lineno(1))
     pass
 
@@ -2314,18 +2350,6 @@ def p_function_definition_2(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
-    t = env.get(str(p[3]))
-    if t is not None:
-        if t.type != p[3].type :
-            print ("\nFunction's type not consistent\n")
-        if t.attr['numParameters'] != p[3].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        else:
-            for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[3].attr['parameterList'][i].type:
-                    print ("\nFunction overloading by different types not supported\n")
-    else:
-        pass
     #code generation
 
 #### TODO : Comment out this rule after adding the exception handling for function_try_block and adding try keyword ###
