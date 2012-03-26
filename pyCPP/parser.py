@@ -119,7 +119,7 @@ precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_
 def p_translation_unit(p):
     ''' translation_unit : 
                          | declaration_seq'''
-    p.set_lineno(0,p.lineno(1))
+    ##p.set_lineno(0,p.lineno(1))
     ### TODO 
 
 #def p_empty(p):
