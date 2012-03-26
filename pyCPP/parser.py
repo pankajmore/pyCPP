@@ -120,7 +120,7 @@ precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_
 def p_translation_unit(p):
     ''' translation_unit : 
                          | declaration_seq'''
-    pass
+    p.set_lineno(0,p.lineno(1))
     ### TODO 
 
 #def p_empty(p):
@@ -147,7 +147,7 @@ def p_new_scope(p):
 def p_finish_scope(p):
     '''finish_scope : '''
     PopScope()
-
+    
 # Is another type of new_scope required ?
 def p_function_scope(t):
     '''function_scope : '''
@@ -159,11 +159,11 @@ def p_unset_function_scope(t):
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 def p_declaration_seq_2(p):
     ''' declaration_seq : declaration_seq declaration  '''
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 ## }}}
 #################### EXPRESSIONS ###################
@@ -174,42 +174,42 @@ def p_literal_1(p):
     p[0]=Attribute()
     p[0].type=Type('INT')
     p[0].place=int(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
     ''' literal : DNUMBER '''
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
     p[0].place=float(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
     ''' literal : LIT_CHAR '''
     p[0]=Attribute()
     p[0].type=Type('CHAR')
     p[0].place=str(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_literal_4(p):
     ''' literal : LIT_STR '''
     p[0]=Attribute()
     p[0].type=Type(Type('CHAR'))
     p[0].place=str(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_literal_5(p):
     ''' literal : TRUE '''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
     p[0].place=bool(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
     ''' literal : FALSE'''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
     p[0].place=bool(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
     #literal
@@ -223,7 +223,7 @@ def p_literal_6(p):
 def p_primary_expression_1(p):
     ''' primary_expression : literal '''
     p[0]=deepcopy(p[1])
-    
+    p.set_lineno(0,p.lineno(1))
   
 ##def p_primary_expression_2(p):
 ##    ''' primary_expression : SCOPE IDENTIFIER '''
@@ -240,7 +240,7 @@ def p_primary_expression_1(p):
 def p_primary_expression_5(p):
     ''' primary_expression : LPAREN expression RPAREN '''
     p[0]=deepcopy(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
@@ -256,7 +256,7 @@ def p_primary_expression_6(p):
 	p[0].type=t.type
 	#print str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
-
+    
 #id-expression:
     #unqualified-id
     #qualified-id
@@ -295,11 +295,14 @@ def p_unqualified_id_1(p):
 def p_unqualified_id_2(p):
     ''' unqualified_id : operator_function_id '''
     p.set_lineno(0,p.lineno(1))
+    
 def p_unqualified_id_3(p):
-    ''' unqualified_id : conversion_function_id ''' 
+    ''' unqualified_id : conversion_function_id '''
+    p.set_lineno(0,p.lineno(1))
+    
 def p_unqualified_id_4(p):
     ''' unqualified_id : TILDE class_name '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 #### TODO : To add production rule for templateopt as well when template is introduced. ###
 #qualified-id:
@@ -349,7 +352,7 @@ def p_unqualified_id_4(p):
 def p_postfix_expression_1(p):
     ''' postfix_expression : primary_expression '''
     p[0]=deepcopy(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
   
 def p_postfix_expression_2(p):
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
@@ -371,7 +374,7 @@ def p_postfix_expression_2(p):
                 p[0].code+=p[1].code + "\t" + p[3].code + "\t" + p[0].place + " = " + p[1].place + "["+p[3].place+"]"+"\n"
                 p[0].type=p[1].type.next
                 p[0].attr={}
-
+    p.set_lineno(0,p.lineno(2))
   
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
@@ -385,10 +388,12 @@ def p_postfix_expression_3(p):
         p[0]=errorAttr(p[0])
     else:
         p[0].attr={}
-
+    p.set_lineno(0,p.lineno(2))
+    
 #def p_postfix_expression_4(p):
     #''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN '''
     #pass
+    #p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_4(p):
     ''' postfix_expression : postfix_expression LPAREN  expression_list RPAREN '''
@@ -416,6 +421,7 @@ def p_postfix_expression_4(p):
                     p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
+    p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
@@ -431,7 +437,7 @@ def p_postfix_expression_5(p):
         if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
-
+    p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_6(p):
     ''' postfix_expression : postfix_expression MINUS_MINUS '''
@@ -446,12 +452,12 @@ def p_postfix_expression_6(p):
         if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostDecrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
-    pass 
+    p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_7(p):
     ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
-    pass
-
+    p.set_lineno(0,p.lineno(2))
+    
 ##def p_postfix_expression_5(p):
 ##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
 ##                    | TYPENAME nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
@@ -471,6 +477,7 @@ def p_expression_list_1(p):
         p[0].attr['parameterList']=[deepcopy(p[1])]
         p[0].attr['numParameters']=1
         p[0].type=Type('VOID')
+    p.set_lineno(0,p.lineno(1))
 
 def p_expression_list_2(p):
     ''' expression_list : expression_list COMMA assignment_expression '''
@@ -480,7 +487,8 @@ def p_expression_list_2(p):
         p[0]=deepcopy(p[1])
         p[0].attr['numParameters']+=1
         p[0].attr['parameterList'].append(deepcopy(p[3]))
-        p[0].code=p[1].code+'\t'+  p[3].code                                                                                                   
+        p[0].code=p[1].code+'\t'+  p[3].code
+    p.set_lineno(0,p.lineno(2))    
 
 def p_expression_list_opt_1(p):
     ''' expression_list_opt : '''
@@ -489,6 +497,7 @@ def p_expression_list_opt_1(p):
 def p_expression_list_opt_2(p):
     ''' expression_list_opt : expression_list '''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 
 #pseudo-destructor-name:
     #::opt nested-name-specifieropt type-name :: ~ type-name
@@ -514,6 +523,7 @@ def p_expression_list_opt_2(p):
 def p_unary_expression_1(p):
     ''' unary_expression : postfix_expression '''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
     
 def p_unary_expression_2(p):
     ''' unary_expression : PLUS_PLUS cast_expression'''
@@ -528,7 +538,8 @@ def p_unary_expression_2(p):
         if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
-    pass         
+    pass
+    p.set_lineno(0,p.lineno(1))
     
 
 def p_unary_expression_3(p):
@@ -544,7 +555,8 @@ def p_unary_expression_3(p):
         if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
         p[0]=errorAttr(p[0])
-    pass 
+    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_expression_4(p):
     ''' unary_expression : unary_operator cast_expression '''
@@ -592,7 +604,8 @@ def p_unary_expression_4(p):
                 print 'Error in line %s : Unary & operator can not be applied to %s' % (p.lineno(1),find_type(p[2]))
     if p[1]=='~':
         pass #except destructor is there any other use of TILDA ~ ? If not we should discard ~ as a valid token.
-    
+    p.set_lineno(0,p.lineno(1))
+        
 #Will need to rewrite SIZEOF functions
   
 def p_unary_expression_5(p):
@@ -605,6 +618,7 @@ def p_unary_expression_5(p):
         p[0]=errorAttr(p[0])
         if p[2].type == Type('ERROR'):
             print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[2]))
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
@@ -616,16 +630,16 @@ def p_unary_expression_6(p):
         p[0]=errorAttr(p[0])
         if p[3].type == Type('ERROR'):
             print "Error in line %s : SIZEOF cannot be applied to %s" %(p.lineno(1), find_type(p[3]))
-
+    p.set_lineno(0,p.lineno(1))
 
 #Will see whether to include the below  two productions in the grammer or not
 def p_unary_expression_7(p):
     ''' unary_expression : new_expression'''
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_expression_8(p):
     ''' unary_expression : delete_expression'''
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 
 #unary-operator: one of
@@ -644,21 +658,25 @@ def p_unary_operator_3(p):
     '''unary_operator : PLUS
     '''
     p[0] = '+'
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_operator_4(p):
     '''unary_operator : MINUS 
     '''
     p[0] = '-'
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_operator_5(p):
     '''unary_expression : EXCLAMATION 
     '''
     p[0] = '!'
+    p.set_lineno(0,p.lineno(1))
 
 def p_unary_operator_6(p):
     '''unary_expression : TILDE
     '''
     p[0] = '~'
+    p.set_lineno(0,p.lineno(1))
 
 
 #new-expression:
@@ -668,7 +686,7 @@ def p_unary_operator_6(p):
 def p_new_expression(p):
     ''' new_expression : NEW new_placement_opt new_type_id new_initializer_opt 
                     | NEW new_placement_opt LPAREN type_id RPAREN new_initializer_opt '''
-    pass
+    p.set_lineno(0,p.lineno(1))
 
 ##def p_new_expression(p):
 ##    ''' new_expression : SCOPE NEW new_placement_opt new_type_id new_initializer_opt 
@@ -682,17 +700,18 @@ def p_new_expression(p):
     #( expression-list )
 def p_new_placement(p): 
     ''' new_placement : LPAREN expression_list RPAREN '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
+    
 def p_new_placement_opt(p):
     ''' new_placement_opt : %prec NOPAREN
                     | new_placement '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 #new-type-id:
     #type-specifier-seq new-declaratoropt
 def p_new_type_id(p):
     ''' new_type_id : type_specifier_seq new_declarator_opt '''
-    pass 
+    p.set_lineno(0,p.lineno(1)) 
 
 #new-declarator:
     #ptr-operator new-declaratoropt
@@ -701,7 +720,7 @@ def p_new_declarator_opt(p):
     ''' new_declarator_opt : %prec IFX
                     | ptr_operator new_declarator_opt 
                     | direct_new_declarator '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 #direct-new-declarator:
     #[ expression ]
@@ -709,14 +728,14 @@ def p_new_declarator_opt(p):
 def p_direct_new_declarator(p):
     ''' direct_new_declarator : LBRACKET expression RBRACKET 
                     | direct_new_declarator LBRACKET constant_expression RBRACKET '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 #new-initializer:
     #( expression-listopt )
 def p_new_initializer_opt(p): 
     ''' new_initializer_opt : 
                     | LPAREN expression_list_opt RPAREN '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 #delete-expression:
     #::opt delete cast-expression
@@ -724,7 +743,7 @@ def p_new_initializer_opt(p):
 def p_delete_expression(p):
     ''' delete_expression : DELETE cast_expression 
                     | DELETE LBRACKET RBRACKET cast_expression '''
-    pass 
+    p.set_lineno(0,p.lineno(1))
 
 ##def p_delete_expression(p):
 ##    ''' delete_expression : SCOPE DELETE cast_expression 
@@ -739,7 +758,7 @@ def p_delete_expression(p):
 def p_cast_expression_1(p):
     ''' cast_expression : unary_expression'''
     p[0]=deepcopy(p[1])
-
+    p.set_lineno(0,p.lineno(1))
 
 def p_cast_expression_2(p):
     '''cast_expression : LPAREN type_id RPAREN cast_expression '''
@@ -758,7 +777,7 @@ def p_cast_expression_2(p):
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
                 print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
-
+    p.set_lineno(0,p.lineno(1))
 
 #multiplicative-expression:
     #pm-expression
@@ -769,6 +788,7 @@ def p_cast_expression_2(p):
 def p_multiplicative_expression_1(p):
     ''' multiplicative_expression : cast_expression'''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
     
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
@@ -785,6 +805,7 @@ def p_multiplicative_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform multiplication between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
@@ -801,6 +822,7 @@ def p_multiplicative_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform division between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_4(p):
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
@@ -813,6 +835,7 @@ def p_multiplicative_expression_4(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Modulo operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
 
 #additive-expression:
     #multiplicative-expression
@@ -822,7 +845,7 @@ def p_multiplicative_expression_4(p):
 def p_additive_expression_1(p):
     ''' additive_expression : multiplicative_expression'''
     p[0]=deepcopy(p[1])
-
+    p.set_lineno(0,p.lineno(1))
 
 def p_additive_expression_2(p):
     ''' additive_expression : additive_expression PLUS multiplicative_expression '''
@@ -844,6 +867,7 @@ def p_additive_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform addition between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
                   
 def p_additive_expression_3(p):
     ''' additive_expression : additive_expression MINUS multiplicative_expression '''
@@ -865,6 +889,7 @@ def p_additive_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform substraction between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
                       
 #shift-expression:
     #additive-expression
@@ -874,7 +899,7 @@ def p_additive_expression_3(p):
 def p_relational_expression_1(p): 
     ''' relational_expression : additive_expression'''
     p[0]=deepcopy(p[1])
-    pass
+    p.set_lineno(0,p.lineno(1))
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
@@ -885,7 +910,8 @@ def p_relational_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : < operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
-
+    p.set_lineno(0,p.lineno(2))
+    
 def p_relational_expression_3(p):
     ''' relational_expression : relational_expression GREATER additive_expression '''
     p[0]=deepcopy(p[1])
@@ -895,7 +921,8 @@ def p_relational_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : < operator >annot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
-    
+    p.set_lineno(0,p.lineno(2))
+        
 def p_relational_expression_4(p):
     ''' relational_expression : relational_expression LESS_EQ additive_expression '''
     p[0]=deepcopy(p[1])
@@ -905,6 +932,7 @@ def p_relational_expression_4(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : <= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    p.set_lineno(0,p.lineno(2))
 
 def p_relational_expression_5(p):
     ''' relational_expression : relational_expression GREATER_EQ additive_expression '''
@@ -915,7 +943,7 @@ def p_relational_expression_5(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : >= operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
-
+    p.set_lineno(0,p.lineno(2))
 
 #relational-expression:
     #shift-expression
@@ -935,7 +963,7 @@ def p_relational_expression_5(p):
 def p_equality_expression_1(p):
     ''' equality_expression : relational_expression '''
     p[0]=deepcopy(p[1])
-    
+    p.set_lineno(0,p.lineno(1))
                   
 def p_equality_expression_2(p):
     ''' equality_expression : equality_expression IS_EQ relational_expression '''
@@ -946,7 +974,8 @@ def p_equality_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : == operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
-                  
+    p.set_lineno(0,p.lineno(2))
+    
 def p_equality_expression_3(p):
     ''' equality_expression : equality_expression NOT_EQ relational_expression '''
     p[0]=deepcopy(p[1])
@@ -956,7 +985,8 @@ def p_equality_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : != operator cannot be applied between %s and %s ",(p.lineno(2),find_type(p[1]),find_type(p[3]))
-                  
+    p.set_lineno(0,p.lineno(2))
+    
 #and-expression:
     #equality-expression
     #and-expression & equality-expression
@@ -978,6 +1008,7 @@ def p_equality_expression_3(p):
 def p_logical_and_expression_1(p):
     ''' logical_and_expression : equality_expression'''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
                         
 def p_logical_and_expression_2(p):
     ''' logical_and_expression : logical_and_expression DOUBLE_AMPERSAND equality_expression'''
@@ -988,6 +1019,7 @@ def p_logical_and_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print 'Error at line %s : && operator can only be applied to boolean operands' % p.lineno(2)
+    p.set_lineno(0,p.lineno(2))            
 
 #logical-or-expression:
     #logical-and-expression
@@ -995,6 +1027,7 @@ def p_logical_and_expression_2(p):
 def p_logical_or_expression_1(p):
     ''' logical_or_expression : logical_and_expression '''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 
 def p_logical_or_expression_2(p):
     ''' logical_or_expression : logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
@@ -1005,7 +1038,7 @@ def p_logical_or_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print 'Error at line %s : || operator can only be applied to boolean operands' % p.lineno(2)
-
+    p.set_lineno(0,p.lineno(2))
 
 
 #conditional-expression:
@@ -1015,6 +1048,7 @@ def p_logical_or_expression_2(p):
 def p_conditional_expression_1(p):
     ''' conditional_expression : logical_or_expression '''
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
             
 def p_conditional_expression_2(p):
     ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
@@ -1026,6 +1060,7 @@ def p_conditional_expression_2(p):
         if p[1].type!=Type(Type('ERROR')) and p[3].type!=Type(Type('ERROR')) and p[5].type!=Type(Type('ERROR')):
             print 'Error at line %s : ? ternary operator can only be applied to boolean operands' % p.lineno(2)
         p[0]=errorAttribute(p[0])
+    p.set_lineno(0,p.lineno(2))
         
 #assignment-expression:
     #conditional-expression
@@ -1035,6 +1070,7 @@ def p_conditional_expression_2(p):
 def p_assignment_expression_1(p):
     ''' assignment_expression : conditional_expression '''
     p[0] = deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 
 #How to check for L-value???
 def p_assignment_expression_2(p):
@@ -1090,7 +1126,8 @@ def p_assignment_expression_2(p):
                     p[0]=errorAttr(p[0])
                     p[1].type=Type('ERROR')
                     print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))  
-                                                                       
+    p.set_lineno(0,p.lineno(2))
+                                              
 #assignment-operator: one of
 #= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 
 def p_assignment_operator(p):
@@ -1101,6 +1138,7 @@ def p_assignment_operator(p):
                     | EQ_PLUS
                     | EQ_MINUS '''
     p[0]=p[1]
+    p.set_lineno(0,p.lineno(1))
 
 
 #expression:
@@ -1110,6 +1148,7 @@ def p_assignment_operator(p):
 def p_expression_1(p):
     ''' expression : assignment_expression '''                
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 
 def p_expression_2(p):
     ''' expression : expression COMMA assignment_expression '''
@@ -1118,12 +1157,14 @@ def p_expression_2(p):
         p[0].type=Type('ERROR')
     else:
         p[0].type=Type('VOID')
+    p.set_lineno(0,p.lineno(2))
 
 #constant-expression:
     #conditional-expression
 def p_constant_expression(p):
     ''' constant_expression : conditional_expression ''' 
     p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 
 def p_constant_expression_opt_1(p):
     ''' constant_expression_opt : '''
@@ -1131,7 +1172,8 @@ def p_constant_expression_opt_1(p):
 
 def p_constant_expression_opt_2(p):
     ''' constant_expression_opt : constant_expression '''
-    p[0]=deepcopy(p[1])    
+    p[0]=deepcopy(p[1])
+    p.set_lineno(0,p.lineno(1))
 ## }}}
 
 ####################################################
