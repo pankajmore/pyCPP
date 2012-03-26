@@ -1,7 +1,7 @@
 
 int main()
 {
-float a;
-int b = a;
+float *a;
+int b ;
 //a =a + b;
 }

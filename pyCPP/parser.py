@@ -1964,6 +1964,8 @@ def p_init_declarator(p):
         else :
             p[0].type = Type("ERROR")
     #t.type = deepcopy(DeclType)
+    if p[1].type == Type("POINTER"):
+        t.type = Type(t.type)
     t.attr = deepcopy(p[1].attr)
     if not env.put(t):
         print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
@@ -2036,7 +2038,7 @@ def p_declarator_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
     if p[1]=='*' :
-        p[0].type = Type(p[1].type)
+        p[0].type = Type("POINTER")
     elif p[1] == '&' :
         p[0].type = Type("ERROR")
 
