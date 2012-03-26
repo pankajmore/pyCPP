@@ -2003,7 +2003,7 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator function-try-block
 
 def p_function_definition_1(p):
-    ''' function_definition : new_scope declarator function_body finish_scope'''
+    ''' function_definition : declarator new_scope function_body finish_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
@@ -2026,7 +2026,7 @@ def p_function_definition_1(p):
 
   
 def p_function_definition_2(p):
-    ''' function_definition : decl_specifier_seq  new_scope declarator function_body finish_scope'''
+    ''' function_definition : decl_specifier_seq  declarator new_scope function_body finish_scope'''
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
