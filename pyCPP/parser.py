@@ -1439,7 +1439,7 @@ def p_simple_declaration_1(p):
         p[0].type = Type("ERROR")
     elif p[0].type != Type("ERROR") :
         for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.name)
+            t1 = Symbol(t.attr["name"])
             t1.type = p[0].type
             if t.attr.has_key("isFunction"):
                 t1.attr["isFunction"] = 1
@@ -1452,7 +1452,7 @@ def p_simple_declaration_1(p):
             if t.attr["initialized"] == 1:
                 t1.attr["initializer"] = deepcopy(t.attr["initializer"])
                 t1.attr["initialized"] =1
-            if t.type != Type("ERROR") and p[1].type == t.attr["initializer"].type:
+            if t.type != Type("ERROR") :
                 if not env.put(t1):
                     print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
                     t.type = Type("ERROR")
@@ -1475,7 +1475,7 @@ def p_simple_declaration_2(p):
     #    p[0].type = Type("ERROR")
     if p[0].type != Type("ERROR") :
         for t in p[0].attr["init_declarator_list"] :
-            t1 = Symbol(t.name)
+            t1 = Symbol(t.attr["name"])
             t1.type = p[0].type
             if t.attr.has_key("isFunction"):
                 t1.attr["isFunction"] = 1
@@ -1486,12 +1486,14 @@ def p_simple_declaration_2(p):
                 #t1.isArray = 1
                 t1.attr["width"] = t.attr["width"]
             if t.attr["initialized"] == 1:
-                t1.attr["initializer_clause"] = deepcopy(t.attr["initializer_clause"])
+                t1.attr["initializer"] = deepcopy(t.attr["initializer"])
                 t1.attr["initialized"] =1
-            if t.type != Type("ERROR"):
+            if t.type != Type("ERROR") :
                 if not env.put(t1):
                     print("ERROR: Identifier " + t.name + "already defined. At line number "+ str(p.lineno(2)))
                     t.type = Type("ERROR")
+            else :
+                t.type = Type("ERROR")
                     
 def p_simple_declaration_3(p):
     ''' simple_declaration : decl_specifier_seq SEMICOLON '''
