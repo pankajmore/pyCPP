@@ -77,7 +77,7 @@ class Symbol(object):
         self.table = None
     def __repr__(self):
         if not self.keyword:
-            return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attrs))
+            return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attr))
         else :
             return ''
         

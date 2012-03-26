@@ -159,8 +159,8 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     functionScope()
-    # get the attribute here
     t = env.prev.get(p[-1].attr['name'])
+    print t
     if t is not None:
         # need the entry of attribute in symbol
         print "der"
