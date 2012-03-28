@@ -184,16 +184,9 @@ def p_function_scope(p):
             if not env.put(s):
                 print ("\nError : parameter is already in the symbol table\n")
 
+#ENHANCEMENT
     else: # function declaration has not been seen
-        f = Symbol(p[-1].attr['name'])
-        f.type = p[-1].type
-        f.attr = deepcopy(p[-1].attr)
-        assert(env.prev.put(f))
-        for i in range(p[-1].attr['numParameters']):
-            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
-            s.type = p[-1].attr['parameterList'][i].type
-            if not env.put(s):
-                print ("\nError : parameter is already in the symbol table\n")
+        print ( " Function declaration must exist for a function definition\n")
 
 
 def p_unset_function_scope(p):
@@ -2344,9 +2337,6 @@ def p_function_definition_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0] = deepcopy(p[1])
-    p[0].type = Type('VOID')
-    print p[0].attr['name'], p[0].type
 
     #p[0].specifier = 1
     #code generation
@@ -2360,7 +2350,6 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0] = deepcopy(p[1])
     #p[0].specifier = 1
     #code generation
 
@@ -2843,7 +2832,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=1)
+    yacc.parse(f1.read(),debug=0)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
