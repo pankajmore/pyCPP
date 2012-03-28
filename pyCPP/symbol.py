@@ -75,6 +75,8 @@ class Symbol(object):
         self.error = False 
         self.attr = {}
         self.table = None
+        self.offset = 0
+        self.width = 0
     def __repr__(self):
         if not self.keyword:
             return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attr))
