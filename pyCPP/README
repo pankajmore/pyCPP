@@ -9,3 +9,27 @@ NEW =>        void hello()
     eg.
         const long int a;
         we can't have declaration like this
+
+##Attributes corresponding to symbol table entry for various types of variables
+
+=> Variable - a simple variables
+    => No extra attributes
+
+=> Array
+    => isArray - attribute to denote it is array
+    => dim - dimension of array i.e 1D or 2D or 3D...
+    => length - a list to store the length of each dimension
+e.g for A[3][4]
+    isArray = 1, dim = 2, length = [3,4]
+
+=> Pointer
+    => isPointer -attribute to denote it is a pointer.
+
+=> Function
+    => isFunction - attribute to denote it is a function
+    => parameterList - a list to store the attribute corresponding to each parameter
+    => numParameters - number of Parameters for the function
+    => env - to denote the environment of the function body.
+
+=> Class
+    =>
