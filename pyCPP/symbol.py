@@ -84,6 +84,10 @@ class Symbol(object):
             return ''
         
 
+def toAddr(offset):
+    return  "-"+str(offset) + "($sp)"
+
+
 
 
 def test():
