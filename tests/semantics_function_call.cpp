@@ -1,6 +1,6 @@
 void func(int a , char b);
 
-func(int a , char b)
+void func(int a , char b)
 {
     return a;
 }

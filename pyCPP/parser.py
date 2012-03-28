@@ -186,8 +186,11 @@ def p_function_scope(p):
 
 #ENHANCEMENT
     else: # function declaration has not been seen
-        print ( " Function declaration must exist for a function definition\n")
-
+        for i in range(p[-1].attr['numParameters']):
+            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
+            s.type = p[-1].attr['parameterList'][i].type
+            if not env.put(s):
+                print ("\nError : parameter is already in the symbol table\n")
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
