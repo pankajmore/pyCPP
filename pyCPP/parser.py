@@ -159,11 +159,14 @@ def p_function_scope(p):
     functionScope()
     t = env.prev.get(p[-1].attr['name'])
     if t is not None: # function declartion already seen
-        # need the entry of attribute in symbol
-# TODO : Check type consistency
-        #print p[-1].type
-        #if t.type != p[-1].type :
-        #    print ("\nFunction's type not consistent\n")
+#HACK : p[-2] might be buggy?
+        if p[-2] is not None:
+            if p[-2].type is None: # it must be a typeless declaration , assume VOID
+                if t.type != Type('VOID'):
+                    print ("\nFunction's type must be void since its declaration had no type\n")
+            else:
+                if t.type != p[-2].type:
+                    print ("\nFunction's type not consistent between declaration and definition\n")
         if t.attr['numParameters'] != p[-1].attr['numParameters'] :
             print ("\nFunction overloading not supported\n")
         for i in range(t.attr['numParameters']):
@@ -179,8 +182,11 @@ def p_function_scope(p):
                 print ("\nError : parameter is already in the symbol table\n")
 
     else: # function declaration has not been seen
+        f = Symbol(p[-1].attr['name'])
+        f.type = p[-1].type
+        f.attr = deepcopy(p[-1].attr)
+        assert(env.prev.put(f))
         for i in range(p[-1].attr['numParameters']):
-            print "here"
             s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
             s.type = p[-1].attr['parameterList'][i].type
             if not env.put(s):
