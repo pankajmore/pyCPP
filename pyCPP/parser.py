@@ -2341,6 +2341,10 @@ def p_function_definition_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    p[0] = deepcopy(p[1])
+    p[0].type = Type('VOID')
+    print p[0].attr['name'], p[0].type
+
     #p[0].specifier = 1
     #code generation
 
@@ -2353,6 +2357,7 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    p[0] = deepcopy(p[1])
     #p[0].specifier = 1
     #code generation
 
@@ -2835,7 +2840,7 @@ yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
-    yacc.parse(f1.read(),debug=0)
+    yacc.parse(f1.read(),debug=1)
     if success:
         print 'Compilation Successful with No Error !!!'
     else:
