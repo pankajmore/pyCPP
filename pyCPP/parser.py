@@ -4,6 +4,7 @@ from symbol import *
 from copy import deepcopy
 num_temporaries=0
 ## TODO : return type of function should match the actual function type
+## {{{
 success = True
 class Type(object):
     def __init__(self,next):
@@ -43,6 +44,8 @@ class Attribute(object):
         self.code=''
         self.place=''
         self.error = False
+    def __repr__(self):
+        return "type:"+str(self.type)+" attr:" + str(self.attr)
 
 def initAttr(a):
     a.type=None 
