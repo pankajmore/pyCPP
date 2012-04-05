@@ -928,16 +928,12 @@ def p_additive_expression_3(p):
         p[0].type=Type('CHAR')
     elif p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
-        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'        
     elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
-        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
     elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
-        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
     elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and  (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
-        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '-' + p[3].place + '\n'
         pass
     else:
         p[0]=errorAttr(p[0])
@@ -969,9 +965,22 @@ def p_relational_expression_1(p):
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+#TODO: Array handling , etc..
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t0, $t1\n"
+    p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
@@ -980,6 +989,7 @@ def p_relational_expression_2(p):
     
 def p_relational_expression_3(p):
     ''' relational_expression : relational_expression GREATER additive_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
@@ -987,13 +997,38 @@ def p_relational_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : > operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
-    p.set_lineno(0,p.lineno(2))
-        
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+#TODO: Array handling , etc..
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t1, $t0\n"
+    p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+
+   p.set_lineno(0,p.lineno(2))
+
 def p_relational_expression_4(p):
     ''' relational_expression : relational_expression LESS_EQ additive_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
+
+    p[0].offset = size
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t1, $t0\n"                  # t2 stores greater than result
+    p[0].code += "\tli $t3 1\n"
+    p[0].code += "\tsub $t3, $t3, $t2\n"                  # invert t2
+    p[0].code += "\tsw $t3 " + toAddr(p[0].offset) + "\n" 
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
@@ -1002,6 +1037,7 @@ def p_relational_expression_4(p):
 
 def p_relational_expression_5(p):
     ''' relational_expression : relational_expression GREATER_EQ additive_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
@@ -1009,7 +1045,20 @@ def p_relational_expression_5(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : >= operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
-    p.set_lineno(0,p.lineno(2))
+
+    p[0].offset = size
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t0, $t1\n"                  # t2 stores less than result
+    p[0].code += "\tli $t3 1\n"
+    p[0].code += "\tsub $t3, $t3, $t2\n"                  # invert t2
+    p[0].code += "\tsw $t3 " + toAddr(p[0].offset) + "\n" 
+
+   p.set_lineno(0,p.lineno(2))
 
 #relational-expression:
     #shift-expression
