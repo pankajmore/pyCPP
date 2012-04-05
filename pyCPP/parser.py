@@ -4,6 +4,7 @@ from symbol import *
 from copy import deepcopy
 num_temporaries=0
 ## TODO : return type of function should match the actual function type
+## {{{
 success = True
 size=0
 class Type(object):
@@ -41,6 +42,9 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=''
+        self.error = False
+    def __repr__(self):
+        return "type:"+str(self.type)+" attr:" + str(self.attr)
 
 def initAttr(a):
     a.type=None 
@@ -159,11 +163,14 @@ def p_function_scope(p):
     functionScope()
     t = env.prev.get(p[-1].attr['name'])
     if t is not None: # function declartion already seen
-        # need the entry of attribute in symbol
-# TODO : Check type consistency
-        #print p[-1].type
-        #if t.type != p[-1].type :
-        #    print ("\nFunction's type not consistent\n")
+#HACK : p[-2] might be buggy?
+        if p[-2] is not None:
+            if p[-2].type is None: # it must be a typeless declaration , assume VOID
+                if t.type != Type('VOID'):
+                    print ("\nFunction's type must be void since its declaration had no type\n")
+            else:
+                if t.type != p[-2].type:
+                    print ("\nFunction's type not consistent between declaration and definition\n")
         if t.attr['numParameters'] != p[-1].attr['numParameters'] :
             print ("\nFunction overloading not supported\n")
         for i in range(t.attr['numParameters']):
@@ -178,14 +185,13 @@ def p_function_scope(p):
             if not env.put(s):
                 print ("\nError : parameter is already in the symbol table\n")
 
+#ENHANCEMENT
     else: # function declaration has not been seen
         for i in range(p[-1].attr['numParameters']):
-            print "here"
             s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
             s.type = p[-1].attr['parameterList'][i].type
             if not env.put(s):
                 print ("\nError : parameter is already in the symbol table\n")
-
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
@@ -1012,30 +1018,40 @@ def p_additive_expression_1(p):
 
 def p_additive_expression_2(p):
     ''' additive_expression : additive_expression PLUS multiplicative_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
     elif p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
-        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'        
     elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
-        p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
     elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR'))and is_primitive(p[1]) and is_primitive(p[3]):
-        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
     elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
-        #p[0].code = p[1].code +'\t' + p[3].code + '\t'+ p[0].place + '=' + p[1].place + '+' + p[3].place + '\n'
         pass
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform addition between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
+
+    if p[0].type != Type('ERROR'):
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+
+        p[0].code = p[1].code + p[3].code
+        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+        p[0].code += "\tadd $t2, $t0, $t1\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+
     p.set_lineno(0,p.lineno(2))
                   
 def p_additive_expression_3(p):
     ''' additive_expression : additive_expression MINUS multiplicative_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1056,7 +1072,19 @@ def p_additive_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform substraction between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
-    p.set_lineno(0,p.lineno(2))
+
+     if p[0].type != Type('ERROR'):
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+
+        p[0].code = p[1].code + p[3].code
+        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+        p[0].code += "\tsub $t2, $t0, $t1\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+
+   p.set_lineno(0,p.lineno(2))
                       
 #shift-expression:
     #additive-expression
@@ -2463,6 +2491,7 @@ def p_function_definition_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+
     #p[0].specifier = 1
     #code generation
 

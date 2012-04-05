@@ -28,6 +28,7 @@ class Environment(object):
 class SymbolTable(object):
     def __init__(self):
         self.symbols = {}
+        self.offset = 0
         for key in keywords :
             symbol = Symbol(key)
             symbol.keyword = True
@@ -70,17 +71,24 @@ class SymbolTable(object):
 class Symbol(object):
     def __init__(self,name):
         self.name = name 
+        self.width = 0;
         self.keyword = False 
         self.type = None 
         self.error = False 
         self.attr = {}
         self.table = None
+        self.offset = 0
+        self.width = 0
     def __repr__(self):
         if not self.keyword:
             return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attr))
         else :
             return ''
         
+
+def toAddr(offset):
+    return  "-"+str(offset) + "($sp)"
+
 
 
 
