@@ -907,7 +907,7 @@ def p_additive_expression_2(p):
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform addition between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
-    if p[0].type == Type('ERROR'):
+    if p[0].type != Type('ERROR'):
         p[0].offset = size 
         size = size + 4
         p[0].place = newTemp()
@@ -944,7 +944,7 @@ def p_additive_expression_3(p):
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform substraction between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
-     if p[0].type == Type('ERROR'):
+     if p[0].type != Type('ERROR'):
         p[0].offset = size 
         size = size + 4
         p[0].place = newTemp()
