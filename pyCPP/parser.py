@@ -1155,12 +1155,26 @@ def p_logical_and_expression_1(p):
     ''' logical_and_expression : equality_expression'''
     p[0]=deepcopy(p[1])
     p.set_lineno(0,p.lineno(1))
-                        
+
+
+#TODO: Lookup short-circuiting and back-patching in logical expressions
 def p_logical_and_expression_2(p):
     ''' logical_and_expression : logical_and_expression DOUBLE_AMPERSAND equality_expression'''
+    global size 
     p[0]=deepcopy(p[1])
     if p[1].type==Type('BOOL') and p[3].type==Type('BOOL') and is_primitive(p[1])and is_primitive(p[3]) :
         p[0].type=Type('BOOL')
+
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tand $t2, $t0, $t1\n"
+    p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
@@ -1177,9 +1191,22 @@ def p_logical_or_expression_1(p):
 
 def p_logical_or_expression_2(p):
     ''' logical_or_expression : logical_or_expression DOUBLE_PIPE logical_and_expression ''' 
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('BOOL') and p[3].type==Type('BOOL') and is_primitive(p[1])and is_primitive(p[3]) :
         p[0].type=Type('BOOL')
+
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tor $t2, $t0, $t1\n"
+    p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
+
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
