@@ -1477,10 +1477,10 @@ def p_compound_statement_1(p):
     p[0].type = Type("VOID")
     pass 
 def p_compound_statement_2(p):
-    ''' compound_statement : LBRACE statement_seq RBRACE '''
+    ''' compound_statement : LBRACE new_scope statement_seq finish_scope RBRACE '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
-    if p[2].type == Type("ERROR"):
+    if p[3].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
