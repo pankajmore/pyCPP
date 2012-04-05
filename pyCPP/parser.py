@@ -5,6 +5,7 @@ from copy import deepcopy
 num_temporaries=0
 ## TODO : return type of function should match the actual function type
 success = True
+size=0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -29,8 +30,6 @@ class Type(object):
 		return str(self.next)
 
 
-
-
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
 env=Environment(None)
 DeclType = None
@@ -42,7 +41,6 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=''
-        self.error = False
 
 def initAttr(a):
     a.type=None 
@@ -50,8 +48,7 @@ def initAttr(a):
     a.value=None
     a.offset= 0
     a.code=''
-    a.place=None
-    a.error = False
+    a.place=''
     return a
 
 def errorAttr(a):
@@ -60,7 +57,7 @@ def errorAttr(a):
     a.value=None
     a.offset= 0
     a.code=''
-    a.place=None
+    a.place=''
     return a
 
 def newTemp():
@@ -74,6 +71,9 @@ def newTemp():
       num_temporaries = num_temporaries + 1
       return temp
 
+def toAddr(offset):
+    return "-"+str(offset)+"($sp)"
+    
 def find_recursively(p):
     if isinstance(p,Type):
         return find_recursively(p.next)
@@ -206,42 +206,42 @@ def p_literal_1(p):
     '''literal : INUMBER '''
     p[0]=Attribute()
     p[0].type=Type('INT')
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
     ''' literal : DNUMBER '''
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
     ''' literal : LIT_CHAR '''
     p[0]=Attribute()
     p[0].type=Type('CHAR')
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_4(p):
     ''' literal : LIT_STR '''
     p[0]=Attribute()
     p[0].type=Type(Type('CHAR'))
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_5(p):
     ''' literal : TRUE '''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
     ''' literal : FALSE'''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=str(p[1])
+    p[0].place=p[1]
     p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
@@ -255,7 +255,13 @@ def p_literal_6(p):
     
 def p_primary_expression_1(p):
     ''' primary_expression : literal '''
+    global size
     p[0]=deepcopy(p[1])
+    p[0].place=newTemp()
+    p[0].offset=size
+    p[0].code+="\tli $t0 "+p[0].place+"\n"
+    p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+    size=size+4
     p.set_lineno(0,p.lineno(1))
   
 ##def p_primary_expression_2(p):
@@ -389,6 +395,7 @@ def p_postfix_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_postfix_expression_2(p):
+    global size
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
     p[0] = deepcopy(p[1])
     if not (isinstance(p[0].type,Type) and isinstance(p[1].type.next,Type)):
@@ -404,14 +411,35 @@ def p_postfix_expression_2(p):
                 print "Error in line %s : Index of array can only be an integer " % p.lineno(2)
                 p[0]=errorAttr(p[0])
             else:
-                p[0].place=newTemp()
-                p[0].code+=p[1].code + "\t" + p[3].code + "\t" + p[0].place + " = " + p[1].place + "["+p[3].place+"]"+"\n"
+                dim=1
+                if p[0].attr.has_key('dim'):
+                    for i in range(1,len(p[0].attr['dim'])):
+                        dim=dim*p[0].attr['dim'][i]
+                    p[0].attr['dim'].pop(0)
+                p[0].offset=size
+                p[0].place=newTemp()          
                 p[0].type=p[1].type.next
                 p[0].attr={}
+                p[0].code=p[1].code+p[3].code+"\tli $t0 "+t[1].offset+"\n"
+                p[0].code+="\tlw $t1 "+toAddr(p[3].offset)+"\n"
+                p[0].code+="\tsll $t1 $t1 2\n"
+                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code+="\tmul $t1 $t1 $t2\n"
+                p[0].code+="\tadd $t0 $t0 $t1\n"
+                if isinstance(p[0].type.next,Type):
+                    p[0].code+="\tsub $t1 $sp $t0\n"
+                    p[0].code+="\tlw $t1 0($t1)\n"
+                    p[0].code+="\tsw $t1 "+toAddr(p[0].offset)+"\n"
+                else:
+                    p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"                     
+                size=size+4
+                
     p.set_lineno(0,p.lineno(2))
   
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
+    global size
+    global MaxFunctionLength
     p[0]=deepcopy(p[1])
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
@@ -422,6 +450,15 @@ def p_postfix_expression_3(p):
         p[0]=errorAttr(p[0])
     else:
         p[0].attr={}
+        p[0].offset=size
+        p[0].place=newTemp()
+        size=size+4
+        p[0].code+="\tjal "+p[1].place+"\n"
+        if p[0].type!=Type('VOID'):
+            p[0].code+='\tmove $t0 $v0\n'
+        else:
+            p[0].code+='\tli $t0 0'
+        p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"
     p.set_lineno(0,p.lineno(2))
     
 #def p_postfix_expression_4(p):
@@ -455,18 +492,46 @@ def p_postfix_expression_4(p):
                     p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
+                for i in range(p[1].attr['symbol'].attr['numParameters']):
+                    p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i].offset)+'\n'
+        p[0].code+="\tjal "+p[1].place+"\n"
+        if p[0].type!=Type('VOID'):
+            p[0].code+='\tmove $t0 $v0\n'
+        else:
+            p[0].code+='\tli $t0 0'
+        p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"                
     p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
-                    
+    global size
     p[0]=deepcopy(p[1])
-    if is_primitive(p[1]) and (p[0].typeerrorAttr=='FLOAT' or p[0].type==Type('INT')) :
+    if is_primitive(p[1]) and (p[0].type==Type('FLOAT') or p[0].type==Type('INT')) :
         p[0].place=newTemp()
-        p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"
+        p[0].offset=size
+        size=size+4
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\taddi $t0 $t0 1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"
     elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
-    #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "+" + "1"                                                                                               
+        p[0].offset=size
+        size=size+4
+        dim=1
+        if p[0].attr.has_key('dim'):
+            for i in range(1,len(p[0].attr['dim'])):
+                dim=dim*p[0].attr['dim'][i]
+            p[0].attr['dim'].pop(0)
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tli $t1 "+dim+"\n"
+        p[0].code+="\tli $t2 "+p[0].size+"\n"
+        p[0].code+="\tmul $t1 $t1 $t2\n"
+        p[0].code+="\tadd $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"     
     else:
         if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
@@ -478,10 +543,31 @@ def p_postfix_expression_6(p):
     p[0]=deepcopy(p[1])
     if is_primitive(p[1]) and (p[0].type==Type('FLOAT') or p[0].type==Type('INT')):
         p[0].place=newTemp()
-        p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"
+        p[0].offset=size
+        size=size+4
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tli $t1 1\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"
     elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
-    #p[0].code= p[1].code + "\t" + p[0].place + "=" + p[1].place + "-" + "1"                                                                                                     
+        p[0].offset=size
+        size=size+4
+        dim=1
+        if p[0].attr.has_key('dim'):
+            for i in range(1,len(p[0].attr['dim'])):
+                dim=dim*p[0].attr['dim'][i]
+            p[0].attr['dim'].pop(0)
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tli $t1 "+dim+"\n"
+        p[0].code+="\tli $t2 "+p[0].size+"\n"
+        p[0].code+="\tmul $t1 $t1 $t2\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"                                                                                           
     else:
         if p[1].type!=Type('ERROR'):                                                                                                     
             print 'Error in line %s : PostDecrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
@@ -564,10 +650,31 @@ def p_unary_expression_2(p):
     p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
-        p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"
+        p[0].offset=size
+        size=size+4
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\taddi $t0 $t0 1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"
+        
     elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
-    #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "+" + "1"                                                                                                        
+        p[0].offset=size
+        size=size+4
+        dim=1
+        if p[0].attr.has_key('dim'):
+            for i in range(1,len(p[0].attr['dim'])):
+                dim=dim*p[0].attr['dim'][i]
+            p[0].attr['dim'].pop(0)
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tli $t1 "+dim+"\n"
+        p[0].code+="\tli $t2 "+p[0].size+"\n"
+        p[0].code+="\tmul $t1 $t1 $t2\n"
+        p[0].code+="\tadd $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"  
     else:
         if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement ++ operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
@@ -581,10 +688,31 @@ def p_unary_expression_3(p):
     p[0]=deepcopy(p[2])
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
-        p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1" + "\n"
+        p[0].offset=size
+        size=size+4
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tli $t1 1\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"    
     elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
-    #p[0].code= p[2].code + "\t" + p[0].place + "=" + p[2].place + "-" + "1"                
+        p[0].offset=size
+        size=size+4
+        dim=1
+        if p[0].attr.has_key('dim'):
+            for i in range(1,len(p[0].attr['dim'])):
+                dim=dim*p[0].attr['dim'][i]
+            p[0].attr['dim'].pop(0)
+        p[0].code=p[1].code
+        p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
+        p[0].code+="\tli $t1 "+dim+"\n"
+        p[0].code+="\tli $t2 "+p[0].size+"\n"
+        p[0].code+="\tmul $t1 $t1 $t2\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"  
     else:
         if p[2].type!=Type('ERROR'):
             print 'Error in line %s : PreIncrement -- operator can not be applied to %s' % (p.lineno(2),find_type(p[1]))
