@@ -1082,9 +1082,25 @@ def p_equality_expression_1(p):
                   
 def p_equality_expression_2(p):
     ''' equality_expression : equality_expression IS_EQ relational_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_equality(p):
         p[0].type=Type('BOOL')
+
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t0, $t1\n"
+    p[0].code += "\tslt $t3, $t1, $t0\n"
+    p[0].code += "\tadd $t1, $t2, $t3\n"
+    p[0].code += "\tli $t0, 1\n"
+    p[0].code += "\tsub $t0, $t0, $t1\n"
+    p[0].code += "\tsw $t0, " + toAddr(p[0].offset) + "\n"
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
@@ -1093,9 +1109,24 @@ def p_equality_expression_2(p):
     
 def p_equality_expression_3(p):
     ''' equality_expression : equality_expression NOT_EQ relational_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_equality(p):
         p[0].type=Type('BOOL')
+
+    p[0].offset = size 
+    size = size + 4
+    p[0].place = newTemp()
+
+    p[0].code = p[1].code + p[3].code
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tslt $t2, $t0, $t1\n"
+    p[0].code += "\tslt $t3, $t1, $t0\n"
+    p[0].code += "\tadd $t1, $t2, $t3\n"
+    p[0].code += "\tsw $t1, " + toAddr(p[0].offset) + "\n"
+
+
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
