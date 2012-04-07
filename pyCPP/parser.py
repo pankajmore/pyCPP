@@ -212,42 +212,42 @@ def p_literal_1(p):
     '''literal : INUMBER '''
     p[0]=Attribute()
     p[0].type=Type('INT')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
     ''' literal : DNUMBER '''
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
     ''' literal : LIT_CHAR '''
     p[0]=Attribute()
     p[0].type=Type('CHAR')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_4(p):
     ''' literal : LIT_STR '''
     p[0]=Attribute()
     p[0].type=Type(Type('CHAR'))
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_5(p):
     ''' literal : TRUE '''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
     ''' literal : FALSE'''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
@@ -490,22 +490,26 @@ def p_postfix_expression_4(p):
             p[0]=errorAttr(p[0])
         else:
             tmp=0
-            for i in range(p[1].attr['symbol'].attr['numParameters']):
-                if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
-                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
-                    tmp=1
-                if tmp==1:
-                    p[0]=errorAttr(p[0]) 
+            if p[1].attr['symbol'].attr['numParameters']>4:
+                print "Error in line %s : Max 4 parameters are allowed\n" % p.lineno(2)
+                tmp=1
+            else:
+                for i in range(p[1].attr['symbol'].attr['numParameters']):
+                    if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
+                        print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
+                        tmp=1
+                    if tmp==1:
+                        p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
                     p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i].offset)+'\n'
-        p[0].code+="\tjal "+p[1].place+"\n"
-        if p[0].type!=Type('VOID'):
-            p[0].code+='\tmove $t0 $v0\n'
-        else:
-            p[0].code+='\tli $t0 0'
-        p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"                
+                p[0].code+="\tjal "+p[1].place+"\n"
+                if p[0].type!=Type('VOID'):
+                    p[0].code+='\tmove $t0 $v0\n'
+                else:
+                    p[0].code+='\tli $t0 0'
+                p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"                
     p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
