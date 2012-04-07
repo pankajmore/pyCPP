@@ -1607,12 +1607,22 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
-                pass
+                p[0].offset = size 
+                size = size + 4
+                p[0].place = newTemp()
+                dim=p[1].type.next.size()
+                p[0].code = p[1].code + p[3].code
+                p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code +="\tmul $t1 $t0 $t2\n"
+                p[0].code += "\tadd $t0 $t0 $t1\n"
+                p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"          
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
                 p[0]=errorAttr(p[0])
-                p[1].type=Type('ERROR')            
+                p[1].type=Type('ERROR')                    
 
         if p[2]=='-=':
             if check_implicit_2(p[1],p[3]):
@@ -1623,10 +1633,20 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
-                pass
+                p[0].offset = size 
+                size = size + 4
+                p[0].place = newTemp()
+                dim=p[1].type.next.size()
+                p[0].code = p[1].code + p[3].code
+                p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code +="\tmul $t1 $t0 $t2\n"
+                p[0].code += "\tsub $t0 $t0 $t1\n"
+                p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                    print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
+                    print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))        
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
@@ -1660,6 +1680,7 @@ def p_expression_2(p):
     if p[1].type==Type('ERROR') or p[2].type==Type('ERROR'):
         p[0].type=Type('ERROR')
     else:
+        p[0].code=p[1].code+p[3].code
         p[0].type=Type('VOID')
     p.set_lineno(0,p.lineno(2))
 
