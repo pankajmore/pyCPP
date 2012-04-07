@@ -1743,6 +1743,18 @@ def p_iteration_statement_1(p):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
 
+    #code generation
+    sbegin = newLabel()
+    safter = newLabel()
+    p[0].code = "\t" + sbegin + ":\n"
+    p[0].code += p[3].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tbeq $t0, $0, " + safter + "\n"
+    p[0].code += p[5].code 
+    p[0].code += "\tj " + sbegin + "\n"
+    p[0].code += "\t" + safter + ":\n"
+
+# Not needed, similar to while
 def p_iteration_statement_2(p):
     ''' iteration_statement : DO statement WHILE LPAREN condition RPAREN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
@@ -1757,6 +1769,7 @@ def p_iteration_statement_2(p):
             print("Type error at" + str(p.lineno(5)))
         p[0].type = Type("ERROR")
     pass 
+
 def p_iteration_statement_3(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON expression RPAREN statement '''
     p.set_lineno(0,p.lineno(1))
