@@ -1516,6 +1516,7 @@ def p_expression_1(p):
 def p_expression_2(p):
     ''' expression : expression COMMA assignment_expression '''
     p[0]=deepcopy(p[1])
+    p[0].code += p[3].code 
     if p[1].type==Type('ERROR') or p[2].type==Type('ERROR'):
         p[0].type=Type('ERROR')
     else:
