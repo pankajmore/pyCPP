@@ -11,6 +11,7 @@ class Type(object):
     def __init__(self,next):
         self.next = next
         self.name = next
+        self.dim = 1
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -29,6 +30,11 @@ class Type(object):
         	return "*" + str(self.next)
 	else:
 		return str(self.next)
+    def size(self):
+        if isinstance(self.next,Type):
+            return dim*self.next.size()
+        else:
+            return 4
 
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
@@ -78,7 +84,7 @@ def newTemp():
 newLabel = newTemp
 
 def toAddr(offset):
-    return "-"+str(offset)+"($sp)"
+    return " -"+str(offset)+"($sp)"
     
 def find_recursively(p):
     if isinstance(p,Type):
@@ -225,42 +231,42 @@ def p_literal_1(p):
     '''literal : INUMBER '''
     p[0]=Attribute()
     p[0].type=Type('INT')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
     ''' literal : DNUMBER '''
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
     ''' literal : LIT_CHAR '''
     p[0]=Attribute()
     p[0].type=Type('CHAR')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_4(p):
     ''' literal : LIT_STR '''
     p[0]=Attribute()
     p[0].type=Type(Type('CHAR'))
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_5(p):
     ''' literal : TRUE '''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
     ''' literal : FALSE'''
     p[0]=Attribute()
     p[0].type=Type('BOOL')
-    p[0].place=p[1]
+    p[0].place=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
@@ -430,20 +436,14 @@ def p_postfix_expression_2(p):
                 print "Error in line %s : Index of array can only be an integer " % p.lineno(2)
                 p[0]=errorAttr(p[0])
             else:
-                dim=1
-                if p[0].attr.has_key('dim'):
-                    for i in range(1,len(p[0].attr['dim'])):
-                        dim=dim*p[0].attr['dim'][i]
-                    p[0].attr['dim'].pop(0)
+                dim=p[1].type.next.size()
                 p[0].offset=size
                 p[0].place=newTemp()          
                 p[0].type=p[1].type.next
                 p[0].attr={}
                 p[0].code=p[1].code+p[3].code+"\tli $t0 "+t[1].offset+"\n"
                 p[0].code+="\tlw $t1 "+toAddr(p[3].offset)+"\n"
-                p[0].code+="\tsll $t1 $t1 2\n"
                 p[0].code+="\tli $t2 "+dim+"\n"
-                p[0].code+="\tmul $t1 $t1 $t2\n"
                 p[0].code+="\tadd $t0 $t0 $t1\n"
                 if isinstance(p[0].type.next,Type):
                     p[0].code+="\tsub $t1 $sp $t0\n"
@@ -490,6 +490,7 @@ def p_postfix_expression_4(p):
     #Default arguments not supported as of now
     #Implicit type conversion not supported as of now
     p[0]=deepcopy(p[1])
+    global size
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
@@ -503,22 +504,30 @@ def p_postfix_expression_4(p):
             p[0]=errorAttr(p[0])
         else:
             tmp=0
-            for i in range(p[1].attr['symbol'].attr['numParameters']):
-                if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
-                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
-                    tmp=1
-                if tmp==1:
-                    p[0]=errorAttr(p[0]) 
+            if p[1].attr['symbol'].attr['numParameters']>4:
+                print "Error in line %s : Max 4 parameters are allowed\n" % p.lineno(2)
+                tmp=1
+            else:
+                for i in range(p[1].attr['symbol'].attr['numParameters']):
+                    if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
+                        print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
+                        tmp=1
+                    if tmp==1:
+                        p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
+                p[0].code=p[2].code
+                p[0].place=newTemp()
+                p[0].offset=size
+                size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
                     p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i].offset)+'\n'
-        p[0].code+="\tjal "+p[1].place+"\n"
-        if p[0].type!=Type('VOID'):
-            p[0].code+='\tmove $t0 $v0\n'
-        else:
-            p[0].code+='\tli $t0 0'
-        p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"                
+                p[0].code+="\tjal "+p[1].place+"\n"
+                if p[0].type!=Type('VOID'):
+                    p[0].code+='\tmove $t0 $v0\n'
+                else:
+                    p[0].code+='\tli $t0 0'
+                p[0].code+="\tsw $t0 " + toAddr(p[0].offset)+"\n"                
     p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
@@ -538,17 +547,11 @@ def p_postfix_expression_5(p):
         p[0].place=newTemp()
         p[0].offset=size
         size=size+4
-        dim=1
-        if p[0].attr.has_key('dim'):
-            for i in range(1,len(p[0].attr['dim'])):
-                dim=dim*p[0].attr['dim'][i]
-            p[0].attr['dim'].pop(0)
+        dim=p[0].type.next.size()
         p[0].code=p[1].code
         p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tli $t2 "+p[0].size+"\n"
-        p[0].code+="\tmul $t1 $t1 $t2\n"
         p[0].code+="\tadd $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"     
     else:
@@ -560,6 +563,7 @@ def p_postfix_expression_5(p):
 def p_postfix_expression_6(p):
     ''' postfix_expression : postfix_expression MINUS_MINUS '''
     p[0]=deepcopy(p[1])
+    global size
     if is_primitive(p[1]) and (p[0].type==Type('FLOAT') or p[0].type==Type('INT')):
         p[0].place=newTemp()
         p[0].offset=size
@@ -574,17 +578,11 @@ def p_postfix_expression_6(p):
         p[0].place=newTemp()
         p[0].offset=size
         size=size+4
-        dim=1
-        if p[0].attr.has_key('dim'):
-            for i in range(1,len(p[0].attr['dim'])):
-                dim=dim*p[0].attr['dim'][i]
-            p[0].attr['dim'].pop(0)
+        dim=p[0].type.next.size()
         p[0].code=p[1].code
         p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tli $t2 "+p[0].size+"\n"
-        p[0].code+="\tmul $t1 $t1 $t2\n"
         p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"                                                                                           
     else:
@@ -622,8 +620,9 @@ def p_expression_list_2(p):
     ''' expression_list : expression_list COMMA assignment_expression '''
     if p[1].type==Type('ERROR') or p[3].type==Type('ERROR'):
         p[0]=errorAttr(p[0])
-    else:                                                                                                     
+    else:
         p[0]=deepcopy(p[1])
+        p[0].code+=p[3].code
         p[0].attr['numParameters']+=1
         p[0].attr['parameterList'].append(deepcopy(p[3]))
         p[0].code=p[1].code+'\t'+  p[3].code
@@ -667,6 +666,7 @@ def p_unary_expression_1(p):
 def p_unary_expression_2(p):
     ''' unary_expression : PLUS_PLUS cast_expression'''
     p[0]=deepcopy(p[2])
+    global size
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].offset=size
@@ -681,16 +681,10 @@ def p_unary_expression_2(p):
         p[0].place=newTemp()
         p[0].offset=size
         size=size+4
-        dim=1
-        if p[0].attr.has_key('dim'):
-            for i in range(1,len(p[0].attr['dim'])):
-                dim=dim*p[0].attr['dim'][i]
-            p[0].attr['dim'].pop(0)
+        dim=p[0].type.next.size()
         p[0].code=p[1].code
         p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tli $t2 "+p[0].size+"\n"
-        p[0].code+="\tmul $t1 $t1 $t2\n"
         p[0].code+="\tadd $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"  
@@ -705,6 +699,7 @@ def p_unary_expression_2(p):
 def p_unary_expression_3(p):
     ''' unary_expression : MINUS_MINUS cast_expression '''
     p[0]=deepcopy(p[2])
+    global size
     if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
         p[0].place=newTemp()
         p[0].offset=size
@@ -719,16 +714,10 @@ def p_unary_expression_3(p):
         p[0].place=newTemp()
         p[0].offset=size
         size=size+4
-        dim=1
-        if p[0].attr.has_key('dim'):
-            for i in range(1,len(p[0].attr['dim'])):
-                dim=dim*p[0].attr['dim'][i]
-            p[0].attr['dim'].pop(0)
+        dim=p[0].type.next.size()
         p[0].code=p[1].code
         p[0].code+="\tlw $t0 "+toAddr(p[1].offset)+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tli $t2 "+p[0].size+"\n"
-        p[0].code+="\tmul $t1 $t1 $t2\n"
         p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0].offset)+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1].offset)+"\n"  
@@ -742,9 +731,15 @@ def p_unary_expression_3(p):
 def p_unary_expression_4(p):
     ''' unary_expression : unary_operator cast_expression '''
     p[0]=deepcopy(p[2])
+    global size
     if p[1]=='+':
         if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT') ):
-            pass
+            p[0].offset=size
+            size=size+4
+            p[0].place=newTemp()
+            p[0].code=p[2].code
+            p[0].code+="\tli $t0"+toAddr(p[2].offset)+"\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -752,8 +747,13 @@ def p_unary_expression_4(p):
 
     if p[1]=='-':
         if is_primitive(p[2]) and (p[2].type==Type('FLOAT') or p[2].type==Type('INT')):
+            p[0].offset=size
+            size=size+4
             p[0].place=newTemp()
-            p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "-" +  p[2].place +"\n"
+            p[0].code=p[2].code
+            p[0].code+="\tlw $t0"+toAddr(p[2].offset)+"\n"
+            p[0].code+="\tsub $t0 $0 $t0\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):        
@@ -761,8 +761,14 @@ def p_unary_expression_4(p):
 
     if p[1]=='!':
         if p[2].type==Type('BOOL') and is_primitive(p[2]):
+            p[0].offset=size
+            size=size+4
             p[0].place=newTemp()
-            p[0].code = p[2].code+ "\t"+ p[0].place + "=" + "not" +  p[2].place +"\n"
+            p[0].code=p[2].code
+            p[0].code+="\tlw $t0"+toAddr(p[2].offset)+"\n"
+            p[0].code+="\tli $t1 1\n"
+            p[0].code+="\tsub $t0 $t1 $t0\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -770,7 +776,15 @@ def p_unary_expression_4(p):
     if p[1]=='*':
         if isinstance(p[2].type,Type) and isinstance(p[2].type.next,Type):
             p[0].type=p[2].type.next
-            #find value of *p[2].value and store in p[0]
+            p[0].offset=size
+            size=size+4
+            p[0].place=newTemp()
+            p[0].code=p[2].code
+            p[0].code+="\tlw $t0"+toAddr(p[2].offset)+"\n"
+            p[0].code+="\tsub $t1 $sp $t0\n"
+            p[0].code+="\tlw $t0 0($t1)\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
+            
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -778,7 +792,12 @@ def p_unary_expression_4(p):
     if p[1]=='&':
         if p[2].type in [Type('FLOAT'),Type('INT'),Type('BOOL'),Type('CHAR')] and is_primitive(p[2]):
             p[0].type=Type(p[2].type)
-            #find value of &p[2].value and store in p[0]
+            p[0].offset=size
+            size=size+4
+            p[0].place=newTemp()
+            p[0].code=p[2].code
+            p[0].code+="\tli $t0"+p[2].offset+"\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -795,6 +814,12 @@ def p_unary_expression_5(p):
     typ=find_recursively(p[2].type)    
     if is_primitive(p[2]) and typ in ['INT','FLOAT','CHAR','BOOL']:
         p[0].type='INT'
+        p[0].place=newTemp()
+        p[0].offset=size
+        size+=4
+        p[0].code=p[1].code
+        p[0].code+="\tli $t0"+p[1].type.size()+"\n"
+        p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
     else:
         p[0]=errorAttr(p[0])
         if p[2].type == Type('ERROR'):
@@ -804,9 +829,16 @@ def p_unary_expression_5(p):
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
     p[0]=Attribute()
+    global size
     typ=find_recursively(p[3].type)    
     if is_primitive(p[3]) and typ in ['INT','FLOAT','CHAR','BOOL']:
         p[0].type='INT'
+        p[0].place=newTemp()
+        p[0].offset=size
+        size+=4
+        p[0].code=p[3].code
+        p[0].code+="\tli $t0"+p[3].type.size()+"\n"
+        p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
     else:
         p[0]=errorAttr(p[0])
         if p[3].type == Type('ERROR'):
@@ -944,16 +976,56 @@ def p_cast_expression_1(p):
 def p_cast_expression_2(p):
     '''cast_expression : LPAREN type_id RPAREN cast_expression '''
     p[0]=deepcopy(p[4])
+    x=-1
+    global size
     #TODO : Add support for type conversion with pointers i.e (int*), (char*), etc.
     if p[4].type!=p[2].type:
         if p[2].type== Type('FLOAT') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]) :
             p[0].type=Type('FLOAT')
+            p[0].offset=size
+            size+=4
+            p[0].place=newTemp()
+            p[0].code=p[2].code+p[4].code
+            p[0].code+="\tlw $t0"+toAddr(p[4].offset)+"\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         elif p[2].type == Type('INT') and p[4].type==Type('FLOAT') and is_primitive(p[4])and is_primitive(p[0]):
             p[0].type=Type('INT')
+            p[0].offset=size
+            size+=4
+            p[0].place=newTemp()
+            p[0].code=p[2].code+p[4].code
+            p[0].code+="\tlw $t0"+toAddr(p[4].offset)+"\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         elif p[2].type == Type('INT') and p[4].type==Type('CHAR') and is_primitive(p[4])and is_primitive(p[0]):
             p[0].type=Type('INT')
-        elif p[2].type == Type('CHAR') and p[4].type==Type('INT') and is_primitive(p[4])and is_primitive(p[0]):
+            p[0].offset=size
+            size+=4
+            p[0].place=newTemp()
+            p[0].code=p[2].code+p[4].code
+            p[0].code+="\tlw $t0"+toAddr(p[4].offset)+"\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
+        elif p[2].type == Type('CHAR') and (p[4].type==Type('INT') or p[4].type=='FLOAT')and is_primitive(p[4])and is_primitive(p[0]):
             p[0].type=Type('CHAR')
+            p[0].offset=size
+            size+=4
+            p[0].place=newTemp()
+            p[0].code=p[2].code+p[4].code
+            p[0].code+="\tlw $t0"+toAddr(p[4].offset)+"\n"
+            p[0].code+="\tandi $t0 $t0 256\n"
+            p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
+        elif isinstance(p[2].type,Type) and isinstance(p[4].type,Type):
+            if p[2].type.next==Type('VOID') or  p[4].type.next==Type('VOID'):
+                x=1
+            if x<0:
+                print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
+            else:
+                p[0].type=p[2].type
+                p[0].offset=size
+                size+=4
+                p[0].place=newTemp()
+                p[0].code=p[2].code+p[4].code
+                p[0].code+="\tlw $t0"+toAddr(p[4].offset)+"\n"
+                p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
@@ -986,6 +1058,15 @@ def p_multiplicative_expression_2(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform multiplication between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    if p[0].type != Type('ERROR'):
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].code = p[1].code + p[3].code
+        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+        p[0].code += "\tmul $t2, $t0, $t1\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"   
     p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_3(p):
@@ -1003,6 +1084,16 @@ def p_multiplicative_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform division between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    if p[0].type != Type('ERROR'):
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].code = p[1].code + p[3].code
+        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+        p[0].code += "\tdiv $t0, $t1\n"
+        p[0].code += "\tmove $t2 $LO\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"            
     p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_4(p):
@@ -1017,6 +1108,16 @@ def p_multiplicative_expression_4(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Modulo operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
+    if p[0].type != Type('ERROR'):
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].code = p[1].code + p[3].code
+        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+        p[0].code += "\tdiv $t0, $t1\n"
+        p[0].code += "\tmove $t2 $HI\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
     p.set_lineno(0,p.lineno(2))
 
 #additive-expression:
@@ -1032,6 +1133,7 @@ def p_additive_expression_1(p):
 def p_additive_expression_2(p):
     ''' additive_expression : additive_expression PLUS multiplicative_expression '''
     global size
+    x=-1
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1040,10 +1142,13 @@ def p_additive_expression_2(p):
     elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
     elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR'))and is_primitive(p[1]) and is_primitive(p[3]):
-        pass
+        p[0]=deepcopy(p[1])
+        x=1
+        y=3
     elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
-        pass
+        x=3
+        y=1 
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
@@ -1053,18 +1158,35 @@ def p_additive_expression_2(p):
         p[0].offset = size 
         size = size + 4
         p[0].place = newTemp()
+        
+        if x>0:
+            dim=1
+            if p[x].attr.has_key('dim'):
+                for i in range(1,len(p[x].attr['dim'])):
+                    dim=dim*p[x].attr['dim'][i]
 
-        p[0].code = p[1].code + p[3].code
-        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
-        p[0].code += "\tadd $t2, $t0, $t1\n"
-        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+            p[0].code = p[1].code + p[3].code
+            p[0].code+="\tli $t0 "+dim+"\n"
+            p[0].code+="\tli $t1 "+p[x].size+"\n"
+            p[0].code+="\tmul $t1 $t1 $t0\n"
+            p[0].code += "\tlw $t0 " + toAddr(p[x].offset) + "\n"
+            p[0].code += "\tlw $t2 " + toAddr(p[y].offset) + "\n"
+            p[0].code +="\tmul $t1 $t1 $t2 $
+            p[0].code += "\tadd $t0, $t0, $t1\n"
+            p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"
+        else:
+            p[0].code = p[1].code + p[3].code
+            p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+            p[0].code += "\tadd $t2, $t0, $t1\n"
+            p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
 
     p.set_lineno(0,p.lineno(2))
                   
 def p_additive_expression_3(p):
     ''' additive_expression : additive_expression MINUS multiplicative_expression '''
     global size
+    x=-1
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1072,26 +1194,45 @@ def p_additive_expression_3(p):
         p[0].type=Type('INT')
     elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
-    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
-        pass
-    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and  (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
+    elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR'))and is_primitive(p[1]) and is_primitive(p[3]):
+        p[0]=deepcopy(p[1])
+        x=1
+        y=3
+    elif isinstance(p[3].type,Type) and isinstance(p[3].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR')) and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[3])
-        pass
+        x=3
+        y=1 
     else:
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : Cannot perform substraction between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
-     if p[0].type != Type('ERROR'):
+    if p[0].type != Type('ERROR'):
         p[0].offset = size 
         size = size + 4
         p[0].place = newTemp()
+        
+        if x>0:
+            dim=1
+            if p[x].attr.has_key('dim'):
+                for i in range(1,len(p[x].attr['dim'])):
+                    dim=dim*p[x].attr['dim'][i]
 
-        p[0].code = p[1].code + p[3].code
-        p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
-        p[0].code += "\tsub $t2, $t0, $t1\n"
-        p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
+            p[0].code = p[1].code + p[3].code
+            p[0].code+="\tli $t0 "+dim+"\n"
+            p[0].code+="\tli $t1 "+p[x].size+"\n"
+            p[0].code+="\tmul $t1 $t1 $t0\n"
+            p[0].code += "\tlw $t0 " + toAddr(p[x].offset) + "\n"
+            p[0].code += "\tlw $t2 " + toAddr(p[y].offset) + "\n"
+            p[0].code +="\tmul $t1 $t1 $t2 $
+            p[0].code += "\tsub $t0, $t0, $t1\n"
+            p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"
+        else:
+            p[0].code = p[1].code + p[3].code
+            p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+            p[0].code += "\tsub $t2, $t0, $t1\n"
+            p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
 
    p.set_lineno(0,p.lineno(2))
                       
@@ -1121,7 +1262,6 @@ def p_relational_expression_2(p):
     p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
     p[0].code += "\tslt $t2, $t0, $t1\n"
     p[0].code += "\tsw $t2 " + toAddr(p[0].offset) + "\n"
-
 
     else:
         p[0]=errorAttr(p[0])
@@ -1368,6 +1508,17 @@ def p_conditional_expression_1(p):
 def p_conditional_expression_2(p):
     ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
     p[0]=deepcopy(p[1])
+    global size 
+    p[0].offset = size 
+    size += 4
+    p[0].place = newTemp()
+    p[0].code = p[1].code + p[3].code + p[5].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tlw $t2, " + toAddr(p[5].offset) + "\n"
+    p[0].code += "\tmovn $t3, $t1, $t0 " + "\n"
+    p[0].code += "\tmovz $t3, $t2, $t0 " + "\n"
+    p[0].code += "\tsw $t3, " toAddr(p[0].offset) + "\n"
     if p[1].type==Type('BOOL') and is_primitive(p[1]):
         #have to choose statement based on conditional evaluation
         pass
@@ -1418,10 +1569,17 @@ def p_assignment_expression_2(p):
     ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
     p[0] = Attribute()
     p[0].type=p[1].type
+    global size 
+    p[0].offset = size 
+    size += 4
+    p[0].code = p[1].code + p[3].code 
         
     if p[2]=='=':
         if check_implicit_1(p[1],p[3]):
-                pass
+            p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+            p[0].code += "\tsw $t0, " + toAddr(p[1].offset) + "\n"
+            p[0].code += "\tsw $t0, " + toAddr(p[0].offset) + "\n"
+
         else:
             if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
@@ -1430,7 +1588,11 @@ def p_assignment_expression_2(p):
     else:
         if p[2]=='*=':
             if check_implicit_2(p[1],p[3]):
-                pass 
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tmul $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1438,7 +1600,11 @@ def p_assignment_expression_2(p):
                 p[1].type=Type('ERROR')
         if p[2]=='/=':
             if check_implicit_2(p[1],p[3]):
-                pass
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tdiv $t1, $t0" + "\n"
+                p[0].code += "\tsw $lo, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $lo, " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1447,23 +1613,53 @@ def p_assignment_expression_2(p):
 
         if p[2]=='+=':
             if check_implicit_2(p[1],p[3]):
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tadd $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
-                pass
+                p[0].offset = size 
+                size = size + 4
+                p[0].place = newTemp()
+                dim=p[1].type.next.size()
+                p[0].code = p[1].code + p[3].code
+                p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code +="\tmul $t1 $t0 $t2\n"
+                p[0].code += "\tadd $t0 $t0 $t1\n"
+                p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"          
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
                 p[0]=errorAttr(p[0])
-                p[1].type=Type('ERROR')            
+                p[1].type=Type('ERROR')                    
 
         if p[2]=='-=':
             if check_implicit_2(p[1],p[3]):
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tsub $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
-                pass
+                p[0].offset = size 
+                size = size + 4
+                p[0].place = newTemp()
+                dim=p[1].type.next.size()
+                p[0].code = p[1].code + p[3].code
+                p[0].code += "\tlw $t0 " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tlw $t1 " + toAddr(p[3].offset) + "\n"
+                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code +="\tmul $t1 $t0 $t2\n"
+                p[0].code += "\tsub $t0 $t0 $t1\n"
+                p[0].code += "\tsw $t0 " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
-                    print 'Error in line %s : Cannot apply += to %s' %(p.lineno(2),find_type(p[1]))        
+                    print 'Error in line %s : Cannot apply -= to %s' %(p.lineno(2),find_type(p[1]))        
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
@@ -1493,9 +1689,11 @@ def p_expression_1(p):
 def p_expression_2(p):
     ''' expression : expression COMMA assignment_expression '''
     p[0]=deepcopy(p[1])
+    p[0].code += p[3].code 
     if p[1].type==Type('ERROR') or p[2].type==Type('ERROR'):
         p[0].type=Type('ERROR')
     else:
+        p[0].code=p[1].code+p[3].code
         p[0].type=Type('VOID')
     p.set_lineno(0,p.lineno(2))
 
