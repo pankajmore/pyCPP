@@ -1690,7 +1690,15 @@ def p_selection_statement_1(p):
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
-    pass 
+
+    #code generation
+    safter = newLabel()
+    p[0].code = p[3].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tbeq $t0, $0, " + safter + "\n"
+    p[0].code += p[5].code
+    p[0].code += "\t" + safter + ":\n"
+
 def p_selection_statement_2(p):
     ''' selection_statement : IF LPAREN condition RPAREN statement ELSE statement '''
     p.set_lineno(0,p.lineno(1))
@@ -1704,7 +1712,19 @@ def p_selection_statement_2(p):
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
-    pass 
+
+    #code generation
+    selse = newLabel()
+    safter = newLabel()
+    p[0].code = p[3].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tbeq $t0, $0 " + selse + "\n"
+    p[0].code += p[5].code
+    p[0].code += "\tj " + safter + "\n"
+    p[0].code += "\t" + selse + ":\n"
+    p[0].code += p[7].code
+    p[0].code += "\t" + safter + ":\n"
+
 def p_selection_statement_3(p):
     ''' selection_statement : SWITCH LPAREN condition RPAREN statement '''
     p.set_lineno(0,p.lineno(1))
