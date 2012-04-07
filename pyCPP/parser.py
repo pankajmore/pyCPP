@@ -1623,12 +1623,12 @@ def p_compound_statement_1(p):
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE new_scope statement_seq finish_scope RBRACE '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
+    p[0] = deepcopy(p[3])
     if p[3].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
-    pass 
+
 
 #statement-seq:
     #statement
@@ -1636,21 +1636,23 @@ def p_compound_statement_2(p):
 def p_statement_seq_1(p):
     ''' statement_seq : statement ''' 
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
+    p[0] = deepcopy(p[1])
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
-    pass 
+    
+
 def p_statement_seq_2(p):
     ''' statement_seq : statement_seq statement'''
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
+    p[0] = deepcopy(p[1])
     if p[1].type == Type("VOID") and p[2].type == Type("VOID"):
         p[0].type = Type("VOID")
     else :
         p[0].type = Type("ERROR")
-    pass 
+
+    p[0].code = p[1].code + p[2].code
 
 #selection-statement:
     #if ( condition ) statement
