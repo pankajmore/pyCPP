@@ -1355,6 +1355,17 @@ def p_conditional_expression_1(p):
 def p_conditional_expression_2(p):
     ''' conditional_expression : logical_or_expression QUESTION expression COLON assignment_expression '''
     p[0]=deepcopy(p[1])
+    global size 
+    p[0].offset = size 
+    size += 4
+    p[0].place = newTemp()
+    p[0].code = p[1].code + p[3].code + p[5].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[1].offset) + "\n"
+    p[0].code += "\tlw $t1, " + toAddr(p[3].offset) + "\n"
+    p[0].code += "\tlw $t2, " + toAddr(p[5].offset) + "\n"
+    p[0].code += "\tmovn $t3, $t1, $t0 " + "\n"
+    p[0].code += "\tmovz $t3, $t2, $t0 " + "\n"
+    p[0].code += "\tsw $t3, " toAddr(p[0].offset) + "\n"
     if p[1].type==Type('BOOL') and is_primitive(p[1]):
         #have to choose statement based on conditional evaluation
         pass
@@ -1405,10 +1416,17 @@ def p_assignment_expression_2(p):
     ''' assignment_expression : logical_or_expression assignment_operator assignment_expression '''                  ## Error handling not included 
     p[0] = Attribute()
     p[0].type=p[1].type
+    global size 
+    p[0].offset = size 
+    size += 4
+    p[0].code = p[1].code + p[3].code 
         
     if p[2]=='=':
         if check_implicit_1(p[1],p[3]):
-                pass
+            p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+            p[0].code += "\tsw $t0, " + toAddr(p[1].offset) + "\n"
+            p[0].code += "\tsw $t0, " + toAddr(p[0].offset) + "\n"
+
         else:
             if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
@@ -1417,7 +1435,11 @@ def p_assignment_expression_2(p):
     else:
         if p[2]=='*=':
             if check_implicit_2(p[1],p[3]):
-                pass 
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tmul $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1425,7 +1447,11 @@ def p_assignment_expression_2(p):
                 p[1].type=Type('ERROR')
         if p[2]=='/=':
             if check_implicit_2(p[1],p[3]):
-                pass
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tdiv $t1, $t0" + "\n"
+                p[0].code += "\tsw $lo, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $lo, " + toAddr(p[0].offset) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1434,6 +1460,11 @@ def p_assignment_expression_2(p):
 
         if p[2]=='+=':
             if check_implicit_2(p[1],p[3]):
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tadd $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 pass
@@ -1445,6 +1476,11 @@ def p_assignment_expression_2(p):
 
         if p[2]=='-=':
             if check_implicit_2(p[1],p[3]):
+                p[0].code += "\tlw $t0, " + toAddr(p[3].offset) + "\n"
+                p[0].code += "\tlw $t1, " + toAddr(p[1].offset) + "\n"
+                p[1].code += "\tsub $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[1].offset) + "\n"
+                p[0].code += "\tsw $t2, " + toAddr(p[0].offset) + "\n"
                 pass                                                                  
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 pass
