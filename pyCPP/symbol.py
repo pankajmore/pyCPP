@@ -29,6 +29,8 @@ class SymbolTable(object):
     def __init__(self):
         self.symbols = {}
         self.offset = 0
+        self.startlabel = None
+        self.endlabel = None
         for key in keywords :
             symbol = Symbol(key)
             symbol.keyword = True

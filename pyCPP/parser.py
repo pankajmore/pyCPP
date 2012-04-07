@@ -75,6 +75,8 @@ def newTemp():
       num_temporaries = num_temporaries + 1
       return temp
 
+newLabel = newTemp
+
 def toAddr(offset):
     return "-"+str(offset)+"($sp)"
     
@@ -139,6 +141,7 @@ def NewScope():
     global env 
     env = Environment(env)
 
+
 def PopScope():
     global env  
     env = env.prev 
@@ -152,10 +155,20 @@ def unsetFunctionScope():
 def p_new_scope(p):
     '''new_scope : '''
     NewScope()
+    global env
+    env.table.startlabel = newLabel()
+    env.table.endlabel = newLabel()
+
+    p[0]  = Attribute()
+    p[0].code = env.table.startlabel + ":\n"
 
 def p_finish_scope(p):
     '''finish_scope : '''
+    global env
+    p[0] = Attribute()
+    p[0].code = env.table.endlabel + ":\n"
     PopScope()
+
 
 
 def p_function_scope(p):
@@ -1604,7 +1617,9 @@ def p_compound_statement_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
-    pass 
+
+    p[0].code = "" # empty code needed to pass
+
 def p_compound_statement_2(p):
     ''' compound_statement : LBRACE new_scope statement_seq finish_scope RBRACE '''
     p.set_lineno(0,p.lineno(1))
@@ -1783,7 +1798,20 @@ def p_iteration_statement_3(p):
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
         p[0].type = Type("ERROR")
-    pass 
+
+    #code generation
+    sbegin = newLabel()
+    safter = newLabel()
+    p[0].code = p[3].code
+    p[0].code += "\t" + sbegin + ":\n"
+    p[0].code += p[4].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[4].offset) + "\n"
+    p[0].code += "\tbeq $t0, $0, " + safter + "\n"
+    p[0].code += p[8].code 
+    p[0].code += p[6].code
+    p[0].code += "\tj " + sbegin + "\n"
+    p[0].code += "\t" + safter + ":\n"
+
 def p_iteration_statement_4(p):
     ''' iteration_statement : FOR LPAREN for_init_statement condition SEMICOLON RPAREN statement '''
     p.set_lineno(0,p.lineno(1))
@@ -1797,7 +1825,19 @@ def p_iteration_statement_4(p):
         if p[4].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(4)))
         p[0].type = Type("ERROR")
-    pass 
+    
+    #code generation
+    sbegin = newLabel()
+    safter = newLabel()
+    p[0].code = p[3].code
+    p[0].code += "\t" + sbegin + ":\n"
+    p[0].code += p[4].code 
+    p[0].code += "\tlw $t0, " + toAddr(p[4].offset) + "\n"
+    p[0].code += "\tbeq $t0, $0, " + safter + "\n"
+    p[0].code += p[7].code 
+    p[0].code += "\tj " + sbegin + "\n"
+    p[0].code += "\t" + safter + ":\n"
+
 def p_iteration_statement_5(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON expression RPAREN statement'''
     p.set_lineno(0,p.lineno(1))
@@ -1806,7 +1846,17 @@ def p_iteration_statement_5(p):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
-    pass 
+    
+    #code generation
+    sbegin = newLabel()
+    #safter = newLabel() - safter not required in this case
+    p[0].code = p[3].code
+    p[0].code += "\t" + sbegin + ":\n"
+    p[0].code += p[7].code 
+    p[0].code += p[5].code
+    p[0].code += "\tj " + sbegin + "\n"
+    #p[0].code += "\t" + safter + ":\n"
+
 def p_iteration_statement_6(p):
     ''' iteration_statement : FOR LPAREN for_init_statement SEMICOLON RPAREN statement '''
     p.set_lineno(0,p.lineno(1))
@@ -1815,7 +1865,16 @@ def p_iteration_statement_6(p):
         p[0].type = Type("ERROR")
     else :
         p[0].type = Type("VOID")
-    pass 
+
+    #code generation
+    sbegin = newLabel()
+    #safter = newLabel() - safter not required in this case
+    p[0].code = p[3].code
+    p[0].code += "\t" + sbegin + ":\n"
+    p[0].code += p[6].code 
+    p[0].code += "\tj " + sbegin + "\n"
+    #p[0].code += "\t" + safter + ":\n"
+
 
 #for-init-statement:
     #expression-statement
@@ -1825,13 +1884,17 @@ def p_for_init_statement_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
-    pass 
+    
+    p[0].code = p[1].code
+
+# need to support a different scope system - currently buggy
 def p_for_init_statement_2(p):
     ''' for_init_statement : simple_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
-    pass 
+
+    p[0].code = p[1].code
 
 #jump-statement:
     #break ;
@@ -1843,13 +1906,17 @@ def p_jump_statement_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
-    pass 
+    global env
+    p[0].code = "\tj " + env.table.endlabel + "\n"
+
 def p_jump_statement_2(p):
     ''' jump_statement : CONTINUE '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID") 
-    pass 
+    global env
+    p[0].code = "\tj " + env.table.startlabel + "\n"
+
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
