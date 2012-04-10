@@ -84,7 +84,7 @@ def newTemp():
 newLabel = newTemp
 
 def toAddr(offset):
-    return " -"+str(offset)+"($sp)"
+    return " -"+str(offset)+"($fp)"
     
 def find_recursively(p):
     if isinstance(p,Type):
@@ -211,10 +211,26 @@ def p_function_scope(p):
             s.type = p[-1].attr['parameterList'][i].type
             if not env.put(s):
                 print ("\nError : parameter is already in the symbol table\n")
+    global size
+    global oldsize
+    oldsize=size
+    size=0
+    p[0].code+="\tsw $fp, -4($sp)\n"
+    p[0].code+="\tsw $ra, 0($sp)\n"
+    p[0].code+="\tli $t0 8\n"
+    p[0].code+="\tsub $sp $sp $t0\n"
+    p[0].code+="\tmove $fp $sp\n"
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
     unsetFunctionScope()
+    global size
+    global oldsize
+    size=oldsize
+    p[0].code+="\taddi $sp Ssp"+str(size)+"\n"
+    p[0].code+="\taddi $sp Ssp 8\n"
+    p[0].code+="\tlw $fp -4($sp)\n"
+    p[0].code+="\tlw $ra 0($sp)\n"
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -446,7 +462,7 @@ def p_postfix_expression_2(p):
                 p[0].code+="\tli $t2 "+dim+"\n"
                 p[0].code+="\tadd $t0 $t0 $t1\n"
                 if isinstance(p[0].type.next,Type):
-                    p[0].code+="\tsub $t1 $sp $t0\n"
+                    p[0].code+="\tsub $t1 $fp $t0\n"
                     p[0].code+="\tlw $t1 0($t1)\n"
                     p[0].code+="\tsw $t1 "+toAddr(p[0].offset)+"\n"
                 else:
@@ -459,6 +475,7 @@ def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
     global size
     global MaxFunctionLength
+    global env
     p[0]=deepcopy(p[1])
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
         print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
@@ -472,6 +489,8 @@ def p_postfix_expression_3(p):
         p[0].offset=size
         p[0].place=newTemp()
         size=size+4
+        #t=env.get(p[0].attr['symbol'].name)
+        #fsize=t.table.offset
         p[0].code+="\tjal "+p[1].place+"\n"
         if p[0].type!=Type('VOID'):
             p[0].code+='\tmove $t0 $v0\n'
@@ -781,7 +800,7 @@ def p_unary_expression_4(p):
             p[0].place=newTemp()
             p[0].code=p[2].code
             p[0].code+="\tlw $t0"+toAddr(p[2].offset)+"\n"
-            p[0].code+="\tsub $t1 $sp $t0\n"
+            p[0].code+="\tsub $t1 $fp $t0\n"
             p[0].code+="\tlw $t0 0($t1)\n"
             p[0].code+="\tsw $t0"+toAddr(p[0].offset)+"\n"
             
@@ -2895,12 +2914,14 @@ def p_parameter_declaration_4(p):
 
 def p_function_definition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
+    global size
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-
     #p[0].specifier = 1
     #code generation
+    p[0].code+=p[1].code+p[2].code+p[3].code
+    p[0].code+="\tjr $ra\n"
 
 
 
@@ -2911,6 +2932,7 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    
     #p[0].specifier = 1
     #code generation
 

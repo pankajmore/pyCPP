@@ -6,7 +6,7 @@ from copy import *
 ## is the parent Environment . 
 class Environment(object):
     def __init__(self,p):
-        self.table = SymbolTable() 
+        self.table = SymbolTable()
         self.prev = p
     def __repr__(self):
         return str(self.table)
