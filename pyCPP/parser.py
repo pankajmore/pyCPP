@@ -181,6 +181,7 @@ def p_function_scope(p):
     '''function_scope : '''
     functionScope()
     t = env.prev.get(p[-1].attr['name'])
+    t.table = env.table # For keeping a pointer to the function symboltable
     if t is not None: # function declartion already seen
 #HACK : p[-2] might be buggy?
         if p[-2] is not None:
@@ -211,6 +212,12 @@ def p_function_scope(p):
             s.type = p[-1].attr['parameterList'][i].type
             if not env.put(s):
                 print ("\nError : parameter is already in the symbol table\n")
+
+    for i in range(3):
+        p[0].code += "\tsw $a" + i + ", " + toAddr(size) + "\n"
+        p[-1].attr['parameterList'][i].offset = size
+        size = size + 4
+
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
