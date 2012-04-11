@@ -6,7 +6,7 @@ from copy import *
 ## is the parent Environment . 
 class Environment(object):
     def __init__(self,p):
-        self.table = SymbolTable() 
+        self.table = SymbolTable()
         self.prev = p
     def __repr__(self):
         return str(self.table)
@@ -19,9 +19,13 @@ class Environment(object):
     def get(self,name):
         env = self
         symbol = None 
+        back = -1
         while(symbol is None and env is not None):
             symbol = env.table.get(name)
             env = env.prev 
+            back +=1
+        if symbol is not None:
+            symbol.back = back
         return symbol 
     
 ## Symbol table is implemented as a simple python dictionary .
@@ -31,6 +35,7 @@ class SymbolTable(object):
         self.offset = 0
         self.startlabel = None
         self.endlabel = None
+        self.back = 0
         for key in keywords :
             symbol = Symbol(key)
             symbol.keyword = True
