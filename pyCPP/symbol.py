@@ -35,7 +35,6 @@ class SymbolTable(object):
         self.offset = 0
         self.startlabel = None
         self.endlabel = None
-        self.back = 0
         for key in keywords :
             symbol = Symbol(key)
             symbol.keyword = True
@@ -86,6 +85,7 @@ class Symbol(object):
         self.table = None
         self.offset = 0
         self.width = 0
+        self.back = 0
     def __repr__(self):
         if not self.keyword:
             return ("name : " + str(self.name) + " || type : " + str(self.type) + " || keyword : " + str(self.keyword) + " || attributes : " + str(self.attr))
