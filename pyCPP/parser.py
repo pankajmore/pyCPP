@@ -2585,6 +2585,7 @@ def p_init_declarator_list_1(p):
     p[0] = initAttr(p[0])
     p[0].attr["init_declarator_list"] = [deepcopy(p[1])]
     p[0].type = p[1].type
+    p[0].code = p[1].code
     
 def p_init_declarator_list_2(p):
     ''' init_declarator_list : init_declarator_list COMMA mark_1 init_declarator '''
@@ -2592,10 +2593,10 @@ def p_init_declarator_list_2(p):
     p[0] = deepcopy(p[1])
     #for key in p[3].attr["init_declarator_list"]:
      #   p[0].attr["init_declarator_list"].append(deepcopy(key))
-    p[0].attr["init_declarator_list"].append(deepcopy(p[3]))
+    p[0].attr["init_declarator_list"].append(deepcopy(p[4]))
     #if p[3].type == Type("ERROR"):
     #    p[0].type = Type("ERROR")
-    p[0].code = p[0].code + '\n' + p[3].code
+    p[0].code +=p[4].code
 
 #init-declarator:
     #declarator initializeropt
@@ -2612,7 +2613,9 @@ def p_init_declarator(p):
     global DeclType
     global env
     global size
-    if not p[1].type == Type("ERROR"):
+    p[0].code+=p[2].code
+    p[0].offset = size
+    if not p[1].type == Type("ERROR") or not p[2].type == Type("ERROR"):
         t = Symbol(p[1].attr["name"])
         #entering type for symbol t
         if isinstance(p[-1],Attribute) :
@@ -2643,6 +2646,7 @@ def p_init_declarator(p):
         elif p[1].attr.has_key("isArray"):
             if isinstance(p[1].type, Type) and p[1].type != Type("ERROR"):
                 print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+                p[0].type = Type("ERROR")
             else:
                 l = len(p[1].attr.["width"])
                 while l>0:
@@ -2660,7 +2664,6 @@ def p_init_declarator(p):
         if p[2] == None :
             pass
         elif p[2].type == Type("ASSIGN"):
-            p[0].code+=p[2].code
             init = p[2].attr["initializer"]
             if p[1].attr.has_key("isFunction"):
                 print "ERROR!! Line number : "+str(p.lineno(0))+"Invalid intialization to function."
@@ -2679,6 +2682,15 @@ def p_init_declarator(p):
                             t.type.dim = q1
                         else:
                             t.type.dim = q1+1
+                        i = 0
+                        p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                        p[0].code+="\tsub $t0 $fp $t0 \n"
+                        p[0].code+="\tli $t2 4 \n"
+                        while i < init.attr["num_element"]:
+                            p[0].code+= "\tlw $t1, " + toAddr(init.attr["initializer_clause"][i]) + "\n"
+                            p[0].code+= "\tsw $t1 0($t0) \n"
+                            p[0].code+= "\tsub $t0 $t0 $t2 \n"
+                            i+=1
                         
         elif p[1].attr.has_key("isArray") or init.attr.has_key("isArray"):
             print "ERROR!! Line number : "+str(p.lineno(0))+ "Invalid initialization"
@@ -2690,7 +2702,7 @@ def p_init_declarator(p):
                 p[0].code+= "\tsw $t0, "+ toAddr(p[0]) + "\n"
             else:
                 print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)    
-
+f
 #declarator:
     #direct-declarator
     #ptr-operator declarator
