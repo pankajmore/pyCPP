@@ -392,6 +392,7 @@ def p_unqualified_id_1(p):
         #p[0].type = t.type
     #p[0].attr["symbol"] = t
     p[0].attr["name"] = str(p[1])
+    p[0].code = ''
     p.set_lineno(0,p.lineno(1))
     
 def p_unqualified_id_2(p):
@@ -2594,6 +2595,7 @@ def p_init_declarator_list_2(p):
     p[0].attr["init_declarator_list"].append(deepcopy(p[3]))
     #if p[3].type == Type("ERROR"):
     #    p[0].type = Type("ERROR")
+    p[0].code = p[0].code + '\n' + p[3].code
 
 #init-declarator:
     #declarator initializeropt
@@ -2610,100 +2612,84 @@ def p_init_declarator(p):
     global DeclType
     global env
     global size
-    t = Symbol(p[1].attr["name"])
-    if isinstance(p[-1],Attribute) :
-        t.type = p[-1].type
-        p[0].type = p[-1].type
-    else :
-        t1 = env.get(str(p[-1]))
-        if t1 == None:
-            print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
-        elif t1.type == Type("CLASS"):
-            t.type = Type(str(p[-1]))
-            p[0].type = t.type
+    if not p[1].type == Type("ERROR"):
+        t = Symbol(p[1].attr["name"])
+        #entering type for symbol t
+        if isinstance(p[-1],Attribute) :
+            t.type = p[-1].type
+            p[0].type = p[-1].type
         else :
-            p[0].type = Type("ERROR")
-    #t.type = deepcopy(DeclType)
-    typ = p[1].type
-    while (isinstance(typ,Type)):
-        t.type = Type(t.type)
-        typ = typ.next
-    t.attr = deepcopy(p[1].attr)
-    if not env.put(t):
-        print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
-        #t.type = Type("ERROR")
-        p[0].type = Type("ERROR")
-    if p[1].attr.has_key("isFunction") :
-        pass
-    elif p[1].attr.has_key("isArray"):
-        if isinstance(p[1].type, Type):
-            print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
-        else:
-            l = len(p[1].attr.["width"])
-            while l>0:
-                l=l-1
-                t.type = Type(t.type)
-                t.type.dim = p[1].attr["width"][l]
-            t.offset = size
-            size = size+t.type.size()
-    else:
-        t.offset = size
-        size = size + t.type.size()
-    
-    if p[2] == None :
-        t.attr["initialized"] = 0
-        
-    elif p[2] == "LPAREN":
-        print "Feature not supported at present. "
-        p[0].type = Type("ERROR")
-        #t.type = Type("ERROR")
-    elif p[2].type == Type("ASSIGN"):
-        tl = p[2].attr["initializer"]
-        if p[1].attr.has_key("isFunction") :
-            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
-            p[0].type = Type("ERROR")
-            #t.type = Type("ERROR")
-        #elif p[1].attr.has_key("isArray") and tl.attr.has_key("isArray"):
-         #   if p[1].attr["width"] < tl.attr["num_element"] and p[1].attr["width"]!=0:
-                #t.type = Type("ERROR")
-        #elif p[1].attr.has_key("isArray") or tl.attr.has_key("isArray"):
-            #t.type = Type("ERROR")
-        if t.type == tl.type:
-            pass
-        elif t.type == Type("FLOAT") and tl.type in [Type("INT"),Type("CHAR")] :
-            pass
-        elif t.type == Type("INT") and tl.type == Type("CHAR"):
-            pass
-        else :
-            print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)
-    if p[2] == None:
-        p[0].attr["initialized"] = 0
-    elif p[2] == "LPAREN":
-        print "Feature not supported at present."
-        p[0].type = Type("ERROR")
-    elif p[2].type == Type("ASSIGN"):
-        if p[1].attr.has_key("isFunction") :
-            print("ERROR : Functions cannot be initialized. At line number " + str(p.lineno(1)))
-            p[0].type = Type("ERROR")
-            #t.type = Type("ERROR")
-        t = p[2].attr["initializer"]
-        if p[1].attr.has_key("isArray") and t.attr.has_key("isArray") :
-            if p[1].attr["width"] >= t.attr["num_element"] :
-                p[0].attr["initializer"] = deepcopy(t)
-            elif p[1].attr["width"] == 0 :
-                p[0].attr["width"] = t.attr["num_element"]
-                p[0].attr["initializer"] = deepcopy(t)
+            t1 = env.get(str(p[-1]))
+            if t1 == None:
+                print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+            elif t1.type == Type("CLASS"):
+                t.type = Type(str(p[-1]))
+                p[0].type = t.type
             else :
                 p[0].type = Type("ERROR")
-        elif (p[1].attr.has_key("isArray")) or (t.attr.has_key("isArray")):
+        #t.type = deepcopy(DeclType)
+        typ = p[1].type
+        while (isinstance(typ,Type)):
+            t.type = Type(t.type)
+            typ = typ.next
+        t.attr = deepcopy(p[1].attr)
+        if not env.put(t):
+            print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
+            #t.type = Type("ERROR")
+            p[0].type = Type("ERROR")
+        #Declaring the offset of the symbol and its size
+        if p[1].attr.has_key("isFunction") :
+            pass
+        elif p[1].attr.has_key("isArray"):
+            if isinstance(p[1].type, Type) and p[1].type != Type("ERROR"):
+                print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+            else:
+                l = len(p[1].attr.["width"])
+                while l>0:
+                    l=l-1
+                    t.type = Type(t.type)
+                    t.type.dim = p[1].attr["width"][l]
+                t.offset = size
+                p[0].offset = size
+                size = size+t.type.size()
+        else:
+            t.offset = size
+            p[0].offset = size
+            size = size + t.type.size()
+        
+        if p[2] == None :
+            pass
+        elif p[2].type == Type("ASSIGN"):
+            p[0].code+=p[2].code
+            init = p[2].attr["initializer"]
+            if p[1].attr.has_key("isFunction"):
+                print "ERROR!! Line number : "+str(p.lineno(0))+"Invalid intialization to function."
+                p[0].type = Type("ERROR")
+            elif p[1].attr.has_key("isArray") and init.attr.has_key("isArray"):
+                l = t.type.size()/4
+                if l == 0 and init.attr["num_element"] != 0 :
+                    typ = t.type.next
+                    ltyp = typ.size()/4
+                    if ltyp == 0:
+                        print "ERROR!! Line number : "+str(p.lineno(0))+" Multi-dimensional array '"+str(p[1].attr["name"]+"' must have bounds for all dimensions except the first"
+                        p[0].type = Type("ERROR")
+                    else :
+                        q1 = init.attr["num_element"]/ltyp
+                        if ltyp*q1 == init.attr["num_element"]:
+                            t.type.dim = q1
+                        else:
+                            t.type.dim = q1+1
+                        
+        elif p[1].attr.has_key("isArray") or init.attr.has_key("isArray"):
+            print "ERROR!! Line number : "+str(p.lineno(0))+ "Invalid initialization"
             p[0].type = Type("ERROR")
         else :
-            p[0].attr["initializer"] = deepcopy(t)
-        p[0].attr["initialized"] = 1
-        #p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
-    elif p[2].type == Type("ERROR"):
-        p[0].type = Type("ERROR")    
-    #p[0].attr["init_declarator_list"] = [t]
+            init = p[2].attr["initializer"]
+            if check_implicit_1(p[0],init):
+                p[0].code+= "\tlw $t0, "+ toAddr(init.attr["initializer_clause"][0])+ "\n"
+                p[0].code+= "\tsw $t0, "+ toAddr(p[0]) + "\n"
+            else:
+                print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)    
 
 #declarator:
     #direct-declarator
@@ -3062,6 +3048,7 @@ def p_initializer_clause_1(p):
     p[0] = initAttr(p[0])
     p[0].attr["initializer_clause"] = [deepcopy(p[1])]
     p[0].type = p[1].type
+    p[0].code = p[1].code
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
@@ -3074,6 +3061,7 @@ def p_initializer_clause_2(p):
     p[0].attr["initializer_clause"] = deepcopy(p[2].attr["initializer_clause"])
     p[0].attr["num_element"] = p[2].attr["num_element"]
     p[0].type = p[2].type
+    p[0].code = p[2].code
     if p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
@@ -3085,6 +3073,7 @@ def p_initializer_clause_3(p):
     p[0].attr["isArray"] = 1
     p[0].attr["initializer_clause"] = []
     p[0].attr["num_element"] = 0
+    p[0].code = ''
 
 #initializer-list:
     #initializer-clause
@@ -3100,7 +3089,13 @@ def p_initializer_list_2(p):
     p[0] = deepcopy(p[1])
     if p[1].type == p[3].type :
         p[0].attr["initializer_clause"].append(deepcopy(p[3].attr["initializer_clause"]))
+        p[0].code+=p[3].code
+        if p[3].attr.has_key("isArray"):
+            p[0].attr["num_element"]+=p[3].attr["num_element"]
+        else:
+            p[0].attr["num_element"]+=1
     else :
+        print "ERROR!! Line number : "+str(p.lineno(0))+" Conflicting data type "
         p[0].type = Type("ERROR")
 ## }}}
 
