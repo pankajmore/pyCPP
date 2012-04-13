@@ -125,6 +125,13 @@ def check_compatibility_equality(p):
     else:
         return False 
 
+def is_integer(p):
+    try:
+        a = int(p.place)
+        return True
+    except ValueError:
+        return False
+
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
@@ -575,7 +582,7 @@ def p_postfix_expression_5(p):
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\taddi $t0 $t0 1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"
-    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
+    elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
         p[0].attr={}
         p[0].offset=size
@@ -607,7 +614,7 @@ def p_postfix_expression_6(p):
         p[0].code+="\tli $t1 1\n"
         p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"
-    elif is_primtive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
+    elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
         p[0].offset=size
         size=size+4
@@ -713,7 +720,7 @@ def p_unary_expression_2(p):
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"
         
-    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
+    elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
         p[0].attr={}
         p[0].offset=size
@@ -747,8 +754,8 @@ def p_unary_expression_3(p):
         p[0].code+="\tli $t1 1\n"
         p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
-        p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"    
-    elif is_primtive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
+        p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"     
+    elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
         p[0].place=newTemp()
         p[0].attr={}
         p[0].offset=size
@@ -1345,7 +1352,6 @@ def p_relational_expression_3(p):
         p[0]=errorAttr(p[0])
         if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
             print "Error in line %s : > operator cannot be applied between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
-
     p.set_lineno(0,p.lineno(2))
 
 def p_relational_expression_4(p):
@@ -2601,6 +2607,7 @@ def p_init_declarator(p):
     p[0] = deepcopy(p[1])
     global DeclType
     global env
+    global size
     t = Symbol(p[1].attr["name"])
     if isinstance(p[-1],Attribute) :
         t.type = p[-1].type
@@ -2624,8 +2631,26 @@ def p_init_declarator(p):
         print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
         #t.type = Type("ERROR")
         p[0].type = Type("ERROR")
-    elif p[2] == None :
+    if p[1].attr.has_key("isFunction") :
+        pass
+    elif p[1].attr.has_key("isArray"):
+        if isinstance(p[1].type, Type):
+            print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+        else:
+            l = len(p[1].attr.["width"])
+            while l>0:
+                l=l-1
+                t.type = Type(t.type)
+                t.type.dim = p[1].attr["width"][l]
+            t.offset = size
+            size = size+t.type.size()
+    else:
+        t.offset = size
+        size = size + t.type.size()
+    
+    if p[2] == None :
         t.attr["initialized"] = 0
+        
     elif p[2] == "LPAREN":
         print "Feature not supported at present. "
         p[0].type = Type("ERROR")
@@ -2719,18 +2744,31 @@ def p_direct_declarator_2(p):
         p[0].attr["numParameters"] = p[3].attr["numParameters"]
         if p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
-  
+
+#array declaration rule  
 def p_direct_declarator_3(p):
     ''' direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    p[0].attr["isArray"] = 1
-    if p[3] == None:
-        p[0].attr["width"] = 0
-    else :
-        p[0].attr["width"] = p[3].place
-        if p[3].type == Type("ERROR"):
+    if not p[0].attr.has_key("isArray"):
+        p[0].attr["isArray"]=1
+        if p[3] == None:
+            p[0].attr["width"] = [0]
+        elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
+            p[0].attr["width"] = [int(p[3].place)]
+        elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
+        else:
+            print "ERROR!! Line number : "+str(p.lineno(0))+" Invalid array declaration"
+    else:
+        if p[3] == None:
+            p[0].attr["width"].append(0)
+        elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
+            p[0].attr["width"].append(p[3].place)
+        elif p[3].type == Type("ERROR"):
+            p[0].type = Type("ERROR")
+        else:
+            print "ERROR!! Line number : "+str(p.lineno(0))+" Invalid array declaration"
   
 def p_direct_declarator_4(p):
     ''' direct_declarator : LPAREN declarator RPAREN '''

@@ -77,7 +77,6 @@ class SymbolTable(object):
 class Symbol(object):
     def __init__(self,name):
         self.name = name 
-        self.width = 0;
         self.keyword = False 
         self.type = None 
         self.error = False 
