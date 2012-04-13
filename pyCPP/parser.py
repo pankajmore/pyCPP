@@ -72,12 +72,7 @@ def errorAttr(a):
 
 def newTemp():
       global num_temporaries
-      #Returns a new temporary named _T<num>
-      temp = "_T00"
-      temp1 = "_T"
-      temp2 = str(num_temporaries / 10)
-      temp3 = str(num_temporaries % 10)
-      temp = temp1 + temp2 + temp3
+      temp = "_T"+str(num_tempraries)
       num_temporaries = num_temporaries + 1
       return temp
 
@@ -88,6 +83,13 @@ def toAddr(p):
         return " -"+str(p.offset)+"($gp)"
     else:
         return " -"+str(p.offset)+"($fp)"
+
+
+def find_scope(p):
+    if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
+        return " $gp"
+    else:
+        return " $fp"
 
 def find_recursively(p):
     if isinstance(p,Type):
