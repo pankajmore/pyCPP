@@ -2674,7 +2674,10 @@ def p_init_declarator(p):
                 p[0].type = Type("ERROR")
             elif p[1].attr.has_key("isArray") and init.attr.has_key("isArray"):
                 l = t.type.size()/4
-                if l == 0 and init.attr["num_element"] != 0 :
+                if l == 0 and init.attr["num_element"] == 0:
+                    print "ERROR!! Line number : "+str(p.lineno(0))+" Invalid array declaration and initialization"
+                    p[0].type = Type("ERROR")
+                elif l == 0 and init.attr["num_element"] != 0 :
                     typ = t.type.next
                     ltyp = typ.size()/4
                     if ltyp == 0:
@@ -2695,7 +2698,20 @@ def p_init_declarator(p):
                             p[0].code+= "\tsw $t1 0($t0) \n"
                             p[0].code+= "\tsub $t0 $t0 $t2 \n"
                             i+=1
-                        
+                elif l >= init.attr["num_element"]:
+                    i = 0
+                    p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                    p[0].code+="\tsub $t0 $fp $t0 \n"
+                    p[0].code+="\tli $t2 4 \n"
+                    while i < init.attr["num_element"]:
+                        p[0].code+= "\tlw $t1, " + toAddr(init.attr["initializer_clause"][i]) + "\n"
+                        p[0].code+= "\tsw $t1 0($t0) \n"
+                        p[0].code+= "\tsub $t0 $t0 $t2 \n"
+                        i+=1
+                else :
+                    print "ERROR!! Line number : "+str(p.lineno(0))+" Index out of range"
+                    p[0].type = Type("ERROR")
+                size = p[0].offset + t.type.size()    
             elif p[1].attr.has_key("isArray") or init.attr.has_key("isArray"):
                 print "ERROR!! Line number : "+str(p.lineno(0))+ "Invalid initialization"
                 p[0].type = Type("ERROR")
