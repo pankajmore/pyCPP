@@ -2262,6 +2262,7 @@ def p_simple_declaration_1(p):
     p[0].type = p[1].type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
+    p[0].code = p[2].code
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
 #    elif p[0].type != Type("ERROR") :
@@ -2300,6 +2301,7 @@ def p_simple_declaration_2(p):
     p[0].type = t.type
     p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
+    p[0].code = p[2].code
     #if p[1].type == Type("ERROR") :
     #    p[0].type = Type("ERROR")
 #    if p[0].type != Type("ERROR") :
@@ -2332,6 +2334,7 @@ def p_simple_declaration_3(p):
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["declaration"] = 1
+    p[0].code = ''
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
         
@@ -2613,7 +2616,7 @@ def p_init_declarator(p):
     global DeclType
     global env
     global size
-    p[0].code+=p[2].code
+    #p[0].code+=p[2].code
     p[0].offset = size
     if not p[1].type == Type("ERROR") or not p[2].type == Type("ERROR"):
         t = Symbol(p[1].attr["name"])
@@ -2664,6 +2667,7 @@ def p_init_declarator(p):
         if p[2] == None :
             pass
         elif p[2].type == Type("ASSIGN"):
+            p[0].code+=p[2].code
             init = p[2].attr["initializer"]
             if p[1].attr.has_key("isFunction"):
                 print "ERROR!! Line number : "+str(p.lineno(0))+"Invalid intialization to function."
@@ -2692,16 +2696,16 @@ def p_init_declarator(p):
                             p[0].code+= "\tsub $t0 $t0 $t2 \n"
                             i+=1
                         
-        elif p[1].attr.has_key("isArray") or init.attr.has_key("isArray"):
-            print "ERROR!! Line number : "+str(p.lineno(0))+ "Invalid initialization"
-            p[0].type = Type("ERROR")
-        else :
-            init = p[2].attr["initializer"]
-            if check_implicit_1(p[0],init):
-                p[0].code+= "\tlw $t0, "+ toAddr(init.attr["initializer_clause"][0])+ "\n"
-                p[0].code+= "\tsw $t0, "+ toAddr(p[0]) + "\n"
-            else:
-                print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(tl.type)    
+            elif p[1].attr.has_key("isArray") or init.attr.has_key("isArray"):
+                print "ERROR!! Line number : "+str(p.lineno(0))+ "Invalid initialization"
+                p[0].type = Type("ERROR")
+            else :
+                init = p[2].attr["initializer"]
+                if check_implicit_1(p[0],init):
+                    p[0].code+= "\tlw $t0, "+ toAddr(init.attr["initializer_clause"][0])+ "\n"
+                    p[0].code+= "\tsw $t0, "+ toAddr(p[0]) + "\n"
+                else:
+                    print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(init.type)    
 f
 #declarator:
     #direct-declarator
@@ -2735,11 +2739,13 @@ def p_direct_declarator_2(p):
     ''' direct_declarator : direct_declarator LPAREN parameter_declaration_clause RPAREN '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    #p[0].code+=p[3].code
     p[0].attr['isFunction'] = 1
     if p[3]==None:
         p[0].attr["parameterList"] = []
         p[0].attr["numParameters"] = 0
     else :
+        p[0].code+=p[3].code
         p[0].attr["parameterList"] = deepcopy(p[3].attr["parameterList"])
         p[0].attr["numParameters"] = p[3].attr["numParameters"]
         if p[3].type == Type("ERROR"):
@@ -2756,6 +2762,7 @@ def p_direct_declarator_3(p):
             p[0].attr["width"] = [0]
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
             p[0].attr["width"] = [int(p[3].place)]
+            p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
         else:
@@ -2765,6 +2772,7 @@ def p_direct_declarator_3(p):
             p[0].attr["width"].append(0)
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
             p[0].attr["width"].append(p[3].place)
+            p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
         else:
@@ -2943,6 +2951,7 @@ def p_parameter_declaration_list_1(p):
     p[0] = initAttr(p[0])
     p[0].attr['parameterList'] = [deepcopy(p[1])]
     p[0].attr['numParameters'] = 1
+    p[0].code = p[1].code
 
 
 def p_parameter_declaration_list_2(p):
@@ -2951,6 +2960,7 @@ def p_parameter_declaration_list_2(p):
     p[0] = deepcopy(p[1])
     p[0].attr['parameterList'].append(deepcopy(p[3]))
     p[0].attr['numParameters'] += 1
+    p[0].code+=p[3].code
 
 #parameter-declaration:
     #decl-specifier-seq declarator
@@ -3039,6 +3049,7 @@ def p_initializer_opt_2(p):
     p[0] = initAttr(p[0])
     p[0].type = Type("ASSIGN")
     p[0].attr["initializer"] = deepcopy(p[2])
+    p[0].code = p[2].code
     if p[2].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
