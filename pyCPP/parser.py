@@ -562,7 +562,7 @@ def p_postfix_expression_4(p):
                         p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
-                p[0].code=p[2].code
+                p[0].code=p[1].code
                 p[0].place=newTemp()
                 p[0].offset=size
                 size=size+4
