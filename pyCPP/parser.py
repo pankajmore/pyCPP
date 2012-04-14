@@ -265,6 +265,7 @@ def p_unset_function_scope(p):
     p[0].code+="\taddi $sp $sp 8\n"
     p[0].code+="\tlw $fp -4($sp)\n"
     p[0].code+="\tlw $ra 0($sp)\n"
+    p[0].code+="\tjr $ra\n"
     size=oldsize
 
 def p_declaration_seq_1(p):
@@ -1748,6 +1749,7 @@ def p_assignment_expression_2(p):
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
+    print "ASSIGN \n"+p[0].code+"\nASSIGNEND\n"
                                               
 #assignment-operator: one of
 #= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 
