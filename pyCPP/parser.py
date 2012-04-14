@@ -336,7 +336,7 @@ def p_primary_expression_1(p):
     p[0].place=newTemp()
     p[0].attr={}
     p[0].offset=size
-    p[0].code+="\tli $t0 "+p[0].place+"\n"
+    p[0].code+="\tli $t0 "+p[1].place+"\n"
     p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
     size=size+4
     p.set_lineno(0,p.lineno(1))
@@ -1823,7 +1823,6 @@ def p_statement_3(p):
     ''' statement : compound_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
@@ -2273,7 +2272,6 @@ def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
     
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
@@ -3076,7 +3074,6 @@ def p_function_body(p):
     ''' function_body : compound_statement ''' 
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
 
 #initializer:
     #= initializer-clause
