@@ -1,7 +1,8 @@
 int main()
 {
-    int a,b;
-    a = 5;
+    int a,b,c;
+    a = 10;
     b = 7;
-    a = a+b;
+    c = a/b;
+    print(b);
 }

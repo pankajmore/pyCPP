@@ -2,7 +2,8 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
-num_temporaries=0
+num_temporaries = 0
+num_labels = 0
 ## TODO : return type of function should match the actual function type
 ## {{{
 success = True
@@ -76,7 +77,12 @@ def newTemp():
       num_temporaries = num_temporaries + 1
       return temp
 
-newLabel = newTemp
+def newLabel():
+      global num_labels
+      label = "L"+str(num_labels)
+      num_labels = num_labels + 1
+      return label
+
 
 def toAddr(p):
     global env
@@ -103,6 +109,11 @@ def toAddr(p):
     else:
         return " -"+str(p.offset)+"($fp)"
 
+def toAddr2(t):
+    if t.back>0:
+        return " -"+str(t.offset)+"($gp)"
+    else:
+        return " -"+str(t.offset)+"($fp)"
 
 def find_scope(p):
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
@@ -153,7 +164,7 @@ def is_integer(p):
     except ValueError:
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -206,13 +217,13 @@ def p_new_scope(p):
     env.table.endlabel = newLabel()
 
     p[0]  = Attribute()
-    p[0].code = env.table.startlabel + ":\n"
+    #p[0].code = env.table.startlabel + ":\n"
 
 def p_finish_scope(p):
     '''finish_scope : '''
     global env
     p[0] = Attribute()
-    p[0].code = env.table.endlabel + ":\n"
+    #p[0].code = env.table.endlabel + ":\n"
     PopScope()
 
 
@@ -496,8 +507,8 @@ def p_postfix_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_postfix_expression_2(p):
-    global size
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
+    global size
     p[0] = deepcopy(p[1])
     if not (isinstance(p[0].type,Type) and isinstance(p[1].type.next,Type)):
         print "Error in line %s : Cannot access index of non-array " % p.lineno(2)
@@ -1144,6 +1155,7 @@ def p_multiplicative_expression_1(p):
     
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1171,6 +1183,7 @@ def p_multiplicative_expression_2(p):
 
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1199,6 +1212,7 @@ def p_multiplicative_expression_3(p):
 
 def p_multiplicative_expression_4(p):
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1846,6 +1860,7 @@ def p_statement_3(p):
     ''' statement : compound_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    #print p[0].code
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
@@ -1864,6 +1879,11 @@ def p_statement_6(p):
     pass 
 def p_statement_7(p):
     ''' statement : declaration_statement '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
+
+def p_statement_8(p):
+    ''' statement : print_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
@@ -2183,6 +2203,25 @@ def p_iteration_statement_6(p):
     p[0].code += "\tj " + sbegin + "\n"
     #p[0].code += "\t" + safter + ":\n"
 
+def p_print_statement(p):
+    ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = env.get(str(p[3]))
+    if t == None :
+        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+        p[0].type = Type("ERROR")
+    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+        p[0].code="\tlw $t0 "+toAddr2(t)+"\n"
+        p[0].code+="\tmove $a0 $t0 \n"
+        p[0].code+="\tli $v0 1 \n"
+        p[0].code+="\tsyscall \n"
+    else :
+        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        p[0].type = Type("ERROR")
+        
 
 #for-init-statement:
     #expression-statement
@@ -2271,7 +2310,7 @@ def p_declaration_1(p):
     ''' declaration : block_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[1].code
+    #print p[1].code
       
 def p_declaration_2(p):
     ''' declaration : function_definition '''
@@ -2295,6 +2334,7 @@ def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    #print p[0].code
     
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
@@ -3069,19 +3109,24 @@ def p_function_definition_1(p):
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
+    if p[1].attr['name'] == "main":
+        p[0].code = "main:\n"
+    else: 
+        flabel = newLabel()
+        p[0].code = flabel + ":\n"
     p[0].code+=p[1].code+p[2].code+p[3].code+p[4].code
-    p[0].code+="\tjr $ra\n"
 
-
-
-
-  
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code = p[2].code+p[3].code+p[4].code+p[5].code
+    if p[2].attr['name'] == "main":
+        p[0].code = "main:\n"
+    else: 
+        flabel = newLabel()
+        p[0].code = flabel + ":\n"
+    p[0].code += p[2].code+p[3].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
@@ -3097,6 +3142,7 @@ def p_function_body(p):
     ''' function_body : compound_statement ''' 
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    #print p[0].code
 
 #initializer:
     #= initializer-clause
