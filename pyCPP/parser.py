@@ -156,7 +156,7 @@ def p_translation_unit_2(p):
     ### TODO 
     #p[0] = deepcopy(p[1])
     name = sys.argv[1] + ".asm"
-    #print p[1].code
+    print p[1].code
     fi = open(name,'w')
     fi.write(p[1].code)
     fi.close()
@@ -1752,7 +1752,6 @@ def p_assignment_expression_2(p):
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
-    print "ASSIGN \n"+p[0].code+"\nASSIGNEND\n"
                                               
 #assignment-operator: one of
 #= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 
@@ -3056,19 +3055,24 @@ def p_function_definition_1(p):
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
+    if p[1].attr['name'] == "main":
+        p[0].code = "main:\n"
+    else: 
+        flabel = newLabel()
+        p[0].code = flabel + ":\n"
     p[0].code+=p[1].code+p[2].code+p[3].code+p[4].code
-    p[0].code+="\tjr $ra\n"
 
-
-
-
-  
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code = p[2].code+p[3].code+p[4].code+p[5].code
+    if p[2].attr['name'] == "main":
+        p[0].code = "main:\n"
+    else: 
+        flabel = newLabel()
+        p[0].code = flabel + ":\n"
+    p[0].code += p[2].code+p[3].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
