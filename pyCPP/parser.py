@@ -85,11 +85,35 @@ def newLabel():
 
 
 def toAddr(p):
+    global env
+    env1=env
+    if p.attr.has_key('symbol'):
+        back=p.attr['symbol'].back
+        print "BACK1 = ",back
+        while(env1!=None):
+            env1=env1.prev
+            back-=1
+        print "BACK2 = ",back
+        
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        return " -"+str(p.offset)+"($gp)"
+        back=p.attr['symbol'].back
+        print "BACK3 = ",back
+        while(env1.prev!=None):
+            env1=env1.prev
+            back-=1
+        print "BACK4 = ",back
+        if back==0:    
+            return " -"+str(p.offset)+"($gp)"
+        else:
+            return " -"+str(p.offset)+"($fp)"
     else:
         return " -"+str(p.offset)+"($fp)"
 
+def toAddr2(t):
+    if t.back>0:
+        return " -"+str(t.offset)+"($gp)"
+    else:
+        return " -"+str(t.offset)+"($fp)"
 
 def find_scope(p):
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
@@ -140,7 +164,7 @@ def is_integer(p):
     except ValueError:
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -173,7 +197,7 @@ def p_translation_unit_2(p):
 def NewScope():
     global env 
     env = Environment(env)
-
+    print "Environment Created\n"
 
 def PopScope():
     global env  
@@ -492,8 +516,8 @@ def p_postfix_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_postfix_expression_2(p):
-    global size
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
+    global size
     p[0] = deepcopy(p[1])
     if not (isinstance(p[0].type,Type) and isinstance(p[1].type.next,Type)):
         print "Error in line %s : Cannot access index of non-array " % p.lineno(2)
@@ -1141,6 +1165,7 @@ def p_multiplicative_expression_1(p):
     
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1168,6 +1193,7 @@ def p_multiplicative_expression_2(p):
 
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1190,12 +1216,13 @@ def p_multiplicative_expression_3(p):
         p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
         p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
         p[0].code += "\tdiv $t0, $t1\n"
-        p[0].code += "\tmove $t2 $LO\n"
+        p[0].code += "\tmflo $t2\n"
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"            
     p.set_lineno(0,p.lineno(2))
 
 def p_multiplicative_expression_4(p):
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1215,7 +1242,7 @@ def p_multiplicative_expression_4(p):
         p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
         p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
         p[0].code += "\tdiv $t0, $t1\n"
-        p[0].code += "\tmove $t2 $HI\n"
+        p[0].code += "\tmfhi $t2\n"
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
     p.set_lineno(0,p.lineno(2))
 
@@ -1348,7 +1375,7 @@ def p_relational_expression_1(p):
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
-    global size
+    gbal size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
@@ -1704,8 +1731,9 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
                 p[1].code += "\tdiv $t1, $t0" + "\n"
-                p[0].code += "\tsw $lo, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $lo, " + toAddr(p[0]) + "\n"
+                p[0].code += "\tsw , " + toAddr(p[1]) + "\n"
+                p[0].code += "\tmflo $t0\n"
+                p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1861,6 +1889,11 @@ def p_statement_6(p):
     pass 
 def p_statement_7(p):
     ''' statement : declaration_statement '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
+
+def p_statement_8(p):
+    ''' statement : print_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
@@ -2180,6 +2213,25 @@ def p_iteration_statement_6(p):
     p[0].code += "\tj " + sbegin + "\n"
     #p[0].code += "\t" + safter + ":\n"
 
+def p_print_statement(p):
+    ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = env.get(str(p[3]))
+    if t == None :
+        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+        p[0].type = Type("ERROR")
+    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+        p[0].code="\tlw $t0 "+toAddr2(t)+"\n"
+        p[0].code+="\tmove $a0 $t0 \n"
+        p[0].code+="\tli $v0 1 \n"
+        p[0].code+="\tsyscall \n"
+    else :
+        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        p[0].type = Type("ERROR")
+        
 
 #for-init-statement:
     #expression-statement
