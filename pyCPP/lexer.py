@@ -99,7 +99,8 @@ keywords={'auto': 'AUTO',
         'typename' : 'TYPENAME',
         'union' : 'UNION',
         'void' : 'VOID',
-        'while' :'WHILE'
+        'while' :'WHILE',
+        'print' : 'PRINT'
         }
 
 tokens=special_characters+operators+complex_tokens+tuple(keywords.values())

@@ -84,6 +84,11 @@ def toAddr(p):
     else:
         return " -"+str(p.offset)+"($fp)"
 
+def toAddr2(t):
+    if t.back>0:
+        return " -"+str(t.offset)+"($gp)"
+    else:
+        return " -"+str(t.offset)+"($fp)"
 
 def find_scope(p):
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
@@ -134,7 +139,7 @@ def is_integer(p):
     except ValueError:
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -475,8 +480,8 @@ def p_postfix_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_postfix_expression_2(p):
-    global size
     ''' postfix_expression : postfix_expression LBRACKET expression RBRACKET '''
+    global size
     p[0] = deepcopy(p[1])
     if not (isinstance(p[0].type,Type) and isinstance(p[1].type.next,Type)):
         print "Error in line %s : Cannot access index of non-array " % p.lineno(2)
@@ -1845,6 +1850,11 @@ def p_statement_6(p):
 def p_statement_7(p):
     ''' statement : declaration_statement '''
     p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
+
+def p_statement_8(p):
+    ''' statement : print_statement '''
+    p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
 #labeled-:
@@ -2163,6 +2173,25 @@ def p_iteration_statement_6(p):
     p[0].code += "\tj " + sbegin + "\n"
     #p[0].code += "\t" + safter + ":\n"
 
+def p_print_statement(p):
+    ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = env.get(str(p[3]))
+    if t == None :
+        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+        p[0].type = Type("ERROR")
+    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+        p[0].code="\tlw $t0 "+toAddr(t)+"\n"
+        p[0].code+="\tmove $a0 $t0 \n"
+        p[0].code+="\tli $v0 1 \n"
+        p[0].code+="\tsyscall \n"
+    else :
+        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        p[0].type = Type("ERROR")
+        
 
 #for-init-statement:
     #expression-statement
