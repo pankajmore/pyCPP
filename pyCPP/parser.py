@@ -152,7 +152,6 @@ def p_translation_unit_2(p):
     name = sys.argv[1] + ".asm"
     print p[1].code
     fi = open(name,'w')
-    fi.write("main:\n")
     fi.write(p[1].code)
     fi.write("\tli $v0, 10\n")
     fi.write("\tsyscall\n")
@@ -190,13 +189,13 @@ def p_new_scope(p):
     env.table.endlabel = newLabel()
 
     p[0]  = Attribute()
-    p[0].code = env.table.startlabel + ":\n"
+    #p[0].code = env.table.startlabel + ":\n"
 
 def p_finish_scope(p):
     '''finish_scope : '''
     global env
     p[0] = Attribute()
-    p[0].code = env.table.endlabel + ":\n"
+    #p[0].code = env.table.endlabel + ":\n"
     PopScope()
 
 
