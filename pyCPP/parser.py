@@ -150,7 +150,7 @@ def p_translation_unit_2(p):
     ### TODO 
     #p[0] = deepcopy(p[1])
     name = sys.argv[1] + ".asm"
-    print p[1].code
+    #print p[1].code
     fi = open(name,'w')
     fi.write(p[1].code)
     fi.close()
@@ -256,13 +256,13 @@ def p_unset_function_scope(p):
     unsetFunctionScope()
     global size
     global oldsize
-    size=oldsize
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code+="\taddi $sp Ssp"+str(size)+"\n"
-    p[0].code+="\taddi $sp Ssp 8\n"
+    p[0].code+="\taddi $sp $sp "+str(size)+"\n"
+    p[0].code+="\taddi $sp $sp 8\n"
     p[0].code+="\tlw $fp -4($sp)\n"
     p[0].code+="\tlw $ra 0($sp)\n"
+    size=oldsize
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -1823,7 +1823,7 @@ def p_statement_3(p):
     ''' statement : compound_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
+    #print p[0].code
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
@@ -2249,7 +2249,7 @@ def p_declaration_1(p):
     ''' declaration : block_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[1].code
+    #print p[1].code
       
 def p_declaration_2(p):
     ''' declaration : function_definition '''
@@ -2273,7 +2273,7 @@ def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
+    #print p[0].code
     
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
@@ -3076,7 +3076,7 @@ def p_function_body(p):
     ''' function_body : compound_statement ''' 
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    print p[0].code
+    #print p[0].code
 
 #initializer:
     #= initializer-clause
