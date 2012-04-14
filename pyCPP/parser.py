@@ -1128,6 +1128,7 @@ def p_multiplicative_expression_1(p):
     
 def p_multiplicative_expression_2(p):
     ''' multiplicative_expression : multiplicative_expression TIMES cast_expression'''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1155,6 +1156,7 @@ def p_multiplicative_expression_2(p):
 
 def p_multiplicative_expression_3(p):
     ''' multiplicative_expression : multiplicative_expression DIV cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
@@ -1183,6 +1185,7 @@ def p_multiplicative_expression_3(p):
 
 def p_multiplicative_expression_4(p):
     ''' multiplicative_expression : multiplicative_expression MODULO cast_expression '''
+    global size
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
