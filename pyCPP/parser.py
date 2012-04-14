@@ -152,10 +152,7 @@ def p_translation_unit_2(p):
     name = sys.argv[1] + ".asm"
     print p[1].code
     fi = open(name,'w')
-    fi.write("main:\n")
     fi.write(p[1].code)
-    fi.write("\tli $v0, 10\n")
-    fi.write("\tsyscall\n")
     fi.close()
 
 #def p_empty(p):
@@ -262,7 +259,7 @@ def p_unset_function_scope(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].code+="\taddi $sp $sp "+str(size)+"\n"
-    p[0].code+="\taddi $sp Ssp 8\n"
+    p[0].code+="\taddi $sp $sp 8\n"
     p[0].code+="\tlw $fp -4($sp)\n"
     p[0].code+="\tlw $ra 0($sp)\n"
     p[0].code+="\tjr $ra\n"
