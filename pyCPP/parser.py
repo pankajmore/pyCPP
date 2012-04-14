@@ -152,10 +152,7 @@ def p_translation_unit_2(p):
     name = sys.argv[1] + ".asm"
     #print p[1].code
     fi = open(name,'w')
-    fi.write("main:\n")
     fi.write(p[1].code)
-    fi.write("\tli $v0, 10\n")
-    fi.write("\tsyscall\n")
     fi.close()
 
 #def p_empty(p):
