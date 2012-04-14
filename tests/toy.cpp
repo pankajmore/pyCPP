@@ -1,14 +1,7 @@
-void abc(int a, float b)
+int main()
 {
-    if (a==b)
-    {
-      return a +1.2 * b; // single line
-    }
-}
-void fn(int a, float b)
-{
-    if (a==b)
-    {
-      return a+2.2*b; // single line
-    }
+    int a,b;
+    a = 5;
+    b = 7;
+    a = a+b;
 }

@@ -140,11 +140,20 @@ precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_
 ########### Start ################
 
 ## {{{
-def p_translation_unit(p):
-    ''' translation_unit : 
-                         | declaration_seq'''
+def p_translation_unit_1(p):
+    ''' translation_unit : '''
+    pass
+
+def p_translation_unit_2(p):
+    ''' translation_unit : declaration_seq'''
     ##p.set_lineno(0,p.lineno(1))
     ### TODO 
+    #p[0] = deepcopy(p[1])
+    name = sys.argv[1] + ".asm"
+    print p[1].code
+    fi = open(name,'w')
+    fi.write(p[1].code)
+    fi.close()
 
 #def p_empty(p):
 #    ''' empty : '''
@@ -258,10 +267,13 @@ def p_unset_function_scope(p):
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
     p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
   
 def p_declaration_seq_2(p):
     ''' declaration_seq : declaration_seq declaration  '''
     p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
+    p[0].code+=p[2].code
 
 ## }}}
 #################### EXPRESSIONS ###################
