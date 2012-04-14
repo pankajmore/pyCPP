@@ -1823,6 +1823,7 @@ def p_statement_3(p):
     ''' statement : compound_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    print p[0].code
     pass 
 def p_statement_4(p):
     ''' statement : selection_statement '''
@@ -1842,10 +1843,9 @@ def p_statement_6(p):
 def p_statement_7(p):
     ''' statement : declaration_statement '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = deepcopy(p[1])
-    pass 
+    p[0] = deepcopy(p[1]) 
 
-#labeled-statement:
+#labeled-:
     #identifier : statement
     #case constant-expression : statement
     #default : statement
@@ -1864,7 +1864,8 @@ def p_labeled_statement_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = p[4].type 
-    pass 
+    p[0].code = p[2].code + p[4].code
+ 
 def p_labeled_statement_3(p):
     ''' labeled_statement : DEFAULT COLON statement ''' 
     p.set_lineno(0,p.lineno(1))
@@ -1887,7 +1888,7 @@ def p_expression_statement_2(p):
         p[0].type = Type("ERROR")
     else:
         p[0].type = Type("VOID") 
-    pass 
+    p[0].code = p[1].code
 
 #compound-statement:
     #{ statement-seqopt }
@@ -1903,6 +1904,7 @@ def p_compound_statement_2(p):
     ''' compound_statement : LBRACE new_scope statement_seq finish_scope RBRACE '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[3])
+    p[0].code = p[2].code+p[3].code+p[4].code
     if p[3].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
@@ -1932,6 +1934,7 @@ def p_statement_seq_2(p):
         p[0].type = Type("ERROR")
 
     p[0].code = p[1].code + p[2].code
+    #print p[0].code
 
 #selection-statement:
     #if ( condition ) statement
@@ -1998,7 +2001,7 @@ def p_selection_statement_3(p):
         if p[3].type != Type("ERROR"):
             print("Type error at" + str(p.lineno(3)))
         p[0].type = Type("ERROR")
-    pass 
+    p[0].code = p[3].code + p[5].code 
 
 #condition:
     #expression
@@ -2007,6 +2010,7 @@ def p_condition_1(p):
     ''' condition : expression ''' 
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = p[1].code
     if p[1].type != Type("ERROR"):
         p[0].type = Type("BOOL")
     else :
@@ -2016,6 +2020,7 @@ def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = p[2].code+p[4].code
     if p[1].type==p[4].type and p[1].type is not None and p[4].type is not None:
         p[0].type=Type('BOOL')
     else:
@@ -2202,7 +2207,8 @@ def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
-    p[0].type = Type("VOID") 
+    p[0].type = Type("VOID")
+    p[0].code = p[2].code 
     pass 
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
@@ -2217,6 +2223,7 @@ def p_declaration_statement(p):
     ''' declaration_statement : block_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = p[1].code
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
     else :
@@ -2242,6 +2249,7 @@ def p_declaration_1(p):
     ''' declaration : block_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    print p[1].code
       
 def p_declaration_2(p):
     ''' declaration : function_definition '''
@@ -2265,6 +2273,7 @@ def p_block_declaration_1(p):
     ''' block_declaration : simple_declaration '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    print p[0].code
     
 #simple-declaration:
     #decl-specifier-seqopt init-declarator-listopt ;
@@ -2739,6 +2748,8 @@ def p_init_declarator(p):
                 else:
                     print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(init.type)    
                     p[0].type = Type("ERROR")
+    #print "Init declarator"
+    #print p[0].code
 #declarator:
     #direct-declarator
     #ptr-operator declarator
@@ -3037,7 +3048,7 @@ def p_function_definition_1(p):
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    p[0].code+=p[1].code+p[2].code+p[3].code
+    p[0].code+=p[1].code+p[2].code+p[3].code+p[4].code
     p[0].code+="\tjr $ra\n"
 
 
@@ -3049,7 +3060,7 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    
+    p[0].code = p[2].code+p[3].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
@@ -3065,6 +3076,7 @@ def p_function_body(p):
     ''' function_body : compound_statement ''' 
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    print p[0].code
 
 #initializer:
     #= initializer-clause
