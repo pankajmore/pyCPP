@@ -2,7 +2,8 @@ from lexer import *
 import ply.yacc as yacc
 from symbol import *
 from copy import deepcopy
-num_temporaries=0
+num_temporaries = 0
+num_labels = 0
 ## TODO : return type of function should match the actual function type
 ## {{{
 success = True
@@ -76,7 +77,12 @@ def newTemp():
       num_temporaries = num_temporaries + 1
       return temp
 
-newLabel = newTemp
+def newLabel():
+      global num_labels
+      label = "L"+str(num_labels)
+      num_labels = num_labels + 1
+      return label
+
 
 def toAddr(p):
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
