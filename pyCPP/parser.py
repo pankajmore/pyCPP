@@ -72,7 +72,7 @@ def errorAttr(a):
 
 def newTemp():
       global num_temporaries
-      temp = "_T"+str(num_tempraries)
+      temp = "_T"+str(num_temporaries)
       num_temporaries = num_temporaries + 1
       return temp
 
@@ -193,9 +193,9 @@ def p_function_scope(p):
     '''function_scope : '''
     functionScope()
     t = env.prev.get(p[-1].attr['name'])
-    t.table = env.table # For keeping a pointer to the function symboltable
     if t is not None: # function declartion already seen
 #HACK : p[-2] might be buggy?
+        t.table = env.table # For keeping a pointer to the function symboltable
         if p[-2] is not None:
             if p[-2].type is None: # it must be a typeless declaration , assume VOID
                 if t.type != Type('VOID'):
@@ -228,14 +228,16 @@ def p_function_scope(p):
     global oldsize
     oldsize=size
     size=0
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
     p[0].code+="\tsw $fp, -4($sp)\n"
     p[0].code+="\tsw $ra, 0($sp)\n"
     p[0].code+="\tli $t0 8\n"
     p[0].code+="\tsub $sp $sp $t0\n"
     p[0].code+="\tmove $fp $sp\n"
 
-    for i in range(3):
-        p[0].code += "\tsw $a" + i + ", " + toAddr(size) + "\n"
+    for i in range(len(p[-1].attr['parameterList'])):
+        p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
         p[-1].attr['parameterList'][i].offset = size
         size = size + 4
 
@@ -246,6 +248,8 @@ def p_unset_function_scope(p):
     global size
     global oldsize
     size=oldsize
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
     p[0].code+="\taddi $sp Ssp"+str(size)+"\n"
     p[0].code+="\taddi $sp Ssp 8\n"
     p[0].code+="\tlw $fp -4($sp)\n"
@@ -2651,7 +2655,7 @@ def p_init_declarator(p):
                 print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
                 p[0].type = Type("ERROR")
             else:
-                l = len(p[1].attr.["width"])
+                l = len(p[1].attr["width"])
                 while l>0:
                     l=l-1
                     t.type = Type(t.type)
@@ -2681,7 +2685,7 @@ def p_init_declarator(p):
                     typ = t.type.next
                     ltyp = typ.size()/4
                     if ltyp == 0:
-                        print "ERROR!! Line number : "+str(p.lineno(0))+" Multi-dimensional array '"+str(p[1].attr["name"]+"' must have bounds for all dimensions except the first"
+                        print "ERROR!! Line number : "+str(p.lineno(0))+" Multi-dimensional array '"+str(p[1].attr["name"])+"' must have bounds for all dimensions except the first"
                         p[0].type = Type("ERROR")
                     else :
                         q1 = init.attr["num_element"]/ltyp
@@ -2722,7 +2726,7 @@ def p_init_declarator(p):
                     p[0].code+= "\tsw $t0, "+ toAddr(p[0]) + "\n"
                 else:
                     print "ERROR : Line number : "+ str(p.lineno(2)) + " Incompatible types " + str(t.type) + " and " + str(init.type)    
-f
+                    p[0].type = Type("ERROR")
 #declarator:
     #direct-declarator
     #ptr-operator declarator
