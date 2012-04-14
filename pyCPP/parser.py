@@ -79,8 +79,27 @@ def newTemp():
 newLabel = newTemp
 
 def toAddr(p):
+    global env
+    env1=env
+    if p.attr.has_key('symbol'):
+        back=p.attr['symbol'].back
+        print "BACK1 = ",back
+        while(env1!=None):
+            env1=env1.prev
+            back-=1
+        print "BACK2 = ",back
+        
     if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        return " -"+str(p.offset)+"($gp)"
+        back=p.attr['symbol'].back
+        print "BACK3 = ",back
+        while(env1.prev!=None):
+            env1=env1.prev
+            back-=1
+        print "BACK4 = ",back
+        if back==0:    
+            return " -"+str(p.offset)+"($gp)"
+        else:
+            return " -"+str(p.offset)+"($fp)"
     else:
         return " -"+str(p.offset)+"($fp)"
 
@@ -167,7 +186,7 @@ def p_translation_unit_2(p):
 def NewScope():
     global env 
     env = Environment(env)
-
+    print "Environment Created\n"
 
 def PopScope():
     global env  
@@ -239,6 +258,8 @@ def p_function_scope(p):
     size=0
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    p[0].code+="\tli $t0 "+str(oldsize)+"\n"
+    p[0].code+="\tsub $sp $sp $t0\n"
     p[0].code+="\tsw $fp, -4($sp)\n"
     p[0].code+="\tsw $ra, 0($sp)\n"
     p[0].code+="\tli $t0 8\n"
@@ -1172,7 +1193,7 @@ def p_multiplicative_expression_3(p):
         p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
         p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
         p[0].code += "\tdiv $t0, $t1\n"
-        p[0].code += "\tmove $t2 $LO\n"
+        p[0].code += "\tmflo $t2\n"
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"            
     p.set_lineno(0,p.lineno(2))
 
@@ -1197,7 +1218,7 @@ def p_multiplicative_expression_4(p):
         p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
         p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
         p[0].code += "\tdiv $t0, $t1\n"
-        p[0].code += "\tmove $t2 $HI\n"
+        p[0].code += "\tmfhi $t2\n"
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
     p.set_lineno(0,p.lineno(2))
 
@@ -1330,7 +1351,7 @@ def p_relational_expression_1(p):
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
-    global size
+    gbal size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
@@ -1686,8 +1707,9 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
                 p[1].code += "\tdiv $t1, $t0" + "\n"
-                p[0].code += "\tsw $lo, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $lo, " + toAddr(p[0]) + "\n"
+                p[0].code += "\tsw , " + toAddr(p[1]) + "\n"
+                p[0].code += "\tmflo $t0\n"
+                p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1746,7 +1768,6 @@ def p_assignment_expression_2(p):
                 p[0]=errorAttr(p[0])
                 p[1].type=Type('ERROR')                    
     p.set_lineno(0,p.lineno(2))
-    print "ASSIGN \n"+p[0].code+"\nASSIGNEND\n"
                                               
 #assignment-operator: one of
 #= *= /= %= += -= >>= <<= &= ^= |=                                                         ## Add these to operators and add them here 

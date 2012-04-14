@@ -2,7 +2,7 @@
 
 int main()
 {
-int q ,w,e,r,t;
+int q,w,e,r,t;
 w=0;
 e=0;
 r=0;
