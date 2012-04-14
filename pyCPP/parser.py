@@ -258,6 +258,8 @@ def p_new_scope(p):
                 p[-3].attr['parameterList'][i].offset = size
                 s.offset = size
                 size = size + 4
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
                 s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
@@ -270,6 +272,8 @@ def p_new_scope(p):
                 p[-3].attr['parameterList'][i].offset = size
                 s.offset = size
                 size = size + 4
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
                 s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
