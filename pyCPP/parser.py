@@ -213,79 +213,88 @@ def p_new_scope(p):
     '''new_scope : '''
     NewScope()
     global env
+    global function_scope
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
 
     p[0]  = Attribute()
-    #p[0].code = env.table.startlabel + ":\n"
+
+    if function_scope == 1:
+        global size
+        global oldsize
+        oldsize=size
+        size=0
+        p[0] = Attribute()
+        p[0] = initAttr(p[0])
+        p[0].code+="\tsw $fp, -4($sp)\n"
+        p[0].code+="\tsw $ra, 0($sp)\n"
+        p[0].code+="\tli $t0 8\n"
+        p[0].code+="\tsub $sp $sp $t0\n"
+        p[0].code+="\tmove $fp $sp\n"
+
+
+        t = env.prev.get(p[-3].attr['name'])
+        if t is not None: # function declartion already seen
+#HACK : p[-2] might be buggy?
+            t.table = env.table # For keeping a pointer to the function symboltable
+            if p[-4] is not None:
+                if p[-4].type is None: # it must be a typeless declaration , assume VOID
+                    if t.type != Type('VOID'):
+                        print ("\nFunction's type must be void since its declaration had no type\n")
+                else:
+                    if t.type != p[-4].type:
+                        print ("\nFunction's type not consistent between declaration and definition\n")
+            if t.attr['numParameters'] != p[-3].attr['numParameters'] :
+                print ("\nFunction overloading not supported\n")
+            for i in range(t.attr['numParameters']):
+                if t.attr['parameterList'][i].type != p[-3].attr['parameterList'][i].type:
+                    print ("\nFunction overloading by different types not supported\n")
+                if t.attr['parameterList'][i].attr['name'] == None:
+                    print ("\nVariable name for parameter missing\n")
+                # refactor the duplicate code
+                # storing the formal parameters in table not the parameters during function declaration
+                s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
+                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                p[-3].attr['parameterList'][i].offset = size
+                s.offset = size
+                size = size + 4
+                s.type = p[-3].attr['parameterList'][i].type
+                if not env.put(s):
+                    print ("\nError : parameter is already in the symbol table\n")
+
+#ENHANCEMENT
+        else: # function declaration has not been seen
+            for i in range(p[-3].attr['numParameters']):
+                s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
+                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                p[-3].attr['parameterList'][i].offset = size
+                s.offset = size
+                size = size + 4
+                s.type = p[-3].attr['parameterList'][i].type
+                if not env.put(s):
+                    print ("\nError : parameter is already in the symbol table\n")
+
 
 def p_finish_scope(p):
     '''finish_scope : '''
     global env
     p[0] = Attribute()
-    #p[0].code = env.table.endlabel + ":\n"
-    PopScope()
+    # p[0].code = env.table.endlabel + ":\n"
+    # no finish scope is needed actually
+    #PopScope()
 
 
 
 def p_function_scope(p):
     '''function_scope : '''
-    functionScope()
-    t = env.prev.get(p[-1].attr['name'])
-    if t is not None: # function declartion already seen
-#HACK : p[-2] might be buggy?
-        t.table = env.table # For keeping a pointer to the function symboltable
-        if p[-2] is not None:
-            if p[-2].type is None: # it must be a typeless declaration , assume VOID
-                if t.type != Type('VOID'):
-                    print ("\nFunction's type must be void since its declaration had no type\n")
-            else:
-                if t.type != p[-2].type:
-                    print ("\nFunction's type not consistent between declaration and definition\n")
-        if t.attr['numParameters'] != p[-1].attr['numParameters'] :
-            print ("\nFunction overloading not supported\n")
-        for i in range(t.attr['numParameters']):
-            if t.attr['parameterList'][i].type != p[-1].attr['parameterList'][i].type:
-                print ("\nFunction overloading by different types not supported\n")
-            if t.attr['parameterList'][i].attr['name'] == None:
-                print ("\nVariable name for parameter missing\n")
-            # refactor the duplicate code
-            # storing the formal parameters in table not the parameters during function declaration
-            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
-            s.type = p[-1].attr['parameterList'][i].type
-            if not env.put(s):
-                print ("\nError : parameter is already in the symbol table\n")
-
-#ENHANCEMENT
-    else: # function declaration has not been seen
-        for i in range(p[-1].attr['numParameters']):
-            s = Symbol(p[-1].attr['parameterList'][i].attr['name'])
-            s.type = p[-1].attr['parameterList'][i].type
-            if not env.put(s):
-                print ("\nError : parameter is already in the symbol table\n")
-    global size
-    global oldsize
-    oldsize=size
-    size=0
-    p[0] = Attribute()
-    p[0] = initAttr(p[0])
-    p[0].code+="\tsw $fp, -4($sp)\n"
-    p[0].code+="\tsw $ra, 0($sp)\n"
-    p[0].code+="\tli $t0 8\n"
-    p[0].code+="\tsub $sp $sp $t0\n"
-    p[0].code+="\tmove $fp $sp\n"
-
-    for i in range(len(p[-1].attr['parameterList'])):
-        p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
-        p[-1].attr['parameterList'][i].offset = size
-        size = size + 4
-        p[0].code+="\tli $t0 4\n"
-        p[0].code+="\tsub $sp $sp $t0\n"
-
+    global function_scope
+    function_scope = 1
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
     unsetFunctionScope()
+    global function_scope
+    function_scope = 0
     global size
     global oldsize
     p[0] = Attribute()
@@ -621,6 +630,7 @@ def p_postfix_expression_4(p):
                 p[0].offset=size
                 size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
+                    print type(p[1].attr['symbol'].attr['parameterList'][i])
                     p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i])+'\n'
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
@@ -3195,7 +3205,7 @@ def p_function_definition_1(p):
     else: 
         flabel = newLabel()
         p[0].code = flabel + ":\n"
-    p[0].code+=p[1].code+p[2].code+p[3].code+p[4].code
+    p[0].code+=p[1].code+p[3].code+p[4].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
@@ -3207,7 +3217,7 @@ def p_function_definition_2(p):
     else: 
         flabel = newLabel()
         p[0].code = flabel + ":\n"
-    p[0].code += p[2].code+p[3].code+p[4].code+p[5].code
+    p[0].code += p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
