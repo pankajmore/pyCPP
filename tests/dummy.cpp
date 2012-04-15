@@ -1,9 +1,10 @@
 int sum(int a,int b);
 int sum(int a, int b)
 {
-int d,e,f;
-d=e+f;
+if (a==0)
 return (a+b);
+else
+return a-1+b;
 }
 
 int main()
@@ -14,6 +15,7 @@ e=0;
 r=5;
 t=10;
 q=w+r+e+t;
+print(q);
 e=sum(r,t);
-
+print(e);
 }
