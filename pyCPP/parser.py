@@ -8,6 +8,7 @@ num_labels = 0
 ## {{{
 success = True
 size=0
+oldsize=0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -164,7 +165,7 @@ def is_integer(p):
     except ValueError:
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -225,9 +226,10 @@ def p_new_scope(p):
         size=0
         p[0] = Attribute()
         p[0] = initAttr(p[0])
-        p[0].code+="\tsw $fp, -4($sp)\n"
         p[0].code+="\tsw $ra, 0($sp)\n"
-        p[0].code+="\tli $t0 8\n"
+        p[0].code+="\tsw $fp, -4($sp)\n"
+        p[0].code+="\tsw $sp, -8($sp)\n"
+        p[0].code+="\tli $t0 12\n"
         p[0].code+="\tsub $sp $sp $t0\n"
         p[0].code+="\tmove $fp $sp\n"
 
@@ -305,10 +307,9 @@ def p_unset_function_scope(p):
     global oldsize
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code+="\taddi $sp $sp "+str(size)+"\n"
-    p[0].code+="\taddi $sp $sp 8\n"
-    p[0].code+="\tlw $fp -4($sp)\n"
-    p[0].code+="\tlw $ra 0($sp)\n"
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
     size=oldsize
 
@@ -577,6 +578,7 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
+        p[1].place = p[1].attr['symbol'].attr['label']
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
@@ -628,6 +630,7 @@ def p_postfix_expression_4(p):
                     if tmp==1:
                         p[0]=errorAttr(p[0]) 
             if tmp==0:
+                p[1].place = p[1].attr['symbol'].attr['label']
                 p[0].attr={}
                 p[0].code=p[1].code+p[3].code
                 p[0].code +="\tli $t0 4\n"
@@ -1978,6 +1981,11 @@ def p_statement_8(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
+def p_statement_9(p):
+    ''' statement : scan_statement '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1]) 
+
 #labeled-:
     #identifier : statement
     #case constant-expression : statement
@@ -2294,7 +2302,7 @@ def p_iteration_statement_6(p):
     #p[0].code += "\t" + safter + ":\n"
 
 def p_scan_statement(p):
-    ''' scan_statement :SCAN LPAREN IDENTIFIER RPAREN SEMICOLON '''
+    ''' scan_statement : SCAN LPAREN IDENTIFIER RPAREN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -2304,9 +2312,9 @@ def p_scan_statement(p):
         print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
         p[0].type = Type("ERROR")
     elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
-        p[0].code+="\tli $v0 5 \n"
+        p[0].code="\tli $v0 5 \n"
         p[0].code+="\tsyscall \n"
-        p[0].code="\tsw $v0 "+toAddr2(t)+"\n"
+        p[0].code+="\tsw $v0 "+toAddr2(t)+"\n"
     else :
         print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
         p[0].type = Type("ERROR")
@@ -3227,9 +3235,17 @@ def p_function_definition_1(p):
     #code generation
     if p[1].attr['name'] == "main":
         p[0].code = "main:\n"
+        p[0].place = "main"
     else: 
         flabel = newLabel()
         p[0].code = flabel + ":\n"
+        p[0].place = flabel
+        t = env.get(str(p[1].attr["name"]))
+        if t == None:
+            print "ERROR!! line number : "+str(p.lineno(1))+" Function "+str(p[1].attr["name"])+" not declared"
+            p[0].type = Type("ERROR")
+        else :
+            t.attr["label"]= p[0].place
     p[0].code+=p[1].code+p[3].code+p[4].code
 
 def p_function_definition_2(p):
@@ -3239,9 +3255,17 @@ def p_function_definition_2(p):
     p[0] = initAttr(p[0])
     if p[2].attr['name'] == "main":
         p[0].code = "main:\n"
+        p[0].place = "main"
     else: 
         flabel = newLabel()
         p[0].code = flabel + ":\n"
+        p[0].place = flabel
+        t = env.get(str(p[2].attr["name"]))
+        if t == None:
+            print "ERROR!! line number : "+str(p.lineno(1))+" Function "+str(p[2].attr["name"])+" not declared"
+            p[0].type = Type("ERROR")
+        else :
+            t.attr["label"]= p[0].place
     p[0].code += p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
