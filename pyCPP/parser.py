@@ -578,7 +578,7 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
-        p[1].place = p[1].attr['symbol'].attr['label']
+        p[1].place = p[1].attr['symbol'].label
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
@@ -3264,7 +3264,7 @@ def p_function_definition_2(p):
         if t == None:
             print "ERROR!! line number : "+str(p.lineno(1))+" Function "+str(p[2].attr["name"])+" not declared"
             p[0].type = Type("ERROR")
-        else :
+        else:
             t.attr["label"]= p[0].place
     p[0].code += p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1

@@ -1,9 +1,10 @@
 int sum(int a);
-int sum(int a)
+int sum(int a,b)
 {
-if (a==0 || a==1)
-return 1;
-return sum(a-1)+sum(a-2);
+if (a==0)
+return (a+b);
+else:
+return sum(a+b-1);
 }
 
 int main()
