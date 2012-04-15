@@ -8,6 +8,8 @@ int sum(int a, int b)
 int main()
 {
     int d;
+    scan(d);
+    print(d);
     d = sum(5,4);
     print(d);
 }
