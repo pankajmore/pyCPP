@@ -233,6 +233,7 @@ def p_new_scope(p):
 
 
         t = env.prev.get(p[-3].attr['name'])
+        function_scope=0
 
 
         if t is not None: # function declartion already seen
