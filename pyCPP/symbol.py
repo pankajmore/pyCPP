@@ -35,6 +35,7 @@ class SymbolTable(object):
         self.offset = 0
         self.startlabel = None
         self.endlabel = None
+        self.fredundantscope = 0
         for key in keywords :
             symbol = Symbol(key)
             symbol.keyword = True
@@ -70,8 +71,6 @@ class SymbolTable(object):
                 self.symbols[k] = i
 
 
-
-        
 
 ## This class represts a symbol , its type and associated attributes . 
 class Symbol(object):
