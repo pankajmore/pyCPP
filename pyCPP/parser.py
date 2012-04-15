@@ -2348,22 +2348,23 @@ def p_scan_statement(p):
 
 
 def p_print_statement(p):
-    ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
+    ''' print_statement : PRINT LPAREN postfix_expression RPAREN SEMICOLON'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("VOID")
-    t = env.get(str(p[3]))
-    if t == None :
-        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
-        p[0].type = Type("ERROR")
-    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
-        p[0].code="\tlw $t0 "+toAddr2(t)+"\n"
+    #t = env.get(str(p[3]))
+    #if t == None :
+    #    print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+    #    p[0].type = Type("ERROR")
+    #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+    if not p[3].type == Type("ERROR"):
+        p[0].code="\tlw $t0 "+toAddr(p[3])+"\n"
         p[0].code+="\tmove $a0 $t0 \n"
         p[0].code+="\tli $v0 1 \n"
         p[0].code+="\tsyscall \n"
     else :
-        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        #print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
         p[0].type = Type("ERROR")
         
 
