@@ -180,7 +180,6 @@ def p_translation_unit_2(p):
     ### TODO 
     #p[0] = deepcopy(p[1])
     name = sys.argv[1] + ".asm"
-    print p[1].code
     fi = open(name,'w')
     fi.write(p[1].code)
     fi.close()
@@ -629,14 +628,14 @@ def p_postfix_expression_4(p):
                         p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[0].attr={}
-                p[0].code=p[1].code
+                p[0].code=p[1].code+p[3].code
                 p[0].code +="\tli $t0 4\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
                 p[0].place=newTemp()
                 p[0].offset=size
                 size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i])+'\n'
+                    p[0].code+='\tlw $a'+str(i)+toAddr(p[3].attr['parameterList'][i])+'\n'
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
                     p[0].code+='\tmove $t0 $v0\n'
@@ -752,7 +751,8 @@ def p_expression_list_2(p):
         p[0].attr['numParameters']+=1
         p[0].attr['parameterList'].append(deepcopy(p[3]))
         p[0].code=p[1].code+'\t'+  p[3].code
-    p.set_lineno(0,p.lineno(2))    
+    p.set_lineno(0,p.lineno(2))
+    
 
 def p_expression_list_opt_1(p):
     ''' expression_list_opt : '''
@@ -2359,8 +2359,9 @@ def p_jump_statement_3(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].type = Type("VOID")
-    p[0].code = p[2].code 
-    pass 
+    p[0].code = p[2].code
+    p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
