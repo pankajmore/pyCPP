@@ -179,7 +179,7 @@ def p_translation_unit_2(p):
     ##p.set_lineno(0,p.lineno(1))
     ### TODO 
     #p[0] = deepcopy(p[1])
-    name = sys.argv[1] + ".asm"
+    name = sys.argv[1][:-4] + ".asm"
     fi = open(name,'w')
     fi.write(p[1].code)
     fi.close()
