@@ -2141,8 +2141,7 @@ def p_selection_statement_3(p):
 def p_condition_1(p):
     ''' condition : expression ''' 
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
-    p[0].code = p[1].code
+    p[0] = deepcopy(p[1])
     if p[1].type != Type("ERROR"):
         p[0].type = Type("BOOL")
     else :
@@ -2151,7 +2150,7 @@ def p_condition_1(p):
 def p_condition_2(p):
     ''' condition : type_specifier_seq declarator ASSIGN assignment_expression '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
+    p[0] = deepcopy(p[2])
     p[0].code = p[2].code+p[4].code
     if p[1].type==p[4].type and p[1].type is not None and p[4].type is not None:
         p[0].type=Type('BOOL')
