@@ -2293,6 +2293,25 @@ def p_iteration_statement_6(p):
     p[0].code += "\tj " + sbegin + "\n"
     #p[0].code += "\t" + safter + ":\n"
 
+def p_scan_statement(p):
+    ''' scan_statement :SCAN LPAREN IDENTIFIER RPAREN SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = env.get(str(p[3]))
+    if t == None :
+        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+        p[0].type = Type("ERROR")
+    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+        p[0].code+="\tli $v0 5 \n"
+        p[0].code+="\tsyscall \n"
+        p[0].code="\tsw $v0 "+toAddr2(t)+"\n"
+    else :
+        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        p[0].type = Type("ERROR")
+
+
 def p_print_statement(p):
     ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
     p.set_lineno(0,p.lineno(1))
