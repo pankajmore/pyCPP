@@ -4,6 +4,7 @@ from symbol import *
 from copy import deepcopy
 num_temporaries = 0
 num_labels = 0
+print_string = {}
 ## TODO : return type of function should match the actual function type
 ## {{{
 success = True
@@ -175,7 +176,7 @@ def is_integer(p):
     except ValueError:
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN','PRINTS'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -192,7 +193,12 @@ def p_translation_unit_2(p):
     #p[0] = deepcopy(p[1])
     name = sys.argv[1][:-4] + ".asm"
     fi = open(name,'w')
-    fi.write(p[1].code)
+    code = p[1].code
+    global print_string
+    code = code + "\n.data\n"
+    for k in print_string:
+        code = code + k + ": .ascii " + print_string[k] + "\n" 
+    fi.write(code)
     fi.close()
 
 #def p_empty(p):
@@ -1837,10 +1843,11 @@ def p_assignment_expression_2(p):
             
     else:
         if p[2]=='*=':
+            print "here"
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tmul $t2, $t1, $t0" + "\n"
+                p[0].code += "\tmul $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
             else:
@@ -1852,7 +1859,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tdiv $t1, $t0" + "\n"
+                p[0].code += "\tdiv $t1, $t0" + "\n"
                 p[0].code += "\tmflo $t0\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
@@ -1866,7 +1873,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tadd $t2, $t1, $t0" + "\n"
+                p[0].code += "\tadd $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                 pass                                                                  
@@ -1889,7 +1896,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tsub $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsub $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                 pass                                                                  
@@ -2015,6 +2022,10 @@ def p_statement_8(p):
 
 def p_statement_9(p):
     ''' statement : scan_statement '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1]) 
+def p_statement_10(p):
+    ''' statement : prints_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
@@ -2353,23 +2364,38 @@ def p_scan_statement(p):
 
 
 def p_print_statement(p):
-    ''' print_statement : PRINT LPAREN IDENTIFIER RPAREN SEMICOLON'''
+    ''' print_statement : PRINT LPAREN postfix_expression RPAREN SEMICOLON'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = Type("VOID")
-    t = env.get(str(p[3]))
-    if t == None :
-        print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
-        p[0].type = Type("ERROR")
-    elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
-        p[0].code="\tlw $t0 "+toAddr2(t)+"\n"
+    #t = env.get(str(p[3]))
+    #if t == None :
+    #    print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+    #    p[0].type = Type("ERROR")
+    #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+    if not p[3].type == Type("ERROR"):
+        p[0].code="\tlw $t0 "+toAddr(p[3])+"\n"
         p[0].code+="\tmove $a0 $t0 \n"
         p[0].code+="\tli $v0 1 \n"
         p[0].code+="\tsyscall \n"
     else :
-        print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        #print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
         p[0].type = Type("ERROR")
+
+def p_prints_statement(p):
+    ''' prints_statement : PRINTS LPAREN  LIT_STR RPAREN SEMICOLON'''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+    t = newLabel()
+    global print_string
+    print_string[t]=p[3]
+    p[0].code="\tla $a0 "+t+"\n"
+    p[0].code+="\tli $v0 4 \n"
+    p[0].code+="\tsyscall \n"
+
         
 
 #for-init-statement:
@@ -2930,7 +2956,7 @@ def p_init_declarator(p):
                         else:
                             t.type.dim = q1+1
                         i = 0
-                        p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                        p[0].code+="\tli $t0 "+ str(p[0].offset) + "\n"
                         p[0].code+="\tsub $t0 $fp $t0 \n"
                         p[0].code+="\tli $t2 4 \n"
                         while i < init.attr["num_element"]:
@@ -2940,7 +2966,7 @@ def p_init_declarator(p):
                             i+=1
                 elif l >= init.attr["num_element"]:
                     i = 0
-                    p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                    p[0].code+="\tli $t0 "+ str(p[0].offset) + "\n"
                     p[0].code+="\tsub $t0 $fp $t0 \n"
                     p[0].code+="\tli $t2 4 \n"
                     while i < init.attr["num_element"]:
@@ -3329,6 +3355,7 @@ def p_initializer_clause_1(p):
     p[0].attr["initializer_clause"] = [deepcopy(p[1])]
     p[0].type = p[1].type
     p[0].code = p[1].code
+    p[0].attr["num_element"] = 1
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
@@ -3368,7 +3395,8 @@ def p_initializer_list_2(p):
     p.set_lineno(0,p.lineno(2))
     p[0] = deepcopy(p[1])
     if p[1].type == p[3].type :
-        p[0].attr["initializer_clause"].append(deepcopy(p[3].attr["initializer_clause"]))
+        for i in p[3].attr["initializer_clause"]:
+            p[0].attr["initializer_clause"].append(deepcopy(i))
         p[0].code+=p[3].code
         if p[3].attr.has_key("isArray"):
             p[0].attr["num_element"]+=p[3].attr["num_element"]
