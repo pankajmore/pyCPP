@@ -234,8 +234,10 @@ def p_new_scope(p):
 
 
         t = env.prev.get(p[-3].attr['name'])
+
+
         if t is not None: # function declartion already seen
-#HACK : p[-2] might be buggy?
+#HACK : p[-4] might be buggy?
             t.table = env.table # For keeping a pointer to the function symboltable
             if p[-4] is not None:
                 if p[-4].type is None: # it must be a typeless declaration , assume VOID
@@ -256,6 +258,7 @@ def p_new_scope(p):
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
+                t.attr['parameterList'][i].offset = size #to retrieve during func call
                 s.offset = size
                 size = size + 4
                 s.type = p[-3].attr['parameterList'][i].type
@@ -292,7 +295,6 @@ def p_function_scope(p):
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
-    unsetFunctionScope()
     global function_scope
     function_scope = 0
     global size
@@ -621,7 +623,6 @@ def p_postfix_expression_4(p):
                 p[0].offset=size
                 size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    print type(p[1].attr['symbol'].attr['parameterList'][i])
                     p[0].code+='\tlw $a'+str(i)+toAddr(p[1].attr['symbol'].attr['parameterList'][i])+'\n'
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
@@ -1375,7 +1376,7 @@ def p_relational_expression_1(p):
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
-    gbal size
+    global size
     p[0]=deepcopy(p[1])
     if check_compatibility_relational(p):
         p[0].type=Type('BOOL')
