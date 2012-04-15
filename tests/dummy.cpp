@@ -1,25 +1,16 @@
 int sum(int a);
-int sum(int a,b)
+int sum(int a)
 {
-if (a==0)
-return (a+b);
-else:
-return sum(a+b-1);
+if (a==0 || a==1)
+return 1;
+else 
+return sum(a-1)+sum(a-2);
 }
 
 int main()
 {
-int q,w,e,r,t;
-w=1;
-e=3;
-r=5;
-t=10;
-q=w+r+e+t;
-print(q);
-if (q==19)
-e=(q+w);
-else
-e=r+t;
-e=sum(1);
+
+int e;
+e=sum(5);
 print(e);
 }

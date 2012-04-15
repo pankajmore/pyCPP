@@ -111,8 +111,17 @@ def toAddr(p):
         return " -"+str(p.offset)+"($fp)"
 
 def toAddr2(t):
+    global env
+    env1=env
     if t.back>0:
-        return " -"+str(t.offset)+"($gp)"
+        back=t.back
+        while(env1.prev!=None):
+            env1=env1.prev
+            back-=1
+        if back==0:    
+            return " -"+str(t.offset)+"($gp)"
+        else:
+            return " -"+str(t.offset)+"($fp)"
     else:
         return " -"+str(t.offset)+"($fp)"
 
