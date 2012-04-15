@@ -298,6 +298,21 @@ def p_function_scope(p):
     '''function_scope : '''
     global function_scope
     function_scope = 1
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    if p[-1].attr['name'] == "main":
+        p[0].code = "main:\n"
+        p[0].place = "main"
+    else: 
+        flabel = newLabel()
+        p[0].code = flabel + ":\n"
+        p[0].place = flabel
+        t = env.get(str(p[-1].attr["name"]))
+        if t == None:
+            print "ERROR!! line number : "+str(p.lineno(-1))+" Function "+str(p[-1].attr["name"])+" not declared"
+            p[0].type = Type("ERROR")
+        else :
+            t.attr["label"]= p[0].place
 
 def p_unset_function_scope(p):
     '''unset_function_scope : '''
@@ -3233,40 +3248,14 @@ def p_function_definition_1(p):
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    if p[1].attr['name'] == "main":
-        p[0].code = "main:\n"
-        p[0].place = "main"
-    else: 
-        flabel = newLabel()
-        p[0].code = flabel + ":\n"
-        p[0].place = flabel
-        t = env.get(str(p[1].attr["name"]))
-        if t == None:
-            print "ERROR!! line number : "+str(p.lineno(1))+" Function "+str(p[1].attr["name"])+" not declared"
-            p[0].type = Type("ERROR")
-        else :
-            t.attr["label"]= p[0].place
-    p[0].code+=p[1].code+p[3].code+p[4].code
+    p[0].code=p[2].code+p[1].code+p[3].code+p[4].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    if p[2].attr['name'] == "main":
-        p[0].code = "main:\n"
-        p[0].place = "main"
-    else: 
-        flabel = newLabel()
-        p[0].code = flabel + ":\n"
-        p[0].place = flabel
-        t = env.get(str(p[2].attr["name"]))
-        if t == None:
-            print "ERROR!! line number : "+str(p.lineno(1))+" Function "+str(p[2].attr["name"])+" not declared"
-            p[0].type = Type("ERROR")
-        else:
-            t.attr["label"]= p[0].place
-    p[0].code += p[2].code+p[4].code+p[5].code
+    p[0].code = p[3].code+p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
