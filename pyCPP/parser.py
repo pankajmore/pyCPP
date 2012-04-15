@@ -2950,7 +2950,7 @@ def p_init_declarator(p):
                         else:
                             t.type.dim = q1+1
                         i = 0
-                        p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                        p[0].code+="\tli $t0 "+ str(p[0].offset) + "\n"
                         p[0].code+="\tsub $t0 $fp $t0 \n"
                         p[0].code+="\tli $t2 4 \n"
                         while i < init.attr["num_element"]:
@@ -2960,7 +2960,7 @@ def p_init_declarator(p):
                             i+=1
                 elif l >= init.attr["num_element"]:
                     i = 0
-                    p[0].code+="\tli $t0 "+ p[0].offset + "\n"
+                    p[0].code+="\tli $t0 "+ str(p[0].offset) + "\n"
                     p[0].code+="\tsub $t0 $fp $t0 \n"
                     p[0].code+="\tli $t2 4 \n"
                     while i < init.attr["num_element"]:
@@ -3349,6 +3349,7 @@ def p_initializer_clause_1(p):
     p[0].attr["initializer_clause"] = [deepcopy(p[1])]
     p[0].type = p[1].type
     p[0].code = p[1].code
+    p[0].attr["num_element"] = 1
     if p[1].type == Type("ERROR"):
         p[0].type = Type("ERROR")
 
@@ -3388,7 +3389,8 @@ def p_initializer_list_2(p):
     p.set_lineno(0,p.lineno(2))
     p[0] = deepcopy(p[1])
     if p[1].type == p[3].type :
-        p[0].attr["initializer_clause"].append(deepcopy(p[3].attr["initializer_clause"]))
+        for i in p[3].attr["initializer_clause"]:
+            p[0].attr["initializer_clause"].append(deepcopy(i))
         p[0].code+=p[3].code
         if p[3].attr.has_key("isArray"):
             p[0].attr["num_element"]+=p[3].attr["num_element"]
