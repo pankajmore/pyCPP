@@ -198,7 +198,7 @@ def p_translation_unit_2(p):
     global print_string
     code = code + "\n.data\n"
     for k in print_string:
-        code = code + k + ": .ascii " + print_string[k] 
+        code = code + k + ": .ascii " + print_string[k] + "\n" 
     fi.write(code)
     fi.close()
 
