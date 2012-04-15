@@ -1832,10 +1832,11 @@ def p_assignment_expression_2(p):
             
     else:
         if p[2]=='*=':
+            print "here"
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tmul $t2, $t1, $t0" + "\n"
+                p[0].code += "\tmul $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
             else:
@@ -1847,7 +1848,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tdiv $t1, $t0" + "\n"
+                p[0].code += "\tdiv $t1, $t0" + "\n"
                 p[0].code += "\tmflo $t0\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
@@ -1861,7 +1862,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tadd $t2, $t1, $t0" + "\n"
+                p[0].code += "\tadd $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                 pass                                                                  
@@ -1884,7 +1885,7 @@ def p_assignment_expression_2(p):
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[1].code += "\tsub $t2, $t1, $t0" + "\n"
+                p[0].code += "\tsub $t2, $t1, $t0" + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                 pass                                                                  
