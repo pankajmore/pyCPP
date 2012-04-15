@@ -34,7 +34,7 @@ class Type(object):
 		return str(self.next)
     def size(self):
         if isinstance(self.next,Type):
-            return dim*self.next.size()
+            return self.dim*self.next.size()
         else:
             return 4
 
@@ -168,8 +168,10 @@ def check_compatibility_equality(p):
         return False 
 
 def is_integer(p):
-    try:
-        a = int(p.place)
+    if p.attr.has_key('symbol'):
+        return False
+    try :
+        data = int(p.data)
         return True
     except ValueError:
         return False
@@ -407,6 +409,7 @@ def p_primary_expression_1(p):
     global size
     p[0]=deepcopy(p[1])
     p[0].place=newTemp()
+    p[0].data = p[1].place
     p[0].attr={}
     p[0].offset=size
     p[0].code +="\tli $t0 4\n"
@@ -573,9 +576,9 @@ def p_postfix_expression_2(p):
                 p[0].code=p[1].code+p[3].code
                 p[0].code +="\tli $t0 4\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
-                P[0].CODE+="\tli $t0 "+p[1].offset+"\n"
+                p[0].code+="\tli $t0 "+str(p[1].offset)+"\n"
                 p[0].code+="\tlw $t1 "+toAddr(p[3])+"\n"
-                p[0].code+="\tli $t2 "+dim+"\n"
+                p[0].code+="\tli $t2 "+str(dim)+"\n"
                 p[0].code+="\tmul $t1 $t1 $t2\n"
                 p[0].code+="\tadd $t0 $t0 $t1\n"
                 if isinstance(p[0].type.next,Type):
@@ -3013,17 +3016,18 @@ def p_direct_declarator_3(p):
         if p[3] == None:
             p[0].attr["width"] = [0]
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
-            p[0].attr["width"] = [int(p[3].place)]
+            p[0].attr["width"] = [int(p[3].data)]
             p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
         else:
             print "ERROR!! Line number : "+str(p.lineno(0))+" Invalid array declaration"
+            p[0].type = Type("ERROR")
     else:
         if p[3] == None:
             p[0].attr["width"].append(0)
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
-            p[0].attr["width"].append(p[3].place)
+            p[0].attr["width"].append(p[3].data)
             p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
