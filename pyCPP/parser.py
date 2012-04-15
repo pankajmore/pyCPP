@@ -8,6 +8,7 @@ num_labels = 0
 ## {{{
 success = True
 size=0
+oldsize=0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -225,9 +226,10 @@ def p_new_scope(p):
         size=0
         p[0] = Attribute()
         p[0] = initAttr(p[0])
-        p[0].code+="\tsw $fp, -4($sp)\n"
         p[0].code+="\tsw $ra, 0($sp)\n"
-        p[0].code+="\tli $t0 8\n"
+        p[0].code+="\tsw $fp, -4($sp)\n"
+        p[0].code+="\tsw $sp, -8($sp)\n"
+        p[0].code+="\tli $t0 12\n"
         p[0].code+="\tsub $sp $sp $t0\n"
         p[0].code+="\tmove $fp $sp\n"
 
@@ -305,10 +307,9 @@ def p_unset_function_scope(p):
     global oldsize
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code+="\taddi $sp $sp "+str(size)+"\n"
-    p[0].code+="\taddi $sp $sp 8\n"
-    p[0].code+="\tlw $fp -4($sp)\n"
-    p[0].code+="\tlw $ra 0($sp)\n"
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
     size=oldsize
 
