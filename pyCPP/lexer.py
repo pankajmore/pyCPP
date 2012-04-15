@@ -101,7 +101,8 @@ keywords={'auto': 'AUTO',
         'void' : 'VOID',
         'while' :'WHILE',
         'print' : 'PRINT',
-        'scan' : 'SCAN'
+        'scan' : 'SCAN' ,
+        'prints' : 'PRINTS'
         }
 
 tokens=special_characters+operators+complex_tokens+tuple(keywords.values())
