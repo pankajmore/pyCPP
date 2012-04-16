@@ -627,7 +627,7 @@ def p_postfix_expression_3(p):
         if p[0].type!=Type('VOID'):
             p[0].code+='\tmove $t0 $v0\n'
         else:
-            p[0].code+='\tli $t0 0'
+            p[0].code+='\tli $t0 0 \n'
         p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(2))
     
@@ -680,7 +680,7 @@ def p_postfix_expression_4(p):
                 if p[0].type!=Type('VOID'):
                     p[0].code+='\tmove $t0 $v0\n'
                 else:
-                    p[0].code+='\tli $t0 0'
+                    p[0].code+='\tli $t0 0 \n'
                 p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
     p.set_lineno(0,p.lineno(2))
 
