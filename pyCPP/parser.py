@@ -258,12 +258,12 @@ def p_new_scope(p):
         if t is not None: # function declartion already seen
 #HACK : p[-4] might be buggy?
             t.table = env.table # For keeping a pointer to the function symboltable
-            if p[-4] is not None:
-                if p[-4].type is None: # it must be a typeless declaration , assume VOID
+            if dec_type is not None:
+                if dec_type is Type("VOID"): # it must be a typeless declaration , assume VOID
                     if t.type != Type('VOID'):
                         print ("\nFunction's type must be void since its declaration had no type\n")
                 else:
-                    if t.type != p[-4].type:
+                    if t.type != dec_type:
                         print ("\nFunction's type not consistent between declaration and definition\n")
             if t.attr['numParameters'] != p[-3].attr['numParameters'] :
                 print ("\nFunction overloading not supported\n")
@@ -286,17 +286,8 @@ def p_new_scope(p):
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
 
-#ENHANCEMENT
         else: # function declaration has not been seen
-            s = Symbol(p[-3].attr['name'])
-            global dec_type
-            s.type = dec_type
-            s.attr = deepcopy(p[-3].attr)
-            if not env.put(s):
-                print("ERROR: Identifier alread defined\n")
-                p[0].type = Type("ERROR")
-
-
+    
             for i in range(p[-3].attr['numParameters']):
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
@@ -334,8 +325,14 @@ def p_function_scope(p):
         p[0].place = flabel
         t = env.get(str(p[-1].attr["name"]))
         if t == None:
-            print "ERROR!! line number : "+str(p.lineno(-1))+" Function "+str(p[-1].attr["name"])+" not declared"
-            p[0].type = Type("ERROR")
+            s = Symbol(p[-1].attr['name'])
+            global dec_type
+            s.type = dec_type
+            s.attr = deepcopy(p[-1].attr)
+            if not env.put(s):
+                print("ERROR: Identifier alread defined\n")
+                p[0].type = Type("ERROR")
+            s.attr['label'] = p[0].place
         else :
             t.attr["label"]= p[0].place
 
@@ -624,7 +621,7 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
-        p[1].place = p[1].attr['symbol'].label
+        p[1].place = p[1].attr['symbol'].attr['label']
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
