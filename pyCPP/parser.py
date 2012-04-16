@@ -1021,7 +1021,7 @@ def p_unary_expression_5(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tli $t0"+p[1].type.size()+"\n"
+        p[0].code+="\tli $t0"+str(p[1].type.size())+"\n"
         p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
     else:
         p[0]=errorAttr(p[0])
@@ -1043,7 +1043,7 @@ def p_unary_expression_6(p):
         p[0].code=p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tli $t0"+p[3].type.size()+"\n"
+        p[0].code+="\tli $t0"+str(p[3].type.size())+"\n"
         p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
     else:
         p[0]=errorAttr(p[0])
@@ -3264,7 +3264,13 @@ def p_parameter_declaration_1(p):
     ''' parameter_declaration : decl_specifier_seq declarator '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[2])
-    p[0].type = p[1].type
+    if not p[2].type is Type("ERROR"):
+        p[0].type = p[1].type
+        typ = p[2].type
+        #print typ
+        while (isinstance(typ,Type)):
+            p[0].type = Type(p[0].type)
+            typ = typ.next
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):
