@@ -305,8 +305,7 @@ def p_finish_scope(p):
     global env
     p[0] = Attribute()
     # p[0].code = env.table.endlabel + ":\n"
-    # no finish scope is needed actually
-    #PopScope()
+    PopScope()
 
 
 
@@ -628,7 +627,7 @@ def p_postfix_expression_3(p):
         if p[0].type!=Type('VOID'):
             p[0].code+='\tmove $t0 $v0\n'
         else:
-            p[0].code+='\tli $t0 0'
+            p[0].code+='\tli $t0 0 \n'
         p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(2))
     
@@ -681,7 +680,7 @@ def p_postfix_expression_4(p):
                 if p[0].type!=Type('VOID'):
                     p[0].code+='\tmove $t0 $v0\n'
                 else:
-                    p[0].code+='\tli $t0 0'
+                    p[0].code+='\tli $t0 0 \n'
                 p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
     p.set_lineno(0,p.lineno(2))
 
@@ -1843,7 +1842,6 @@ def p_assignment_expression_2(p):
             
     else:
         if p[2]=='*=':
-            print "here"
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
@@ -2368,6 +2366,7 @@ def p_print_statement(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    p[0].code=p[3].code
     p[0].type = Type("VOID")
     #t = env.get(str(p[3]))
     #if t == None :
@@ -2375,7 +2374,7 @@ def p_print_statement(p):
     #    p[0].type = Type("ERROR")
     #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
     if not p[3].type == Type("ERROR"):
-        p[0].code="\tlw $t0 "+toAddr(p[3])+"\n"
+        p[0].code+="\tlw $t0 "+toAddr(p[3])+"\n"
         p[0].code+="\tmove $a0 $t0 \n"
         p[0].code+="\tli $v0 1 \n"
         p[0].code+="\tsyscall \n"
@@ -3797,7 +3796,7 @@ def p_operator(p):
 ########################################
 
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,outputdir=".",method="LALR")
 
 try:
     f1 = open(sys.argv[1])
