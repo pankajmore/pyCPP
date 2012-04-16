@@ -10,6 +10,7 @@ print_string = {}
 success = True
 size=0
 oldsize=0
+dec_type = None
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -287,6 +288,15 @@ def p_new_scope(p):
 
 #ENHANCEMENT
         else: # function declaration has not been seen
+            s = Symbol(p[-3].attr['name'])
+            global dec_type
+            s.type = dec_type
+            s.attr = deepcopy(p[-3].attr)
+            if not env.put(s):
+                print("ERROR: Identifier alread defined\n")
+                p[0].type = Type("ERROR")
+
+
             for i in range(p[-3].attr['numParameters']):
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
@@ -3292,6 +3302,8 @@ def p_parameter_declaration_4(p):
 def p_function_definition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
     global size
+    global dec_type
+    dec_type = Type("VOID")
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
@@ -3304,6 +3316,8 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    global dec_type 
+    dec_type = p[1].type
     p[0].code = p[3].code+p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
