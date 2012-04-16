@@ -614,7 +614,7 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
-        p[1].place = p[1].attr['symbol'].label
+        p[1].place = p[1].attr['symbol'].attr["label"]
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
@@ -2366,6 +2366,7 @@ def p_print_statement(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    p[0].code=p[3].code
     p[0].type = Type("VOID")
     #t = env.get(str(p[3]))
     #if t == None :
@@ -2373,7 +2374,7 @@ def p_print_statement(p):
     #    p[0].type = Type("ERROR")
     #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
     if not p[3].type == Type("ERROR"):
-        p[0].code="\tlw $t0 "+toAddr(p[3])+"\n"
+        p[0].code+="\tlw $t0 "+toAddr(p[3])+"\n"
         p[0].code+="\tmove $a0 $t0 \n"
         p[0].code+="\tli $v0 1 \n"
         p[0].code+="\tsyscall \n"
