@@ -198,7 +198,7 @@ def p_translation_unit_2(p):
     global print_string
     code = code + "\n.data\n"
     for k in print_string:
-        code = code + k + ": .ascii " + print_string[k] + "\n" 
+        code = code + k + ": .ascii " + print_string[k] + "\n\t.byte 0\n"  
     fi.write(code)
     fi.close()
 
@@ -306,7 +306,8 @@ def p_finish_scope(p):
     global env
     p[0] = Attribute()
     # p[0].code = env.table.endlabel + ":\n"
-    PopScope()
+    # no finish scope is needed actually
+    #PopScope()
 
 
 
@@ -634,7 +635,7 @@ def p_postfix_expression_3(p):
         if p[0].type!=Type('VOID'):
             p[0].code+='\tmove $t0 $v0\n'
         else:
-            p[0].code+='\tli $t0 0 \n'
+            p[0].code+='\tli $t0 0'
         p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(2))
     
@@ -687,7 +688,7 @@ def p_postfix_expression_4(p):
                 if p[0].type!=Type('VOID'):
                     p[0].code+='\tmove $t0 $v0\n'
                 else:
-                    p[0].code+='\tli $t0 0 \n'
+                    p[0].code+='\tli $t0 0'
                 p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
     p.set_lineno(0,p.lineno(2))
 
@@ -978,14 +979,17 @@ def p_unary_expression_4(p):
             p[0].code +="\tli $t0 4\n"
             p[0].code +="\tsub $sp $sp $t0\n"
             p[0].code+="\tlw $t0"+toAddr(p[2])+"\n"
-            p[0].code+="\tsub $t1"+find_scope(p[2])+" $t0\n"
-            p[0].code+="\tlw $t0 0($t1)\n"
-            p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
-            p[0].code +="\tli $t0 4\n"
-            p[0].code +="\tsub $sp $sp $t0\n"
-            p[0].offset1=size
-            p[0].code+="\tsw $t1 -"+str(p[0].offset1)+"($fp)\n"
-            size=size+4
+            if not isinstance(p[0].type.next,Type):
+                p[0].code+="\tsub $t0"+find_scope(p[2])+" $t0\n"
+                p[0].code+="\tlw $t1 0($t0)\n"
+                p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
+                p[0].code +="\tli $t1 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                p[0].offset1=size
+                p[0].code+="\tsw $t0 -"+str(p[0].offset1)+"($fp)\n"
+                size=size+4
+            else:
+                p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -1850,11 +1854,19 @@ def p_assignment_expression_2(p):
     else:
         if p[2]=='*=':
             if check_implicit_2(p[1],p[3]):
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tmul $t2, $t1, $t0" + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                if hasattr(p[1],'offset1'):
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\tmul $t2, $t0, $t3" + "\n"
+                    p[0].code += "\tsw $t2, 0($t1)\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                else: 
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tmul $t2, $t1, $t0" + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1862,12 +1874,21 @@ def p_assignment_expression_2(p):
                 p[1].type=Type('ERROR')
         if p[2]=='/=':
             if check_implicit_2(p[1],p[3]):
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tdiv $t1, $t0" + "\n"
-                p[0].code += "\tmflo $t0\n"
-                p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                if hasattr(p[1],'offset1'):
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\tdiv $t3, $t0" + "\n"
+                    p[0].code += "\tmflo $t0\n"
+                    p[0].code += "\tsw $t0, 0($t1)\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                else:
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tdiv $t1, $t0" + "\n"
+                    p[0].code += "\tmflo $t0\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -1876,12 +1897,20 @@ def p_assignment_expression_2(p):
 
         if p[2]=='+=':
             if check_implicit_2(p[1],p[3]):
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tadd $t2, $t1, $t0" + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
-                pass                                                                  
+                if hasattr(p[1],'offset1'):
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\tadd $t0, $t3, $t0" + "\n"
+                    p[0].code += "\tsw $t0, 0($t1)\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                else:
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tadd $t2, $t1, $t0" + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                    
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 dim=p[1].type.next.size()
                 p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
@@ -1899,12 +1928,19 @@ def p_assignment_expression_2(p):
 
         if p[2]=='-=':
             if check_implicit_2(p[1],p[3]):
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsub $t2, $t1, $t0" + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
-                pass                                                                  
+                if hasattr(p[1],'offset1'):
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\tsub $t0, $t3, $t0" + "\n"
+                    p[0].code += "\tsw $t0, 0($t1)\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                else:
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsub $t2, $t1, $t0" + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"                                                               
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 dim=p[1].type.next.size()
                 p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
@@ -2452,13 +2488,31 @@ def p_jump_statement_3(p):
     p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
     
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = ""
     p[0].type = Type("VOID") 
-    pass 
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
 
 #declaration-statement:
     #block-declaration
@@ -2903,7 +2957,6 @@ def p_init_declarator(p):
                 p[0].type = Type("ERROR")
         #t.type = deepcopy(DeclType)
         typ = p[1].type
-        #print typ
         while (isinstance(typ,Type)):
             t.type = Type(t.type)
             typ = typ.next
@@ -3807,7 +3860,7 @@ def p_operator(p):
 ########################################
 
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=1,outputdir=".",method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
 
 try:
     f1 = open(sys.argv[1])
