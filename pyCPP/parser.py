@@ -132,6 +132,21 @@ def find_scope(p):
     else:
         return " $fp"
 
+def find_scope2(t):
+    global env
+    env1=env
+    if t.back>0:
+        back=t.back
+        while(env1.prev!=None):
+            env1=env1.prev
+            back-=1
+        if back==0:    
+            return " $gp"
+        else:
+            return " $fp"
+    else:
+        return " $fp"
+
 def find_recursively(p):
     if isinstance(p,Type):
         return find_recursively(p.next)
@@ -1006,6 +1021,7 @@ def p_unary_expression_4(p):
             p[0].code +="\tli $t0 4\n"
             p[0].code +="\tsub $sp $sp $t0\n"
             p[0].code+="\tli $t0 "+str(p[2].offset)+"\n"
+	    p[0].code+="\tsub $t0 "+find_scope(p[2])+" $t0\n"
             p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
         else:
             p[0]=errorAttr(p[0])
@@ -2982,6 +2998,7 @@ def p_init_declarator(p):
                 p[0].code+="\tli $t0 4 \n"
                 p[0].code+="\tsub $sp $sp $t0\n"
                 p[0].code+="\tli $t0 "+str(size)+"\n"
+		p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
                 p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
                 size = size+t.type.size()
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
