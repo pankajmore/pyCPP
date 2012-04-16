@@ -592,16 +592,15 @@ def p_postfix_expression_2(p):
                 p[0].code+="\tlw $t1 "+toAddr(p[3])+"\n"
                 p[0].code+="\tli $t2 "+str(dim)+"\n"
                 p[0].code+="\tmul $t1 $t1 $t2\n"
-                p[0].code+="\tadd $t0 $t0 $t1\n"
+                p[0].code+="\tsub $t0 $t0 $t1\n"
                 if not isinstance(p[0].type.next,Type):
-                    p[0].code+="\tsub $t1"+find_scope(p[1])+" $t0\n"
-                    p[0].code+="\tlw $t2 0($t1)\n"
+                    p[0].code+="\tlw $t2 0($t0)\n"
                     p[0].code+="\tsw $t2 "+toAddr(p[0])+"\n"
-                    p[0].code +="\tli $t0 4\n"
-                    p[0].code +="\tsub $sp $sp $t0\n"
+                    p[0].code +="\tli $t1 4\n"
+                    p[0].code +="\tsub $sp $sp $t1\n"
                     size=size+4
                     p[0].offset1=size
-                    p[0].code+="\tsw $t1 -"+str(p[0].offset1)+"($fp)\n"
+                    p[0].code+="\tsw $t0 -"+str(p[0].offset1)+"($fp)\n"
                 else:
                     p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
                 size=size+4
@@ -719,7 +718,7 @@ def p_postfix_expression_5(p):
         p[0].code+="\tlw $t0 "+toAddr(p[1])+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tadd $t0 $t0 $t1\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"     
     else:
         if p[1].type!=Type('ERROR'):                                                                                                     
@@ -755,7 +754,7 @@ def p_postfix_expression_6(p):
         p[0].code+="\tlw $t0 "+toAddr(p[1])+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tadd $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"                                                                                           
     else:
         if p[1].type!=Type('ERROR'):                                                                                                     
@@ -865,7 +864,7 @@ def p_unary_expression_2(p):
         p[0].code +="\tsub $sp $sp $t0\n"
         p[0].code+="\tlw $t0 "+toAddr(p[1])+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tadd $t0 $t0 $t1\n"
+        p[0].code+="\tsub $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"  
     else:
@@ -904,7 +903,7 @@ def p_unary_expression_3(p):
         p[0].code +="\tsub $sp $sp $t0\n"
         p[0].code+="\tlw $t0 "+toAddr(p[1])+"\n"
         p[0].code+="\tli $t1 "+dim+"\n"
-        p[0].code+="\tsub $t0 $t0 $t1\n"
+        p[0].code+="\tadd $t0 $t0 $t1\n"
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
         p[0].code+="\tsw $t0 "+toAddr(p[1])+"\n"  
     else:
@@ -980,7 +979,6 @@ def p_unary_expression_4(p):
             p[0].code +="\tsub $sp $sp $t0\n"
             p[0].code+="\tlw $t0"+toAddr(p[2])+"\n"
             if not isinstance(p[0].type.next,Type):
-                p[0].code+="\tsub $t0"+find_scope(p[2])+" $t0\n"
                 p[0].code+="\tlw $t1 0($t0)\n"
                 p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
                 p[0].code +="\tli $t1 4\n"
@@ -1412,7 +1410,7 @@ def p_additive_expression_2(p):
             p[0].code += "\tlw $t2 " + toAddr(p[y]) + "\n"
             p[0].code+="\tli $t1 "+str(dim)+"\n"
             p[0].code +="\tmul $t1 $t1 $t2\n"
-            p[0].code += "\tadd $t0, $t0, $t1\n"
+            p[0].code += "\tsub $t0, $t0, $t1\n"
             p[0].code += "\tsw $t0 " + toAddr(p[0]) + "\n"
         else:
             p[0].code = p[1].code + p[3].code
@@ -1464,7 +1462,7 @@ def p_additive_expression_3(p):
             p[0].code += "\tlw $t2 " + toAddr(p[y]) + "\n"
             p[0].code+="\tli $t1 "+str(dim)+"\n"
             p[0].code +="\tmul $t1 $t1 $t2\n"
-            p[0].code += "\tsub $t0, $t0, $t1\n"
+            p[0].code += "\tadd $t0, $t0, $t1\n"
             p[0].code += "\tsw $t0 " + toAddr(p[0]) + "\n"
         else:
             p[0].code = p[1].code + p[3].code
@@ -1917,7 +1915,7 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
                 p[0].code+="\tli $t2 "+dim+"\n"
                 p[0].code +="\tmul $t1 $t1 $t2\n"
-                p[0].code += "\tadd $t0 $t0 $t1\n"
+                p[0].code += "\tsub $t0 $t0 $t1\n"
                 p[0].code += "\tsw $t0 " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
@@ -1947,7 +1945,7 @@ def p_assignment_expression_2(p):
                 p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
                 p[0].code+="\tli $t2 "+dim+"\n"
                 p[0].code +="\tmul $t1 $t1 $t2\n"
-                p[0].code += "\tsub $t0 $t0 $t1\n"
+                p[0].code += "\tadd $t0 $t0 $t1\n"
                 p[0].code += "\tsw $t0 " + toAddr(p[1]) + "\n"
                 p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
