@@ -615,7 +615,7 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
-        p[1].place = p[1].attr['symbol'].label
+        p[1].place = p[1].attr['symbol'].attr["label"]
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
@@ -2481,13 +2481,31 @@ def p_jump_statement_3(p):
     p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
     
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = ""
     p[0].type = Type("VOID") 
-    pass 
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
 
 #declaration-statement:
     #block-declaration
