@@ -2895,6 +2895,7 @@ def p_init_declarator(p):
                 p[0].type = Type("ERROR")
         #t.type = deepcopy(DeclType)
         typ = p[1].type
+        #print typ
         while (isinstance(typ,Type)):
             t.type = Type(t.type)
             typ = typ.next
@@ -2918,6 +2919,11 @@ def p_init_declarator(p):
                     t.type.dim = p[1].attr["width"][l]
                 t.offset = size
                 p[0].offset = size
+                size = size+4
+                p[0].code+="\tli $t0 4 \n"
+                p[0].code+="\tsub $sp $sp $t0\n"
+                p[0].code+="\tli $t0 "+str(size)+"\n"
+                p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
                 size = size+t.type.size()
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
@@ -3056,7 +3062,7 @@ def p_direct_declarator_3(p):
         if p[3] == None:
             p[0].attr["width"].append(0)
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
-            p[0].attr["width"].append(p[3].data)
+            p[0].attr["width"].append(int(p[3].data))
             p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
