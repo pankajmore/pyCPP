@@ -305,8 +305,7 @@ def p_finish_scope(p):
     global env
     p[0] = Attribute()
     # p[0].code = env.table.endlabel + ":\n"
-    # no finish scope is needed actually
-    #PopScope()
+    PopScope()
 
 
 
@@ -1843,7 +1842,6 @@ def p_assignment_expression_2(p):
             
     else:
         if p[2]=='*=':
-            print "here"
             if check_implicit_2(p[1],p[3]):
                 p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
                 p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
@@ -3791,7 +3789,7 @@ def p_operator(p):
 ########################################
 
 lex.lex()
-yacc.yacc(start='translation_unit',write_tables=1,method="LALR")
+yacc.yacc(start='translation_unit',write_tables=1,outputdir=".",method="LALR")
 
 try:
     f1 = open(sys.argv[1])
