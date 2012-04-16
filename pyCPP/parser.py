@@ -2444,13 +2444,31 @@ def p_jump_statement_3(p):
     p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
     
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
+    p[0].code = ""
     p[0].type = Type("VOID") 
-    pass 
+    global function_scope
+    function_scope = 0
+    global size
+    global oldsize
+    p[0].code+="\tlw $sp, 4($fp)\n"
+    p[0].code+="\tlw $ra 12($fp)\n"
+    p[0].code+="\tlw $fp 8($fp)\n"
+    p[0].code+="\tjr $ra\n"
+    size=oldsize
 
 #declaration-statement:
     #block-declaration
