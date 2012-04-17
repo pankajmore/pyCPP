@@ -5,14 +5,17 @@ from copy import deepcopy
 num_temporaries = 0
 num_labels = 0
 function_scope=0
+class_scope = 0
 print_string = {}
 ## TODO : return type of function should match the actual function type
 ## {{{
 success = True
 size=0
 oldsize=0
+oldsize1 = 0
 dec_type = None
-gsize = 0
+gsize = 4
+global_end = 0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -93,21 +96,26 @@ def newLabel():
 def toAddr(p):
     global env
     env1=env 
-    if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        back=p.attr['symbol'].back
-        while(env1.prev!=None):
-            env1=env1.prev
-            back-=1
-        if back==0:    
+    if p.attr.has_key('symbol'):
+        if env.prev is None:
             return " -"+str(p.offset)+"($gp)"
-        else:
-            return " -"+str(p.offset)+"($fp)"
+        if p.attr['symbol'].back>0:
+            back=p.attr['symbol'].back
+            while(env1.prev!=None):
+                env1=env1.prev
+                back-=1
+            if back==0:    
+                return " -"+str(p.offset)+"($gp)"
+            else:
+                return " -"+str(p.offset)+"($fp)"
     else:
         return " -"+str(p.offset)+"($fp)"
 
 def toAddr2(t):
     global env
     env1=env
+    if env.prev is None:
+        return " -"+str(t.offset)+"($gp)"
     if t.back>0:
         back=t.back
         while(env1.prev!=None):
@@ -122,22 +130,27 @@ def toAddr2(t):
 
 def find_scope(p):
     global env
-    env1=env 
-    if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        back=p.attr['symbol'].back
-        while(env1.prev!=None):
-            env1=env1.prev
-            back-=1
-        if back==0:    
-            return " $gp"
-        else:
-            return " $fp"
+    env1=env
+    if p.attr.has_key('symbol'):
+        if env.prev is None:
+            return " $gp" 
+        if p.attr['symbol'].back>0:
+            back=p.attr['symbol'].back
+            while(env1.prev!=None):
+                env1=env1.prev
+                back-=1
+            if back==0:    
+                return " $gp"
+            else:
+                return " $fp"
     else:
         return " $fp"
 
 def find_scope2(t):
     global env
     env1=env
+    if env.prev is None:
+        return " $gp"
     if t.back>0:
         back=t.back
         while(env1.prev!=None):
@@ -195,6 +208,22 @@ def is_integer(p):
     except ValueError:
         return False
 
+def type_check(t,p):
+    if t.attr.has_key('isArray') and p.attr.has_key('isArray'):
+        t1 = deepcopy(t.type)
+        t2 = deepcopy(p.type)
+        while(isinstance(t1.next,Type) and isinstance(t2.next,Type)):
+            t1 = t1.next
+            t2 = t2.next
+        if t1 == t2:
+            return True
+        else:
+            return False
+    elif t.type==p.type:
+        return True
+    else :
+        return False
+
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN','PRINTS'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
@@ -212,7 +241,9 @@ def p_translation_unit_2(p):
     #p[0] = deepcopy(p[1])
     name = sys.argv[1][:-4] + ".asm"
     fi = open(name,'w')
-    code = p[1].code
+    code = 'global:\n'
+    code+= '\tsw $ra 0($gp)\n'
+    code+= p[1].code
     global print_string
     code = code + "\n.data\n"
     for k in print_string:
@@ -248,15 +279,23 @@ def p_new_scope(p):
     '''new_scope : '''
     NewScope()
     global env
+    global class_scope
     global function_scope
+    global size
+    global oldsize
+    global oldsize1
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
 
     p[0]  = Attribute()
 
+    if class_scope == 1:
+#create a symbol for the class name in prev Environment
+        oldsize1 = size
+        size = 0
+
+
     if function_scope == 1:
-        global size
-        global oldsize
         oldsize=size
         size=0
         p[0] = Attribute()
@@ -267,7 +306,9 @@ def p_new_scope(p):
         p[0].code+="\tli $t0 12\n"
         p[0].code+="\tsub $sp $sp $t0\n"
         p[0].code+="\tmove $fp $sp\n"
-
+        if p[-3].attr['name'] == "main":
+            p[0].code+="\tjal global\n"
+            #p[0].code+="\tmove $fp $sp\n"
 
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
@@ -280,16 +321,21 @@ def p_new_scope(p):
                 if dec_type is Type("VOID"): # it must be a typeless declaration , assume VOID
                     if t.type != Type('VOID'):
                         print ("\nFunction's type must be void since its declaration had no type\n")
+                        p[0].type = Type("ERROR")
                 else:
                     if t.type != dec_type:
                         print ("\nFunction's type not consistent between declaration and definition\n")
+                        p[0].type = Type("ERROR")
             if t.attr['numParameters'] != p[-3].attr['numParameters'] :
                 print ("\nFunction overloading not supported\n")
+                p[0].type = Type("ERROR")
             for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[-3].attr['parameterList'][i].type:
+                if not type_check(t.attr['parameterList'][i],p[-3].attr['parameterList'][i]):
                     print ("\nFunction overloading by different types not supported\n")
-                if t.attr['parameterList'][i].attr['name'] == None:
+                    p[0].type = Type("ERROR")
+                elif p[-3].attr['parameterList'][i].attr['name'] == None:
                     print ("\nVariable name for parameter missing\n")
+                    p[0].type = Type("ERROR")
                 # refactor the duplicate code
                 # storing the formal parameters in table not the parameters during function declaration
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
@@ -303,7 +349,8 @@ def p_new_scope(p):
                 s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
-
+                    p[0].type = Type("ERROR")
+                
         else: # function declaration has not been seen
     
             for i in range(p[-3].attr['numParameters']):
@@ -317,7 +364,7 @@ def p_new_scope(p):
                 s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
-
+                    p[0].type = Type("ERROR")
 
 def p_finish_scope(p):
     '''finish_scope : '''
@@ -327,20 +374,33 @@ def p_finish_scope(p):
     # no finish scope is needed actually
     #PopScope()
 
+def p_set_class_scope(p):
+    '''set_class_scope : '''
+    global class_scope
+    class_scope = 1
 
+def p_unset_class_scope(p):
+    '''unset_class_scope : '''
+    global oldsize1
+    size = oldsize1
 
 def p_function_scope(p):
     '''function_scope : '''
     global function_scope
+    global global_end
     function_scope = 1
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    if global_end==0:
+        global_end = 1
+        p[0].code="\tlw $ra 0($gp)\n"
+        p[0].code+="\tjr $ra\n" 
     if p[-1].attr['name'] == "main":
-        p[0].code = "main:\n"
+        p[0].code += "main:\n"
         p[0].place = "main"
     else: 
         flabel = newLabel()
-        p[0].code = flabel + ":\n"
+        p[0].code += flabel + ":\n"
         p[0].place = flabel
         t = env.get(str(p[-1].attr["name"]))
         if t == None:
@@ -459,10 +519,10 @@ def p_primary_expression_1(p):
         p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(1))
   
-##def p_primary_expression_2(p):
-##    ''' primary_expression : SCOPE IDENTIFIER '''
-##    pass
-##  
+def p_primary_expression_2(p):
+    ''' primary_expression : THIS '''
+    global currentObj
+
 ##def p_primary_expression_3(p):
 ##    ''' primary_expression : SCOPE operator_function_id '''
 ##    pass
@@ -3366,6 +3426,9 @@ def p_init_declarator(p):
                     t.offset = gsize
                     p[0].offset = gsize
                     gsize = gsize+4
+                    p[0].code+="\tli $t0 "+str(gsize)+"\n"
+                    p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                    p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
                     gsize = gsize+t.type.size()
                 else:
                     t.offset = size
@@ -3730,6 +3793,19 @@ def p_parameter_declaration_1(p):
         while (isinstance(typ,Type)):
             p[0].type = Type(p[0].type)
             typ = typ.next
+        if p[2].attr.has_key("isFunction") :
+            pass
+        elif p[2].attr.has_key("isArray"):
+            if isinstance(p[2].type, Type) and p[2].type != Type("ERROR"):
+                print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+                p[0].type = Type("ERROR")
+            else:
+                l = len(p[2].attr["width"])
+                while l>0:
+                    l=l-1
+                    p[0].type = Type(p[0].type)
+                    p[0].type.dim = p[2].attr["width"][l]
+                print str(p[0].type.size())+" "+str(p[0].type.next.size())
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):
@@ -3906,7 +3982,7 @@ def p_class_name(p):
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
-    ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
+    ''' class_specifier : set_class_scope new_scope class_head LBRACE member_specification RBRACE finish_scope unset_class_scope'''
     p[0] = Attribute()
     p[0].type = Type(p[2].name)
     pass
