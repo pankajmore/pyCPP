@@ -513,7 +513,7 @@ def p_primary_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_primary_expression_2(p):
-    ''' primary_expression : this '''
+    ''' primary_expression : THIS '''
     global currentObj
 
 ##def p_primary_expression_3(p):
