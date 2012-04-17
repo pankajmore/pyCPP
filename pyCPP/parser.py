@@ -449,9 +449,9 @@ def p_primary_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 ##def p_primary_expression_2(p):
-##    ''' primary_expression : SCOPE IDENTIFIER '''
+##    ''' primary_expression : this '''
 ##    pass
-##  
+
 ##def p_primary_expression_3(p):
 ##    ''' primary_expression : SCOPE operator_function_id '''
 ##    pass
