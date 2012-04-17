@@ -441,11 +441,15 @@ def p_primary_expression_1(p):
     p[0].data = p[1].place
     p[0].attr={}
     p[0].offset=size
+    size=size+4
     p[0].code +="\tli $t0 4\n"
     p[0].code +="\tsub $sp $sp $t0\n"
-    p[0].code+="\tli $t0 "+p[1].place+"\n"
-    p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
-    size=size+4
+    if p[1].type == Type("FLOAT"):
+        p[0].code+="\tli.s $f2 "+p[1].place+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+    else:
+        p[0].code+="\tli $t0 "+p[1].place+"\n"
+        p[0].code+="\tsw $t0 "+toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(1))
   
 ##def p_primary_expression_2(p):
@@ -1615,11 +1619,11 @@ def p_additive_expression_2(p):
             print "Error in line %s : Cannot perform addition between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
     if p[0].type != Type('ERROR'):
-        p[0].offset = size 
-        size = size + 4
-        p[0].place = newTemp()
-        p[0].attr={}
         if x>0:
+            p[0].offset = size 
+            size = size + 4
+            p[0].place = newTemp()
+            p[0].attr={}
             dim=p[1].type.next.size()
             p[0].code = p[1].code + p[3].code
             p[0].code +="\tli $t0 4\n"
@@ -1639,10 +1643,44 @@ def p_additive_expression_3(p):
     p[0]=deepcopy(p[1])
     if p[1].type==Type('CHAR') and p[3].type==Type('CHAR')and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('CHAR')
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].attr={}
+        p[0].code = p[1].code + p[3].code
+        p[0].code +="\tli $t0 4\n"
+        p[0].code +="\tsub $sp $sp $t0\n"
+        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+        p[0].code += "\tsub $t2, $t0, $t1\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
     elif p[1].type in [Type('INT'),Type('CHAR')] and p[3].type in [Type('INT'),Type('CHAR')]and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('INT')
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].attr={}
+        p[0].code = p[1].code + p[3].code
+        p[0].code +="\tli $t0 4\n"
+        p[0].code +="\tsub $sp $sp $t0\n"
+        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+        p[0].code += "\tsub $t2, $t0, $t1\n"
+        p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
+
     elif p[1].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and p[3].type in [Type('FLOAT'),Type('INT'),Type('CHAR')] and is_primitive(p[1])and is_primitive(p[3]):
         p[0].type=Type('FLOAT')
+        p[0].offset = size 
+        size = size + 4
+        p[0].place = newTemp()
+        p[0].attr={}
+        p[0].code = p[1].code + p[3].code
+        p[0].code +="\tli $t0 4\n"
+        p[0].code +="\tsub $sp $sp $t0\n"
+        p[0].code +=  castFloat(p[1].type,p[1],"$f2")
+        p[0].code +=  castFloat(p[3].type,p[3],"$f3")
+        p[0].code += "\tsub.s $f2, $f2, $f3\n"
+        p[0].code += "\ts.s $f2 " + toAddr(p[0]) + "\n"
     elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type==Type('INT') or p[3].type==Type('CHAR'))and is_primitive(p[1]) and is_primitive(p[3]):
         p[0]=deepcopy(p[1])
         x=1
@@ -1657,12 +1695,11 @@ def p_additive_expression_3(p):
             print "Error in line %s : Cannot perform substraction between %s and %s " %(p.lineno(2),find_type(p[1]),find_type(p[3]))
 
     if p[0].type != Type('ERROR'):
-        p[0].offset = size 
-        size = size + 4
-        p[0].place = newTemp()
-        p[0].attr={}
         if x>0:
-            
+            p[0].offset = size 
+            size = size + 4
+            p[0].place = newTemp()
+            p[0].attr={}
             dim=p[1].type.next.size()
             p[0].code = p[1].code + p[3].code
             p[0].code +="\tli $t0 4\n"
@@ -1673,14 +1710,6 @@ def p_additive_expression_3(p):
             p[0].code +="\tmul $t1 $t1 $t2\n"
             p[0].code += "\tadd $t0, $t0, $t1\n"
             p[0].code += "\tsw $t0 " + toAddr(p[0]) + "\n"
-        else:
-            p[0].code = p[1].code + p[3].code
-            p[0].code +="\tli $t0 4\n"
-            p[0].code +="\tsub $sp $sp $t0\n"
-            p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
-            p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
-            p[0].code += "\tsub $t2, $t0, $t1\n"
-            p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
 
     p.set_lineno(0,p.lineno(2))
                       
@@ -1693,6 +1722,21 @@ def p_relational_expression_1(p):
     ''' relational_expression : additive_expression'''
     p[0]=deepcopy(p[1])
     p.set_lineno(0,p.lineno(1))
+
+
+# To store the value of special conditional register for floating numbers in the given register
+def compareFloat(register):
+    code = ""
+    t1 = newLabel()
+    t2 = newLabel()
+    code += "\tbclt t1\n"
+    code += "\tli "+register + "0"
+    code += "\tj "+t2 +"\n"
+    code += t1 + ":\n"
+    code += "\tli "+register + "1"
+    code += t2 + ":\n"
+    return code 
+
                   
 def p_relational_expression_2(p):
     ''' relational_expression : relational_expression LESS additive_expression'''
@@ -1709,10 +1753,17 @@ def p_relational_expression_2(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t0, $t1\n"
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t0, $t1\n"
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.lt.s $f2, $f3\n"
+            p[0].code += compareFloat("$t2") 
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
+
 
     else:
         p[0]=errorAttr(p[0])
@@ -1730,13 +1781,18 @@ def p_relational_expression_3(p):
         size = size + 4
         p[0].place = newTemp()
         p[0].attr={}
-    #TODO: Array handling , etc..
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t1, $t0\n"
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t1, $t0\n"
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.lt.s $f3, $f2\n"
+            p[0].code += compareFloat("$t2") 
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
     else:
         p[0]=errorAttr(p[0])
@@ -1758,9 +1814,15 @@ def p_relational_expression_4(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t1, $t0\n"                  # t2 stores greater than result
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t1, $t0\n"                  # t2 stores greater than result
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.lt.s $f3, $f2\n"
+            p[0].code += compareFloat("$t2") 
         p[0].code += "\tli $t3 1\n"
         p[0].code += "\tsub $t3, $t3, $t2\n"                  # invert t2
         p[0].code += "\tsw $t3 " + toAddr(p[0]) + "\n" 
@@ -1784,9 +1846,15 @@ def p_relational_expression_5(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t0, $t1\n"                  # t2 stores less than result
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t0, $t1\n"                  # t2 stores less than result
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.lt.s $f2, $f3\n"
+            p[0].code += compareFloat("$t2") 
         p[0].code += "\tli $t3 1\n"
         p[0].code += "\tsub $t3, $t3, $t2\n"                  # invert t2
         p[0].code += "\tsw $t3 " + toAddr(p[0]) + "\n" 
@@ -1830,13 +1898,19 @@ def p_equality_expression_2(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t0, $t1\n"
-        p[0].code += "\tslt $t3, $t1, $t0\n"
-        p[0].code += "\tadd $t1, $t2, $t3\n"
-        p[0].code += "\tli $t0, 1\n"
-        p[0].code += "\tsub $t0, $t0, $t1\n"
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t0, $t1\n"
+            p[0].code += "\tslt $t3, $t1, $t0\n"
+            p[0].code += "\tadd $t1, $t2, $t3\n"
+            p[0].code += "\tli $t0, 1\n"
+            p[0].code += "\tsub $t0, $t0, $t1\n"
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.eq.s $f2, $f3\n"
+            p[0].code += compareFloat("$t0") 
         p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
 
     else:
@@ -1859,11 +1933,19 @@ def p_equality_expression_3(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
-        p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
-        p[0].code += "\tslt $t2, $t0, $t1\n"
-        p[0].code += "\tslt $t3, $t1, $t0\n"
-        p[0].code += "\tadd $t1, $t2, $t3\n"
+        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+            p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
+            p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
+            p[0].code += "\tslt $t2, $t0, $t1\n"
+            p[0].code += "\tslt $t3, $t1, $t0\n"
+            p[0].code += "\tadd $t1, $t2, $t3\n"
+        else :
+            p[0].code += castFloat(p[1].Type,p[1],"$f2")
+            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += "\tc.eq.s $f2, $f3\n"
+            p[0].code += compareFloat("$t1") 
+            p[0].code += "\tli $t0, 1\n"
+            p[0].code += "\tsub $t1, $t0, $t1\n"
         p[0].code += "\tsw $t1, " + toAddr(p[0]) + "\n"
 
     else:
@@ -2044,14 +2126,25 @@ def p_assignment_expression_2(p):
     if p[2]=='=':
         if check_implicit_1(p[1],p[3]):
             if hasattr(p[1],'offset1'):     
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
-                p[0].code += "\tsw $t0, 0($t1)\n"
-                p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                if p[1].type==Type("FLOAT"):
+                    p[0].code += castFloat(p[3].type,p[3],"$f2")
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\ts.s $f2, 0($t1)\n"
+                    p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                else:
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                    p[0].code += "\tsw $t0, 0($t1)\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
-                p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
-                p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                if p[1].type == Type("FLOAT"):
+                    p[0].code += castFloat(p[3].type,p[3],"$f2")
+                    p[0].code += "\ts.s $f2, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                else:
+                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
+                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
         else:
             if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
@@ -2062,18 +2155,33 @@ def p_assignment_expression_2(p):
         if p[2]=='*=':
             if check_implicit_2(p[1],p[3]):
                 if hasattr(p[1],'offset1'):
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
-                    p[0].code += "\tmul $t2, $t0, $t3" + "\n"
-                    p[0].code += "\tsw $t2, 0($t1)\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                    if p[1].type==Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tmul.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\ts.s $f2, 0($t1)\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\tmul $t2, $t0, $t3" + "\n"
+                        p[0].code += "\tsw $t2, 0($t1)\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                 else: 
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tmul $t2, $t1, $t0" + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                    if p[1].type == Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tmul.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tmul $t2, $t1, $t0" + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -2082,20 +2190,35 @@ def p_assignment_expression_2(p):
         if p[2]=='/=':
             if check_implicit_2(p[1],p[3]):
                 if hasattr(p[1],'offset1'):
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
-                    p[0].code += "\tdiv $t3, $t0" + "\n"
-                    p[0].code += "\tmflo $t0\n"
-                    p[0].code += "\tsw $t0, 0($t1)\n"
-                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                    if p[1].type==Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tdiv.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\ts.s $f2, 0($t1)\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\tdiv $t3, $t0" + "\n"
+                        p[0].code += "\tmflo $t0\n"
+                        p[0].code += "\tsw $t0, 0($t1)\n"
+                        p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
                 else:
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tdiv $t1, $t0" + "\n"
-                    p[0].code += "\tmflo $t0\n"
-                    p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                    if p[1].type == Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tdiv.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tdiv $t1, $t0" + "\n"
+                        p[0].code += "\tmflo $t0\n"
+                        p[0].code += "\tsw $t0, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
             else:
                 if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                     print 'Error in line %s : Cannot apply %s to %s' %(p.lineno(2),p[2],find_type(p[1]))
@@ -2105,18 +2228,33 @@ def p_assignment_expression_2(p):
         if p[2]=='+=':
             if check_implicit_2(p[1],p[3]):
                 if hasattr(p[1],'offset1'):
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
-                    p[0].code += "\tadd $t0, $t3, $t0" + "\n"
-                    p[0].code += "\tsw $t0, 0($t1)\n"
-                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                    if p[1].type==Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tadd.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\ts.s $f2, 0($t1)\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\tadd $t0, $t3, $t0" + "\n"
+                        p[0].code += "\tsw $t0, 0($t1)\n"
+                        p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
                 else:
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tadd $t2, $t1, $t0" + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
+                    if p[1].type == Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tadd.s $f2, $f2, $f3" + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tadd $t2, $t1, $t0" + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"
                     
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 dim=p[1].type.next.size()
@@ -2136,18 +2274,33 @@ def p_assignment_expression_2(p):
         if p[2]=='-=':
             if check_implicit_2(p[1],p[3]):
                 if hasattr(p[1],'offset1'):
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
-                    p[0].code += "\tsub $t0, $t3, $t0" + "\n"
-                    p[0].code += "\tsw $t0, 0($t1)\n"
-                    p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
+                    if p[1].type==Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tsub.s $f2, $f3, $f2" + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\ts.s $f2, 0($t1)\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t3, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tlw $t1, -" + str(p[1].offset1) + "($fp)\n"
+                        p[0].code += "\tsub $t0, $t3, $t0" + "\n"
+                        p[0].code += "\tsw $t0, 0($t1)\n"
+                        p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
                 else:
-                    p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
-                    p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tsub $t2, $t1, $t0" + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
-                    p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"                                                               
+                    if p[1].type == Type("FLOAT"):
+                        p[0].code += castFloat(p[3].type,p[3],"$f2")
+                        p[0].code += castFloat(p[1].type,p[1],"$f3")
+                        p[0].code += "\tsub.s $f2, $f3, $f2" + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\ts.s $f2, " + toAddr(p[0]) + "\n"
+                    else:
+                        p[0].code += "\tlw $t0, " + toAddr(p[3]) + "\n"
+                        p[0].code += "\tlw $t1, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tsub $t2, $t1, $t0" + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[1]) + "\n"
+                        p[0].code += "\tsw $t2, " + toAddr(p[0]) + "\n"                                                               
             elif isinstance(p[1].type,Type) and isinstance(p[1].type.next,Type) and (p[3].type=='INT' or p[3].type=='CHAR') and is_primitive(p[3]):
                 dim=p[1].type.next.size()
                 p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
