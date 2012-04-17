@@ -202,12 +202,6 @@ def type_check(t,p):
             t1 = t1.next
             t2 = t2.next
         if t1 == t2:
-            t3 = t.type
-            t4 = p.type
-            while(isinstance(t3,Type) and isinstance(t4,Type)):
-                t3.dim = t4.dim
-                t3= t3.next
-                t4 = t4.next
             return True
         else:
             return False
@@ -322,32 +316,14 @@ def p_new_scope(p):
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 t.attr['parameterList'][i].offset = size #to retrieve during func call
+                s.offset = size
+                size = size + 4
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
                     p[0].type = Type("ERROR")
-                s.type = p[-3].attr['parameterList'][i].type
-                temp = p[-3].attr['parameterList'][i]
-                if temp.attr.has_key("isArray"):
-                    s.offset = size
-                    p[0].offset = size
-                    size = size+4
-                    p[0].code+="\tli $t0 4 \n"
-                    p[0].code+="\tsub $sp $sp $t0\n"
-                    p[0].code+="\tli $t0 "+str(size)+"\n"
-                    p[0].code+="\tsub $t0 "+find_scope2(s)+" $t0\n"
-                    p[0].code+="\tsw $t0 "+toAddr2(s)+"\n"
-                    size = size+s.type.size()
-                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
-                    p[0].code +="\tsub $sp $sp $t0\n"
-                elif temp.attr.has_key('isFunction'):
-                    print 'ERROR!! Line number : '+str(p.lineno(0))+'Parameters can\'t be a function'
-                    p[0].type = Type('ERROR')
-                else:
-                    s.offset = size
-                    p[0].offset = size
-                    size = size + s.type.size()
-                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
-                    p[0].code +="\tsub $sp $sp $t0\n"
                 
         else: # function declaration has not been seen
     
@@ -355,32 +331,14 @@ def p_new_scope(p):
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
+                s.offset = size
+                size = size + 4
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
                     p[0].type = Type("ERROR")
-                s.type = p[-3].attr['parameterList'][i].type
-                temp = p[-3].attr['parameterList'][i]
-                if temp.attr.has_key("isArray"):
-                    s.offset = size
-                    p[0].offset = size
-                    size = size+4
-                    p[0].code+="\tli $t0 4 \n"
-                    p[0].code+="\tsub $sp $sp $t0\n"
-                    p[0].code+="\tli $t0 "+str(size)+"\n"
-                    p[0].code+="\tsub $t0 "+find_scope2(s)+" $t0\n"
-                    p[0].code+="\tsw $t0 "+toAddr2(s)+"\n"
-                    size = size+s.type.size()
-                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
-                    p[0].code +="\tsub $sp $sp $t0\n"
-                elif temp.attr.has_key('isFunction'):
-                    print 'ERROR!! Line number : '+str(p.lineno(0))+'Parameters can\'t be a function'
-                    p[0].type = Type('ERROR')
-                else:
-                    s.offset = size
-                    p[0].offset = size
-                    size = size + s.type.size()
-                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
-                    p[0].code +="\tsub $sp $sp $t0\n"
 
 def p_finish_scope(p):
     '''finish_scope : '''
@@ -3439,7 +3397,7 @@ def p_parameter_declaration_1(p):
                     l=l-1
                     p[0].type = Type(p[0].type)
                     p[0].type.dim = p[2].attr["width"][l]
-                
+                print str(p[0].type.size())+" "+str(p[0].type.next.size())
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):
