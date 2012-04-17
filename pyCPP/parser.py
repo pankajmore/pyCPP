@@ -4,6 +4,7 @@ from symbol import *
 from copy import deepcopy
 num_temporaries = 0
 num_labels = 0
+function_scope=0
 print_string = {}
 ## TODO : return type of function should match the actual function type
 ## {{{
@@ -11,6 +12,7 @@ success = True
 size=0
 oldsize=0
 dec_type = None
+gsize = 0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -2952,6 +2954,7 @@ def p_init_declarator(p):
     global DeclType
     global env
     global size
+    global gsize
     #p[0].code+=p[2].code
     p[0].offset = size
     if not p[1].type == Type("ERROR") or not p[2].type == Type("ERROR"):
@@ -2992,27 +2995,41 @@ def p_init_declarator(p):
                     l=l-1
                     t.type = Type(t.type)
                     t.type.dim = p[1].attr["width"][l]
+                if env.prev is None:
+                    t.offset = gsize
+                    p[0].offset = gsize
+                    gsize = gsize+4
+                    gsize = gsize+t.type.size()
+                else:
+                    t.offset = size
+                    p[0].offset = size
+                    size = size+4
+                    p[0].code+="\tli $t0 4 \n"
+                    p[0].code+="\tsub $sp $sp $t0\n"
+                    p[0].code+="\tli $t0 "+str(size)+"\n"
+                    p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                    p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
+                    size = size+t.type.size()
+                    p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
+        else:
+            if env.prev is None:
+                t.offset = gsize
+                p[0].offset = gsize
+                gsize = gsize+t.type.size()
+            else:
                 t.offset = size
                 p[0].offset = size
-                size = size+4
-                p[0].code+="\tli $t0 4 \n"
-                p[0].code+="\tsub $sp $sp $t0\n"
-                p[0].code+="\tli $t0 "+str(size)+"\n"
-		p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
-                p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
-                size = size+t.type.size()
+                size = size + t.type.size()
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
-        else:
-            t.offset = size
-            p[0].offset = size
-            size = size + t.type.size()
-            p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
-            p[0].code +="\tsub $sp $sp $t0\n"
-        
+        #Checking for initialization
         if p[2] == None :
             pass
         elif p[2].type == Type("ASSIGN"):
+            if env.prev is None:
+                print "ERROR!! Line number : "+str(p.lineno(0))+"Global variable can't be initialized in global scope"
+                p[0].type = Type("ERROR")
             p[0].code+=p[2].code
             init = p[2].attr["initializer"]
             if p[1].attr.has_key("isFunction"):
