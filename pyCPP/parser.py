@@ -12,7 +12,8 @@ success = True
 size=0
 oldsize=0
 dec_type = None
-gsize = 0
+gsize = 4
+global_end = 0
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -92,21 +93,26 @@ def newLabel():
 def toAddr(p):
     global env
     env1=env 
-    if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        back=p.attr['symbol'].back
-        while(env1.prev!=None):
-            env1=env1.prev
-            back-=1
-        if back==0:    
+    if p.attr.has_key('symbol'):
+        if env.prev is None:
             return " -"+str(p.offset)+"($gp)"
-        else:
-            return " -"+str(p.offset)+"($fp)"
+        if p.attr['symbol'].back>0:
+            back=p.attr['symbol'].back
+            while(env1.prev!=None):
+                env1=env1.prev
+                back-=1
+            if back==0:    
+                return " -"+str(p.offset)+"($gp)"
+            else:
+                return " -"+str(p.offset)+"($fp)"
     else:
         return " -"+str(p.offset)+"($fp)"
 
 def toAddr2(t):
     global env
     env1=env
+    if env.prev is None:
+        return " -"+str(t.offset)+"($gp)"
     if t.back>0:
         back=t.back
         while(env1.prev!=None):
@@ -121,22 +127,27 @@ def toAddr2(t):
 
 def find_scope(p):
     global env
-    env1=env 
-    if p.attr.has_key('symbol') and p.attr['symbol'].back>0:
-        back=p.attr['symbol'].back
-        while(env1.prev!=None):
-            env1=env1.prev
-            back-=1
-        if back==0:    
-            return " $gp"
-        else:
-            return " $fp"
+    env1=env
+    if p.attr.has_key('symbol'):
+        if env.prev is None:
+            return " $gp" 
+        if p.attr['symbol'].back>0:
+            back=p.attr['symbol'].back
+            while(env1.prev!=None):
+                env1=env1.prev
+                back-=1
+            if back==0:    
+                return " $gp"
+            else:
+                return " $fp"
     else:
         return " $fp"
 
 def find_scope2(t):
     global env
     env1=env
+    if env.prev is None:
+        return " $gp"
     if t.back>0:
         back=t.back
         while(env1.prev!=None):
@@ -227,7 +238,9 @@ def p_translation_unit_2(p):
     #p[0] = deepcopy(p[1])
     name = sys.argv[1][:-4] + ".asm"
     fi = open(name,'w')
-    code = p[1].code
+    code = 'global:\n'
+    code+= '\tsw $ra 0($gp)\n'
+    code+= p[1].code
     global print_string
     code = code + "\n.data\n"
     for k in print_string:
@@ -282,7 +295,9 @@ def p_new_scope(p):
         p[0].code+="\tli $t0 12\n"
         p[0].code+="\tsub $sp $sp $t0\n"
         p[0].code+="\tmove $fp $sp\n"
-
+        if p[-3].attr['name'] == "main":
+            p[0].code+="\tjal global\n"
+            #p[0].code+="\tmove $fp $sp\n"
 
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
@@ -353,15 +368,20 @@ def p_finish_scope(p):
 def p_function_scope(p):
     '''function_scope : '''
     global function_scope
+    global global_end
     function_scope = 1
     p[0] = Attribute()
     p[0] = initAttr(p[0])
+    if global_end==0:
+        global_end = 1
+        p[0].code="\tlw $ra 0($gp)\n"
+        p[0].code+="\tjr $ra\n" 
     if p[-1].attr['name'] == "main":
-        p[0].code = "main:\n"
+        p[0].code += "main:\n"
         p[0].place = "main"
     else: 
         flabel = newLabel()
-        p[0].code = flabel + ":\n"
+        p[0].code += flabel + ":\n"
         p[0].place = flabel
         t = env.get(str(p[-1].attr["name"]))
         if t == None:
@@ -471,7 +491,7 @@ def p_primary_expression_1(p):
     p.set_lineno(0,p.lineno(1))
   
 def p_primary_expression_2(p):
-    ''' primary_expression : this '''
+    ''' primary_expression : THIS '''
     global currentObj
 
 ##def p_primary_expression_3(p):
@@ -3021,6 +3041,9 @@ def p_init_declarator(p):
                     t.offset = gsize
                     p[0].offset = gsize
                     gsize = gsize+4
+                    p[0].code+="\tli $t0 "+str(gsize)+"\n"
+                    p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                    p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
                     gsize = gsize+t.type.size()
                 else:
                     t.offset = size
