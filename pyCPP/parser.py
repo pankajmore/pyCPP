@@ -54,6 +54,7 @@ class Attribute(object):
         self.offset = 0
         self.code=''
         self.place=''
+        self.string=''
         self.error = False
     def __repr__(self):
         return "type:"+str(self.type)+" attr:" + str(self.attr)
@@ -387,6 +388,7 @@ def p_literal_1(p):
     p[0]=Attribute()
     p[0].type=Type('INT')
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 def p_literal_2(p):
@@ -394,6 +396,7 @@ def p_literal_2(p):
     p[0]=Attribute()
     p[0].type=Type('FLOAT')
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_3(p):
@@ -401,6 +404,7 @@ def p_literal_3(p):
     p[0]=Attribute()
     p[0].type=Type('CHAR')
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_4(p):
@@ -408,6 +412,7 @@ def p_literal_4(p):
     p[0]=Attribute()
     p[0].type=Type(Type('CHAR'))
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_5(p):
@@ -415,6 +420,7 @@ def p_literal_5(p):
     p[0]=Attribute()
     p[0].type=Type('BOOL')
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
 
 def p_literal_6(p):
@@ -422,6 +428,7 @@ def p_literal_6(p):
     p[0]=Attribute()
     p[0].type=Type('BOOL')
     p[0].place=str(p[1])
+    p[0].string=str(p[1])
     p.set_lineno(0,p.lineno(1))
   
 #primary-expression:
@@ -474,7 +481,6 @@ def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
     p[0]=deepcopy(p[1])
     global env
-    p[0] = Attribute()
     t = env.get(p[1].attr['name'])
     if t==None:
         p[0].type = Type("ERROR")
@@ -1124,7 +1130,7 @@ def p_unary_expression_4(p):
   
 def p_unary_expression_5(p):
     ''' unary_expression : SIZEOF unary_expression '''
-    p[0]=Attribute()
+    p[0]=deepcopy(p[2])
     typ=find_recursively(p[2].type)    
     if is_primitive(p[2]) and typ in ['INT','FLOAT','CHAR','BOOL']:
         p[0].type='INT'
@@ -1402,13 +1408,13 @@ def castFloat(t,v,register):
     code = ""
     if t== Type("INT"):
         code+="\tlw $t0"+toAddr(v)+"\n"
-        code+="\tmtc1 $t0 $f2 \n"
-        code+="\tcvt.s.w "+ register +" $f2 \n"
+        code+="\tmtc1 $t0 $f8 \n"
+        code+="\tcvt.s.w "+ register +" $f8 \n"
     elif t== Type("CHAR"):
         code+="\tlw $t0"+toAddr(v)+"\n"
         code+="\tandi $t0 $t0 256\n"
-        code+="\tmtc1 $t0 $f2 \n"
-        code+="\tcvt.s.w "+ register +" $f2 \n"
+        code+="\tmtc1 $t0 $f8 \n"
+        code+="\tcvt.s.w "+ register +" $f8 \n"
     elif t==Type("FLOAT"):
         code+="\tl.s "+register+toAddr(v)+"\n"
     else :
@@ -1733,11 +1739,11 @@ def compareFloat(register):
     code = ""
     t1 = newLabel()
     t2 = newLabel()
-    code += "\tbclt t1\n"
-    code += "\tli "+register + "0"
+    code += "\tbc1t "+t1+ "\n"
+    code += "\tli "+register + " 0\n" 
     code += "\tj "+t2 +"\n"
     code += t1 + ":\n"
-    code += "\tli "+register + "1"
+    code += "\tli "+register + " 1\n"
     code += t2 + ":\n"
     return code 
 
@@ -1757,13 +1763,13 @@ def p_relational_expression_2(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t0, $t1\n"
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.lt.s $f2, $f3\n"
             p[0].code += compareFloat("$t2") 
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
@@ -1788,13 +1794,13 @@ def p_relational_expression_3(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t1, $t0\n"
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.lt.s $f3, $f2\n"
             p[0].code += compareFloat("$t2") 
         p[0].code += "\tsw $t2 " + toAddr(p[0]) + "\n"
@@ -1818,13 +1824,13 @@ def p_relational_expression_4(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t1, $t0\n"                  # t2 stores greater than result
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.lt.s $f3, $f2\n"
             p[0].code += compareFloat("$t2") 
         p[0].code += "\tli $t3 1\n"
@@ -1850,13 +1856,13 @@ def p_relational_expression_5(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0 " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1 " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t0, $t1\n"                  # t2 stores less than result
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.lt.s $f2, $f3\n"
             p[0].code += compareFloat("$t2") 
         p[0].code += "\tli $t3 1\n"
@@ -1902,7 +1908,7 @@ def p_equality_expression_2(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t0, $t1\n"
@@ -1911,8 +1917,8 @@ def p_equality_expression_2(p):
             p[0].code += "\tli $t0, 1\n"
             p[0].code += "\tsub $t0, $t0, $t1\n"
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.eq.s $f2, $f3\n"
             p[0].code += compareFloat("$t0") 
         p[0].code += "\tsw $t0, " + toAddr(p[0]) + "\n"
@@ -1937,15 +1943,15 @@ def p_equality_expression_3(p):
         p[0].code = p[1].code + p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        if p[1].type in [Type("INT"),Typr("CHAR")] and p[3].type in [Type("INT"),Typr("CHAR")]:
+        if p[1].type in [Type("INT"),Type("CHAR")] and p[3].type in [Type("INT"),Type("CHAR")]:
             p[0].code += "\tlw $t0, " + toAddr(p[1]) + "\n"
             p[0].code += "\tlw $t1, " + toAddr(p[3]) + "\n"
             p[0].code += "\tslt $t2, $t0, $t1\n"
             p[0].code += "\tslt $t3, $t1, $t0\n"
             p[0].code += "\tadd $t1, $t2, $t3\n"
         else :
-            p[0].code += castFloat(p[1].Type,p[1],"$f2")
-            p[0].code += castFloat(p[3].Type,p[3],"$f3")
+            p[0].code += castFloat(p[1].type,p[1],"$f2")
+            p[0].code += castFloat(p[3].type,p[3],"$f3")
             p[0].code += "\tc.eq.s $f2, $f3\n"
             p[0].code += compareFloat("$t1") 
             p[0].code += "\tli $t0, 1\n"
@@ -2781,15 +2787,22 @@ def p_print_statement(p):
     #    p[0].type = Type("ERROR")
     #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
     if not p[3].type == Type("ERROR"):
-        if p[3].type != Type("FLOAT"):
-            p[0].code+="\tlw $t0 "+toAddr(p[3])+"\n"
-            p[0].code+="\tmove $a0 $t0 \n"
-            p[0].code+="\tli $v0 1 \n"
-            p[0].code+="\tsyscall \n"
-        else:
+        if p[3].type == Type("FLOAT"):
             p[0].code+="\tl.s $f0 "+toAddr(p[3])+"\n"
             p[0].code+="\tmov.s $f12 $f0 \n"
             p[0].code+="\tli $v0 2 \n"
+            p[0].code+="\tsyscall \n"
+        elif p[3].type == Type(Type("CHAR")):
+            t = newLabel()
+            global print_string
+            print_string[t]=p[3].string
+            p[0].code="\tla $a0 "+t+"\n"
+            p[0].code+="\tli $v0 4 \n"
+            p[0].code+="\tsyscall \n"
+        else:
+            p[0].code+="\tlw $t0 "+toAddr(p[3])+"\n"
+            p[0].code+="\tmove $a0 $t0 \n"
+            p[0].code+="\tli $v0 1 \n"
             p[0].code+="\tsyscall \n"
     else :
         #print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
