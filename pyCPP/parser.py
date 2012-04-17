@@ -998,7 +998,7 @@ def p_unary_expression_4(p):
                 p[0].code+="\tlw $t1 0($t0)\n"
                 p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
                 p[0].code +="\tli $t1 4\n"
-                p[0].code +="\tsub $sp $sp $t0\n"
+                p[0].code +="\tsub $sp $sp $t1\n"
                 p[0].offset1=size
                 p[0].code+="\tsw $t0 -"+str(p[0].offset1)+"($fp)\n"
                 size=size+4
