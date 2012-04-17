@@ -5,12 +5,14 @@ from copy import deepcopy
 num_temporaries = 0
 num_labels = 0
 function_scope=0
+class_scope = 0
 print_string = {}
 ## TODO : return type of function should match the actual function type
 ## {{{
 success = True
 size=0
 oldsize=0
+oldsize1 = 0
 dec_type = None
 gsize = 0
 class Type(object):
@@ -269,15 +271,23 @@ def p_new_scope(p):
     '''new_scope : '''
     NewScope()
     global env
+    global class_scope
     global function_scope
+    global size
+    global oldsize
+    global oldsize1
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
 
     p[0]  = Attribute()
 
+    if class_scope == 1:
+#create a symbol for the class name in prev Environment
+        oldsize1 = size
+        size = 0
+
+
     if function_scope == 1:
-        global size
-        global oldsize
         oldsize=size
         size=0
         p[0] = Attribute()
@@ -390,7 +400,15 @@ def p_finish_scope(p):
     # no finish scope is needed actually
     #PopScope()
 
+def p_set_class_scope(p):
+    '''set_class_scope : '''
+    global class_scope
+    class_scope = 1
 
+def p_unset_class_scope(p):
+    '''unset_class_scope : '''
+    global oldsize1
+    size = oldsize1
 
 def p_function_scope(p):
     '''function_scope : '''
@@ -3616,7 +3634,7 @@ def p_class_name(p):
 #class-specifier:
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
-    ''' class_specifier : new_scope class_head LBRACE member_specification RBRACE finish_scope'''
+    ''' class_specifier : set_class_scope new_scope class_head LBRACE member_specification RBRACE finish_scope unset_class_scope'''
     p[0] = Attribute()
     p[0].type = Type(p[2].name)
     pass
