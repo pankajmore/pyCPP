@@ -194,6 +194,28 @@ def is_integer(p):
     except ValueError:
         return False
 
+def type_check(t,p):
+    if t.attr.has_key('isArray') and p.attr.has_key('isArray'):
+        t1 = deepcopy(t.type)
+        t2 = deepcopy(p.type)
+        while(isinstance(t1.next,Type) and isinstance(t2.next,Type)):
+            t1 = t1.next
+            t2 = t2.next
+        if t1 == t2:
+            t3 = t.type
+            t4 = p.type
+            while(isinstance(t3,Type) and isinstance(t4,Type)):
+                t3.dim = t4.dim
+                t3= t3.next
+                t4 = t4.next
+            return True
+        else:
+            return False
+    elif t.type==p.type:
+        return True
+    else :
+        return False
+
 precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN','PRINTS'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
@@ -279,44 +301,86 @@ def p_new_scope(p):
                 if dec_type is Type("VOID"): # it must be a typeless declaration , assume VOID
                     if t.type != Type('VOID'):
                         print ("\nFunction's type must be void since its declaration had no type\n")
+                        p[0].type = Type("ERROR")
                 else:
                     if t.type != dec_type:
                         print ("\nFunction's type not consistent between declaration and definition\n")
+                        p[0].type = Type("ERROR")
             if t.attr['numParameters'] != p[-3].attr['numParameters'] :
                 print ("\nFunction overloading not supported\n")
+                p[0].type = Type("ERROR")
             for i in range(t.attr['numParameters']):
-                if t.attr['parameterList'][i].type != p[-3].attr['parameterList'][i].type:
+                if not type_check(t.attr['parameterList'][i],p[-3].attr['parameterList'][i]):
                     print ("\nFunction overloading by different types not supported\n")
-                if t.attr['parameterList'][i].attr['name'] == None:
+                    p[0].type = Type("ERROR")
+                elif p[-3].attr['parameterList'][i].attr['name'] == None:
                     print ("\nVariable name for parameter missing\n")
+                    p[0].type = Type("ERROR")
                 # refactor the duplicate code
                 # storing the formal parameters in table not the parameters during function declaration
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 t.attr['parameterList'][i].offset = size #to retrieve during func call
-                s.offset = size
-                size = size + 4
-                p[0].code +="\tli $t0 4\n"
-                p[0].code +="\tsub $sp $sp $t0\n"
-                s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
-
+                    p[0].type = Type("ERROR")
+                s.type = p[-3].attr['parameterList'][i].type
+                temp = p[-3].attr['parameterList'][i]
+                if temp.attr.has_key("isArray"):
+                    s.offset = size
+                    p[0].offset = size
+                    size = size+4
+                    p[0].code+="\tli $t0 4 \n"
+                    p[0].code+="\tsub $sp $sp $t0\n"
+                    p[0].code+="\tli $t0 "+str(size)+"\n"
+                    p[0].code+="\tsub $t0 "+find_scope2(s)+" $t0\n"
+                    p[0].code+="\tsw $t0 "+toAddr2(s)+"\n"
+                    size = size+s.type.size()
+                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
+                elif temp.attr.has_key('isFunction'):
+                    print 'ERROR!! Line number : '+str(p.lineno(0))+'Parameters can\'t be a function'
+                    p[0].type = Type('ERROR')
+                else:
+                    s.offset = size
+                    p[0].offset = size
+                    size = size + s.type.size()
+                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
+                
         else: # function declaration has not been seen
     
             for i in range(p[-3].attr['numParameters']):
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
                 p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
-                s.offset = size
-                size = size + 4
-                p[0].code +="\tli $t0 4\n"
-                p[0].code +="\tsub $sp $sp $t0\n"
-                s.type = p[-3].attr['parameterList'][i].type
                 if not env.put(s):
                     print ("\nError : parameter is already in the symbol table\n")
-
+                    p[0].type = Type("ERROR")
+                s.type = p[-3].attr['parameterList'][i].type
+                temp = p[-3].attr['parameterList'][i]
+                if temp.attr.has_key("isArray"):
+                    s.offset = size
+                    p[0].offset = size
+                    size = size+4
+                    p[0].code+="\tli $t0 4 \n"
+                    p[0].code+="\tsub $sp $sp $t0\n"
+                    p[0].code+="\tli $t0 "+str(size)+"\n"
+                    p[0].code+="\tsub $t0 "+find_scope2(s)+" $t0\n"
+                    p[0].code+="\tsw $t0 "+toAddr2(s)+"\n"
+                    size = size+s.type.size()
+                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
+                elif temp.attr.has_key('isFunction'):
+                    print 'ERROR!! Line number : '+str(p.lineno(0))+'Parameters can\'t be a function'
+                    p[0].type = Type('ERROR')
+                else:
+                    s.offset = size
+                    p[0].offset = size
+                    size = size + s.type.size()
+                    p[0].code +="\tli $t0 "+str(s.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
 
 def p_finish_scope(p):
     '''finish_scope : '''
@@ -651,7 +715,7 @@ def p_postfix_expression_3(p):
         if p[0].type!=Type('VOID'):
             p[0].code+='\tmove $t0 $v0\n'
         else:
-            p[0].code+='\tli $t0 0'
+            p[0].code+='\tli $t0 0\n'
         p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
     p.set_lineno(0,p.lineno(2))
     
@@ -704,7 +768,7 @@ def p_postfix_expression_4(p):
                 if p[0].type!=Type('VOID'):
                     p[0].code+='\tmove $t0 $v0\n'
                 else:
-                    p[0].code+='\tli $t0 0'
+                    p[0].code+='\tli $t0 0\n'
                 p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
     p.set_lineno(0,p.lineno(2))
 
@@ -3363,6 +3427,19 @@ def p_parameter_declaration_1(p):
         while (isinstance(typ,Type)):
             p[0].type = Type(p[0].type)
             typ = typ.next
+        if p[2].attr.has_key("isFunction") :
+            pass
+        elif p[2].attr.has_key("isArray"):
+            if isinstance(p[2].type, Type) and p[2].type != Type("ERROR"):
+                print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+                p[0].type = Type("ERROR")
+            else:
+                l = len(p[2].attr["width"])
+                while l>0:
+                    l=l-1
+                    p[0].type = Type(p[0].type)
+                    p[0].type.dim = p[2].attr["width"][l]
+                
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):

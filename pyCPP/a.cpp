@@ -1,5 +1,5 @@
-void matrixmult(int**,int**,int**,int );
-void matrixmult(int **a,int **b,int **temp,int c)
+void matrixmult(int a[2][2],int b[2][2],int temp[2][2],int c);
+void matrixmult(int a[2][2],int b[2][2],int temp[2][2],int c)
 {
     int i,j,k;
     for(i=0;i<c;i++)
