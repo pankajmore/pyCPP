@@ -1079,8 +1079,12 @@ def p_unary_expression_4(p):
             p[0].code +="\tsub $sp $sp $t0\n"
             p[0].code+="\tlw $t0"+toAddr(p[2])+"\n"
             if not isinstance(p[0].type.next,Type):
-                p[0].code+="\tlw $t1 0($t0)\n"
-                p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
+                if (p[0].type == Type("FLOAT")):
+                    p[0].code+="\tl.s $f2 0($t0)\n"
+                    p[0].code+="\ts.s $f2"+toAddr(p[0])+"\n"
+                else:
+                    p[0].code+="\tlw $t1 0($t0)\n"
+                    p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
                 p[0].code +="\tli $t1 4\n"
                 p[0].code +="\tsub $sp $sp $t1\n"
                 p[0].offset1=size
