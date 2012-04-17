@@ -4,6 +4,7 @@ from symbol import *
 from copy import deepcopy
 num_temporaries = 0
 num_labels = 0
+function_scope=0
 print_string = {}
 ## TODO : return type of function should match the actual function type
 ## {{{
