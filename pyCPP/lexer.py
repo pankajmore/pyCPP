@@ -176,12 +176,12 @@ def t_ILLEGAL_ID(t):
 
     # Match a decimal number
 def t_DNUMBER(t):
-    r'((\d*)\.((\d*([eE][+-]\d+))|\d+)(?=[+\-*/%(),;\s\]])|([eE][+-]\d+)(?=[+\-*/()%,;\s\]]))'
+    r'((\d*)\.((\d*([eE][+-]\d+))|\d+)(?=[+<>!=\-*/%(),;\s\]])|([eE][+-]\d+)(?=[+<>!=\-*/()%,;\s\]]))'
     return t
 
 # Match an integer
 def t_INUMBER(t):
-    r'\d+(?=[+\-*/()%,;\s\]])'
+    r'\d+(?=[+<>!=\-*/()%,;\s\]])'
     return t
 
 def t_DOT(t):
