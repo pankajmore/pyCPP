@@ -112,6 +112,8 @@ def toAddr(p,q=None):
                 return " -"+str(p.offset)+"($gp)"
             else:
                 return " -"+str(p.offset)+"($fp)"
+        else:
+            return " -"+str(p.offset)+"($fp)"
     else:
         return " -"+str(p.offset)+"($fp)"
 
@@ -147,6 +149,8 @@ def find_scope(p):
                 return " $gp"
             else:
                 return " $fp"
+        else:
+            return " $fp"
     else:
         return " $fp"
 
