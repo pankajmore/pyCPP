@@ -470,10 +470,10 @@ def p_primary_expression_1(p):
     size=size+4
     p.set_lineno(0,p.lineno(1))
   
-##def p_primary_expression_2(p):
-##    ''' primary_expression : SCOPE IDENTIFIER '''
-##    pass
-##  
+def p_primary_expression_2(p):
+    ''' primary_expression : this '''
+    global currentObj
+
 ##def p_primary_expression_3(p):
 ##    ''' primary_expression : SCOPE operator_function_id '''
 ##    pass
