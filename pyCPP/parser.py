@@ -3410,7 +3410,7 @@ def p_init_declarator_list_1(p):
                 print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
                 p[0].type = Type("ERROR")
             elif t1.type == Type("CLASS"):
-                p[0].type = Type(str(p[-1])
+                p[0].type = Type(str(p[-1]))
             else :
                 p[0].type = Type("ERROR")
     else :
@@ -3862,7 +3862,7 @@ def p_parameter_declaration_1(p):
                     l=l-1
                     p[0].type = Type(p[0].type)
                     p[0].type.dim = p[2].attr["width"][l]
-                print str(p[0].type.size())+" "+str(p[0].type.next.size())
+                #print str(p[0].type.size())+" "+str(p[0].type.next.size())
     #p[0].specifier = p[1].specifier
     #p[0].qualifier = p[1].qualifier
     if (p[2].attr.has_key('isFunction') and p[2].attr['isFunction'] == 1):
@@ -4040,9 +4040,18 @@ def p_class_name(p):
     #class-head { member-specificationopt }
 def p_class_specifier_1(p):
     ''' class_specifier : set_class_scope new_scope class_head LBRACE member_specification RBRACE finish_scope unset_class_scope'''
+    p.set_lineno(0,p.lineno(3))
+    global env
     p[0] = Attribute()
-    p[0].type = Type(p[2].name)
-    pass
+    p[0] = initAttr(p[0])
+    p[0].type = Type(p[2].attr['name'])
+    p[0].code = p[2].code+p[5].code+p[7].code
+    if p[2].type != Type("ERROR"):
+        cl = env.get(p[2].attr['name'])
+        cl.offset = p[5].csize
+        cl.code = p[0].code
+    
+        
 
 def p_class_specifier_2(p):
     ''' class_specifier : set_class_scope new_scope class_head LBRACE RBRACE finish_scope unset_class_scope'''
@@ -4056,17 +4065,23 @@ def p_class_specifier_2(p):
     #class-key nested-name-specifier template template-id base-clauseopt
 def p_class_head(p):
     ''' class_head : class_key IDENTIFIER base_clause_opt '''
+    p.set_lineno(0,p.lineno(1))
     global env
-    cl = Symbol(p[2])
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].attr['name']=str(p[2])
+    cl = Symbol(str(p[2]))
     cl.type = p[1].type 
-    cl.attr["inherits"] = p[3]
-    table = env.table
-    temp = SymbolTable()
-    for s in cl.attr["inherits"]:
-        temp = temp.combine(s)
-    cl.attr["scope"] = env.table 
-    env.prev.put(cl)
-    p[0] = cl 
+    #cl.attr["inherits"] = p[3]
+    #table = env.table
+    #temp = SymbolTable()
+    #for s in cl.attr["inherits"]:
+        #temp = temp.combine(s)
+    cl.table = env.table 
+    if not env.prev.put(cl):
+        print "ERROR!! Line number : "+str(p.lineno(0))+" Identifier \'"+str(p[2])+"\' already declared."
+        p[0].type = Type("ERROR")
+ 
 
 ##def p_class_head(p):
 ##    ''' class_head : class_key base_clause_opt 
@@ -4193,7 +4208,7 @@ def p_member_declarator_list_1(p):
                 print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
                 p[0].type = Type("ERROR")
             elif t1.type == Type("CLASS"):
-                p[0].type = Type(str(p[-1])
+                p[0].type = Type(str(p[-1]))
             else :
                 p[0].type = Type("ERROR")
     else :
@@ -4325,7 +4340,7 @@ def p_constant_initializer(p):
     #: base-specifier-list
 def p_base_clause_opt_1(p):
     ''' base_clause_opt : '''
-    p[0] = []
+    p[0] = None
 def p_base_clause_opt_2(p):
     ''' base_clause_opt : COLON base_specifier_list '''
     p.set_lineno(0,p.lineno(1))
