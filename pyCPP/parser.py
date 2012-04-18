@@ -326,6 +326,7 @@ def p_new_scope(p):
 
         if t is not None: # function declartion already seen
 #HACK : p[-4] might be buggy?
+            print "seen"
             t.table = env.table # For keeping a pointer to the function SymbolTable
             function_symbol = t
             if p[-4].type is Type("VOID"): # it must be a typeless declaration , assume VOID
@@ -354,7 +355,7 @@ def p_new_scope(p):
                     p[0].code+='\tl.s $f2 '+str(12+j*4)+'($fp)\n'
                     p[0].code+="\ts.s $f2 -" +str(size) + "($fp)\n"
                 else:
-                    p[0].code+'\tlw $t0 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+='\tlw $t0 '+str(12+j*4)+'($fp)\n'
                     p[0].code+="\tsw $t0 -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 t.attr['parameterList'][i].offset = size #to retrieve during func call
@@ -368,10 +369,16 @@ def p_new_scope(p):
                     p[0].type = Type("ERROR")
                 
         else: # function declaration has not been seen
-    
+            print "not seen"
             for i in range(p[-3].attr['numParameters']):
+                j=p[-3].attr['numParameters']-i
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
-                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                if p[-3].attr['parameterList'][i].type == Type('FLOAT'):
+                    p[0].code+='\tl.s $f2 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\ts.s $f2 -" +str(size) + "($fp)\n"
+                else:
+                    p[0].code+='\tlw $t0 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\tsw $t0 -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 s.offset = size
                 size = size + 4
@@ -744,15 +751,15 @@ def p_postfix_expression_3(p):
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
-        size=size+4
-        p[0].code +="\tli $t0 4\n"
-        p[0].code +="\tsub $sp $sp $t0\n"
         #t=env.get(p[0].attr['symbol'].name)
         #fsize=t.table.offset
         p[0].code+="\tjal "+p[1].place+"\n"
+        p[0].code +="\tli $t0 4\n"
+        p[0].code +="\tsub $sp $sp $t0\n"
+        size=size+4
         if p[0].type!=Type('VOID'):
             if p[0].type==Type('FLOAT'):
-                p[0].code+='\tmove.s $f2 $f0\n'
+                p[0].code+='\tmov.s $f2 $f0\n'
                 p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
             else:
                 p[0].code+='\tmove $t0 $v0\n'
@@ -797,11 +804,7 @@ def p_postfix_expression_4(p):
                 p[1].place = p[1].attr['symbol'].attr['label']
                 p[0].attr={}
                 p[0].code=p[1].code+p[3].code
-                p[0].code +="\tli $t0 4\n"
-                p[0].code +="\tsub $sp $sp $t0\n"
                 p[0].place=newTemp()
-                p[0].offset=size
-                size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
                     x=p[3].attr['parameterList'][i]
                     if x.type==Type('FLOAT'):
@@ -813,10 +816,19 @@ def p_postfix_expression_4(p):
                     size=size+4
                     p[0].code +="\tli $t0 4\n"
                     p[0].code +="\tsub $sp $sp $t0\n"
-                p[0].code+="\tjal "+p[1].place+"\n"
+
+                p[0].code+="\tjal "+p[1].place+"\n"    
+                size=size-p[1].attr['symbol'].attr['numParameters']*4
+                p[0].code +="\tli $t0 " + str(p[1].attr['symbol'].attr['numParameters']*4)+"\n"
+                p[0].code +="\tadd $sp $sp $t0\n"
+                
+                p[0].offset=size        
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                size=size+4
                 if p[0].type!=Type('VOID'):
                     if p[0].type==Type('FLOAT'):
-                        p[0].code+='\tmove.s $f2 $f0\n'
+                        p[0].code+='\tmov.s $f2 $f0\n'
                         p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
                     else:
                         p[0].code+='\tmove $t0 $v0\n'
@@ -3550,7 +3562,9 @@ def p_init_declarator(p):
             else:
                 t.offset = size
                 p[0].offset = size
+                print size
                 size = size + t.type.size()
+                print size
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
         #Checking for initialization
@@ -3945,14 +3959,14 @@ def p_function_definition_1(p):
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    p[0].code=p[3].code+p[2].code+p[4].code+p[5].code
+    p[0].code=p[3].code+p[4].code+p[5].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code = p[3].code+p[2].code+p[4].code+p[5].code
+    p[0].code = p[3].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
