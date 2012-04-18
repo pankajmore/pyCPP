@@ -322,12 +322,7 @@ def p_new_scope(p):
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
-<<<<<<< HEAD
-        if t is not None: # function declartion already seen
-=======
-
         if t is not None: # function definition for non-main functions
->>>>>>> 0562acf239e9143c4e90cd6e76795fc75d9bc5e5
 #HACK : p[-4] might be buggy?
             t.table = env.table # For keeping a pointer to the function SymbolTable
             function_symbol = t
