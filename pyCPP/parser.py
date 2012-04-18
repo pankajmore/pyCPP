@@ -339,6 +339,7 @@ def p_new_scope(p):
                 print ("\nFunction overloading not supported\n")
                 p[0].type = Type("ERROR")
             for i in range(t.attr['numParameters']):
+                j=t.attr['numParameters']-i
                 if not type_check(t.attr['parameterList'][i],p[-3].attr['parameterList'][i]):
                     print ("\nFunction overloading by different types not supported\n")
                     p[0].type = Type("ERROR")
@@ -348,7 +349,12 @@ def p_new_scope(p):
                 # refactor the duplicate code
                 # storing the formal parameters in table not the parameters during function declaration
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
-                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                if p[-3].attr['parameterList'][i].type == Type('FLOAT'):
+                    p[0].code+='\tl.s $f2 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\ts.s $f2 -" +str(size) + "($fp)\n"
+                else:
+                    p[0].code+'\tlw $t0 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\tsw $t0 -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 t.attr['parameterList'][i].offset = size #to retrieve during func call
                 s.offset = size
@@ -743,10 +749,16 @@ def p_postfix_expression_3(p):
         #fsize=t.table.offset
         p[0].code+="\tjal "+p[1].place+"\n"
         if p[0].type!=Type('VOID'):
-            p[0].code+='\tmove $t0 $v0\n'
+            if p[0].type==Type('FLOAT'):
+                p[0].code+='\tmove.s $f2 $f0\n"
+                p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
+            else:
+                p[0].code+='\tmove $t0 $v0\n'
+                p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
         else:
             p[0].code+='\tli $t0 0\n'
-        p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
+            p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
+            
     p.set_lineno(0,p.lineno(2))
     
 #def p_postfix_expression_4(p):
@@ -773,16 +785,12 @@ def p_postfix_expression_4(p):
             p[0]=errorAttr(p[0])
         else:
             tmp=0
-            if p[1].attr['symbol'].attr['numParameters']>4:
-                print "Error in line %s : Max 4 parameters are allowed\n" % p.lineno(2)
-                tmp=1
-            else:
-                for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
-                        print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
-                        tmp=1
-                    if tmp==1:
-                        p[0]=errorAttr(p[0]) 
+            for i in range(p[1].attr['symbol'].attr['numParameters']):
+                if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
+                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
+                    tmp=1
+                if tmp==1:
+                    p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[1].place = p[1].attr['symbol'].attr['label']
                 p[0].attr={}
@@ -793,13 +801,27 @@ def p_postfix_expression_4(p):
                 p[0].offset=size
                 size=size+4
                 for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    p[0].code+='\tlw $a'+str(i)+toAddr(p[3].attr['parameterList'][i])+'\n'
+                    x=p[3].attr['parameterList'][i]
+                    if x.type==Type('FLOAT'):
+                        p[0].code+='\tl.s $f2'+toAddr(x)+"\n"
+                        p[0].code+='\ts.s $f2 -'+str(size)+'($fp)\n'
+                    else:
+                        p[0].code+='\tlw $t0'+toAddr(x)+'\n'
+                        p[0].code+='\tsw $t0 -'+str(size)+'($fp)\n'
+                    size=size+4
+                    p[0].code +="\tli $t0 4\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
-                    p[0].code+='\tmove $t0 $v0\n'
+                    if p[0].type==Type('FLOAT'):
+                        p[0].code+='\tmove.s $f2 $f0\n"
+                        p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
+                    else:
+                        p[0].code+='\tmove $t0 $v0\n'
+                        p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
                 else:
                     p[0].code+='\tli $t0 0\n'
-                p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
+                    p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"               
     p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
