@@ -45,7 +45,6 @@ class Type(object):
         if isinstance(self.next,Type):
             return self.dim*self.next.size()
         else:
-<<<<<<< HEAD
             if self in [Type("FLOAT"),Type("INT"),Type("CHAR"),Type("BOOL")]:
                 return 4
             elif self in [Type("VOID")]:
@@ -53,9 +52,6 @@ class Type(object):
             else :
                 cl = env.get(str(self.next))
                 return cl.offset
-=======
-            return self.baseSize
->>>>>>> 875931074370a3cdb2ca117e3dde9bd4423a0d4b
 
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
@@ -3962,22 +3958,22 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-def p_void_decl_specifier_1(p):
-    ''' void_decl_specifier : '''
-    p[0] = Attribute()
-    p[0] = initAttr(p[0])
-    p[0].type = Type("VOID")
+#def p_void_decl_specifier_1(p):
+#    ''' void_decl_specifier : '''
+#    p[0] = Attribute()
+#    p[0] = initAttr(p[0])
+#    p[0].type = Type("VOID")
 
 
-def p_function_definition_1(p):
-    ''' function_definition : void_decl_specifier declarator function_scope function_body unset_function_scope'''
-    global size
-    p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
-    p[0] = initAttr(p[0])
+#def p_function_definition_1(p):
+#    ''' function_definition : void_decl_specifier declarator function_scope function_body unset_function_scope'''
+#    global size
+#    p.set_lineno(0,p.lineno(1))
+#    p[0] = Attribute()
+#    p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    p[0].code=p[3].code+p[4].code+p[5].code
+#    p[0].code=p[3].code+p[4].code+p[5].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
