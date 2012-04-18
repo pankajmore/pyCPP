@@ -103,7 +103,7 @@ keywords={'auto': 'AUTO',
         'while' :'WHILE',
         'print' : 'PRINT',
         'scan' : 'SCAN' ,
-        'prints' : 'PRINTS'
+        'malloc' : 'MALLOC'
         }
 
 tokens=special_characters+operators+complex_tokens+tuple(keywords.values())

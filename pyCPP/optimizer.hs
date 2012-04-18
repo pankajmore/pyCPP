@@ -4,6 +4,7 @@ import System.IO
 import System.Environment
 import Text.Parsec hiding(label)
 import Text.Parsec.String
+import Data.List
 
 type Program = [Block]
 data Block = Block {
@@ -82,6 +83,23 @@ statement_sub = do
     skipMany space 
     return ("$"++r1,"$"++r2,"$"++r3)
 
+statement_add :: Parser (String,String,String)
+statement_add = do 
+    string "add"
+    skipMany space 
+    r1 <- char '$' >>  many1 alphaNum
+    skipMany space 
+    optional (char ',')
+    skipMany space 
+    r2 <- char '$' >>  many1 alphaNum
+    skipMany space 
+    optional (char ',')
+    skipMany space 
+    r3 <- char '$' >>  many1 alphaNum
+    skipMany space 
+    return ("$"++r1,"$"++r2,"$"++r3)
+
+
 statement_move :: Parser (String,String)
 statement_move  = do 
     string "move"
@@ -118,6 +136,37 @@ statement_sw  = do
     skipMany space 
     return ("$"++r,s)
 
+parseSP :: Parser String
+parseSP = do 
+    optional (char '-')
+    skipMany digit
+    char '('
+    s <- many1 (alphaNum <|> char '$')
+    char ')'
+    return s
+
+isSP ::  Either t [Char] -> Bool
+isSP x = do 
+    case x of 
+        Left err -> False 
+        Right "$sp" -> True 
+        otherwise -> False 
+
+isADDSP :: Either t (String,String,String) -> Bool
+isADDSP x = do 
+    case x of 
+        Left err -> False 
+        Right (r1,r2,r3) -> r1=="$sp" || r2=="$sp" || r3=="$sp"
+
+    
+containSP :: Parser ()
+containSP = do 
+    skipMany1 anyChar
+    string "$sp"
+    skipMany (noneOf ['\n'])
+
+
+
 remove_reloading [] = []
 remove_reloading [x] = [x]
 remove_reloading (x:y:ys) = case parse statement_sw "" x of 
@@ -127,35 +176,24 @@ remove_reloading (x:y:ys) = case parse statement_sw "" x of
                                     Right (r2,s2) -> if r1==r2 && s1==s2 
                                         then x:remove_reloading ys
                                         else x:y:remove_reloading ys
-
-
-
-
-
-
-
-
-
-
+test = ["li $t0 4","sub $sp $sp $t0","jal L0","li $t0 16","add $sp $sp $t0","li $t0 4","sub $sp $sp $t0","li $t0 4","sub $sp $sp $t0","li $t0 4","sub $sp $sp $t0"]
 stackSub [] m = ([],0) 
 stackSub [x] m = ([x],0)
-stackSub (x:y:xs) m = case parse (try statement_move <|> statement_lw)  "" x of 
-        Left err -> ps x y xs m
-        Right (r1,r2) -> if r1=="$sp" || r2=="$sp" 
-                            then let (res,v) = ps x y xs True
-                                    in (res,0)
-                            else ps x y xs m
-    where ps x y xs m = case parse statement_li "" x  of 
+stackSub (x:y:xs) m = if (isInfixOf "$sp" x || isInfixOf "jal" x) && (not $ isInfixOf "sub" x)
+                        then let (res,v) = stackSub (y:xs) True
+                                    in (x:res,0)
+                        else ps x y xs m
+ps x y xs m = case parse statement_li "" x  of 
                         Left err -> do let (rest,v) = stackSub (y:xs) m
                                        (x:rest,v)
                         Right (r,v) -> case  parse statement_sub "" y of 
-                                            Left err -> do let (rest,v) = stackSub (y:xs) m
-                                                           (x:rest,v)
+                                            Left err -> do let (rest,val) = stackSub (y:xs) m
+                                                           (x:rest,val)
                                             Right (r1,r2,r3) -> if (r1=="$sp") && (r2=="$sp") && (r==r3)
                                                                     then if m 
                                                                         then do 
                                                                             let (rest,val) = stackSub xs False
-                                                                            (("li "++r++" "++show(v+val)):y:rest,v+val)
+                                                                            (("li "++r++" "++show(v+val)):y:rest,0)
                                                                         else do 
                                                                             let (rest,val) = stackSub xs m
                                                                             (rest,val+v)
