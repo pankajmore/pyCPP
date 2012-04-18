@@ -318,22 +318,17 @@ def p_new_scope(p):
         size=0
         p[0] = Attribute()
         p[0] = initAttr(p[0])
-        p[0].code+="\tsw $ra, 0($sp)\n"
-        p[0].code+="\tsw $fp, -4($sp)\n"
-        p[0].code+="\tsw $sp, -8($sp)\n"
-        p[0].code+="\tli $t0 12\n"
-        p[0].code+="\tsub $sp $sp $t0\n"
-        p[0].code+="\tmove $fp $sp\n"
-        if p[-3].attr['name'] == "main":
-            p[0].code+="\tjal global\n"
-            #p[0].code+="\tmove $fp $sp\n"
 
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
+<<<<<<< HEAD
         if t is not None: # function declartion already seen
+=======
+
+        if t is not None: # function definition for non-main functions
+>>>>>>> 0562acf239e9143c4e90cd6e76795fc75d9bc5e5
 #HACK : p[-4] might be buggy?
-            print "seen"
             t.table = env.table # For keeping a pointer to the function SymbolTable
             function_symbol = t
             if p[-4].type is Type("VOID"): # it must be a typeless declaration , assume VOID
@@ -375,8 +370,7 @@ def p_new_scope(p):
                     print ("\nError : parameter is already in the symbol table\n")
                     p[0].type = Type("ERROR")
                 
-        else: # function declaration has not been seen
-            print "not seen"
+        else: # function definition for main
             for i in range(p[-3].attr['numParameters']):
                 j=p[-3].attr['numParameters']-i
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
@@ -816,10 +810,10 @@ def p_postfix_expression_4(p):
                     x=p[3].attr['parameterList'][i]
                     if x.type==Type('FLOAT'):
                         p[0].code+='\tl.s $f2'+toAddr(x)+"\n"
-                        p[0].code+='\ts.s $f2 -'+str(size)+'($fp)\n'
+                        p[0].code+='\ts.s $f2 0($sp)\n'
                     else:
                         p[0].code+='\tlw $t0'+toAddr(x)+'\n'
-                        p[0].code+='\tsw $t0 -'+str(size)+'($fp)\n'
+                        p[0].code+='\tsw $t0 0($sp)\n'
                     size=size+4
                     p[0].code +="\tli $t0 4\n"
                     p[0].code +="\tsub $sp $sp $t0\n"
@@ -867,11 +861,11 @@ def p_postfix_expression_5(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tadd.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tadd.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
     elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
@@ -917,11 +911,11 @@ def p_postfix_expression_6(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tsub.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tsub.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
     elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
@@ -1082,11 +1076,11 @@ def p_unary_expression_2(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tadd.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tadd.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
         
     elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
@@ -1135,11 +1129,11 @@ def p_unary_expression_3(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tsub.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tsub.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
 
     elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
@@ -2957,8 +2951,8 @@ def p_print_statement(p):
     #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
     if not p[3].type == Type("ERROR"):
         if p[3].type == Type("FLOAT"):
-            p[0].code+="\tl.s $f0 "+toAddr(p[3])+"\n"
-            p[0].code+="\tmov.s $f12 $f0 \n"
+            p[0].code+="\tl.s $f2 "+toAddr(p[3])+"\n"
+            p[0].code+="\tmov.s $f12 $f2 \n"
             p[0].code+="\tli $v0 2 \n"
             p[0].code+="\tsyscall \n"
         elif p[3].type == Type(Type("CHAR")):
@@ -3985,7 +3979,20 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code = p[3].code+p[4].code+p[5].code
+
+    p[0].code = p[3].code
+
+    p[0].code+="\tsw $ra, 0($sp)\n"
+    p[0].code+="\tsw $fp, -4($sp)\n"
+    p[0].code+="\tsw $sp, -8($sp)\n"
+    p[0].code+="\tli $t0 12\n"
+    p[0].code+="\tsub $sp $sp $t0\n"
+    p[0].code+="\tmove $fp $sp\n"
+    if p[2].attr['name'] == "main":
+        p[0].code+="\tjal global\n"
+        #p[0].code+="\tmove $fp $sp\n"
+
+    p[0].code += p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
