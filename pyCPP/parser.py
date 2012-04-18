@@ -317,23 +317,13 @@ def p_new_scope(p):
         size=0
         p[0] = Attribute()
         p[0] = initAttr(p[0])
-        p[0].code+="\tsw $ra, 0($sp)\n"
-        p[0].code+="\tsw $fp, -4($sp)\n"
-        p[0].code+="\tsw $sp, -8($sp)\n"
-        p[0].code+="\tli $t0 12\n"
-        p[0].code+="\tsub $sp $sp $t0\n"
-        p[0].code+="\tmove $fp $sp\n"
-        if p[-3].attr['name'] == "main":
-            p[0].code+="\tjal global\n"
-            #p[0].code+="\tmove $fp $sp\n"
 
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
 
-        if t is not None: # function declartion already seen
+        if t is not None: # function definition for non-main functions
 #HACK : p[-4] might be buggy?
-            print "seen"
             t.table = env.table # For keeping a pointer to the function SymbolTable
             function_symbol = t
             if p[-4].type is Type("VOID"): # it must be a typeless declaration , assume VOID
@@ -375,8 +365,7 @@ def p_new_scope(p):
                     print ("\nError : parameter is already in the symbol table\n")
                     p[0].type = Type("ERROR")
                 
-        else: # function declaration has not been seen
-            print "not seen"
+        else: # function definition for main
             for i in range(p[-3].attr['numParameters']):
                 j=p[-3].attr['numParameters']-i
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
@@ -3980,7 +3969,20 @@ def p_function_definition_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].code = p[3].code+p[4].code+p[5].code
+
+    p[0].code = p[3].code
+
+    p[0].code+="\tsw $ra, 0($sp)\n"
+    p[0].code+="\tsw $fp, -4($sp)\n"
+    p[0].code+="\tsw $sp, -8($sp)\n"
+    p[0].code+="\tli $t0 12\n"
+    p[0].code+="\tsub $sp $sp $t0\n"
+    p[0].code+="\tmove $fp $sp\n"
+    if p[2].attr['name'] == "main":
+        p[0].code+="\tjal global\n"
+        #p[0].code+="\tmove $fp $sp\n"
+
+    p[0].code += p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
