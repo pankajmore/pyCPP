@@ -8,6 +8,15 @@ function_scope=0
 class_scope = 0
 print_string = {}
 ## TODO : return type of function should match the actual function type
+def accessLinks(offset,register,fp,number):
+    code = ""
+    if number == 0:
+        code += "\tlw "+register+" -"+str(offset)+"("+fp+")\n"
+    else:
+        code+="\tlw $t5 4("+fp+")\n"
+        code+=accessLinks(offset,register,"$t5",number-1)
+    return code 
+
 ## {{{
 success = True
 size=0
@@ -3043,7 +3052,6 @@ def p_jump_statement_3(p):
     p[0].code+="\tlw $ra 12($fp)\n"
     p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
-    size=oldsize
     
 def p_jump_statement_4(p):
     ''' jump_statement : RETURN SEMICOLON '''
@@ -3063,7 +3071,6 @@ def p_jump_statement_4(p):
     p[0].code+="\tlw $ra 12($fp)\n"
     p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
-    size=oldsize
 
 #declaration-statement:
     #block-declaration
