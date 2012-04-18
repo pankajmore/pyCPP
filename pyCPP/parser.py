@@ -753,7 +753,7 @@ def p_postfix_expression_3(p):
         p[0].code+="\tjal "+p[1].place+"\n"
         if p[0].type!=Type('VOID'):
             if p[0].type==Type('FLOAT'):
-                p[0].code+="\tmove.s $f2 $f0\n"
+                p[0].code+='\tmove.s $f2 $f0\n'
                 p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
             else:
                 p[0].code+='\tmove $t0 $v0\n'
@@ -817,7 +817,7 @@ def p_postfix_expression_4(p):
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
                     if p[0].type==Type('FLOAT'):
-                        p[0].code+="\tmove.s $f2 $f0\n"
+                        p[0].code+='\tmove.s $f2 $f0\n'
                         p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
                     else:
                         p[0].code+='\tmove $t0 $v0\n'
@@ -3014,13 +3014,15 @@ def p_jump_statement_2(p):
 
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
+    global dec_type
+    print dec_type
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()    
 
     if dec_type == p[2].type: 
         p[0].type = p[2].type
     else:
-        print ("\nReturn type of function " + str(p[0].lineno(0)) + "does not match its signature\n" )
+        print ("\nReturn type of function at line no : " + str(p.lineno(1)) + " does not match its signature\n" )
         p[0].type = Type("ERROR")
         dec_type = Type("ERROR")
 
@@ -3049,7 +3051,7 @@ def p_jump_statement_4(p):
     if dec_type == Type("VOID"): 
         p[0].type = Type("VOID") 
     else:
-        print ("\nReturn type of function + " str(p[0].lineno(0) + "does not match its signature\n" )
+        print ("\nReturn type of function at line no : "+ str(p.lineno(1)) + " does not match its signature\n" )
         p[0].type = Type("ERROR")
         dec_type = Type("ERROR")
     global function_scope
