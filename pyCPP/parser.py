@@ -22,6 +22,7 @@ success = True
 size=0
 oldsize=0
 oldsize1 = 0
+oldsize3 = 0
 function_symbol = None
 gsize = 4
 global_end = 0
@@ -762,7 +763,8 @@ def p_postfix_expression_3(p):
             print "Error in line %s : Unidentified type of function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     else:
-        p[1].place = p[1].attr['symbol'].attr['label']
+        if p[1].attr['symbol'].attr.has_key('label'):
+            p[1].place = p[1].attr['symbol'].attr['label']
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
@@ -816,7 +818,8 @@ def p_postfix_expression_4(p):
                 if tmp==1:
                     p[0]=errorAttr(p[0]) 
             if tmp==0:
-                p[1].place = p[1].attr['symbol'].attr['label']
+                if p[1].attr['symbol'].attr.has_key('label'):
+                    p[1].place = p[1].attr['symbol'].attr['label']
                 p[0].attr={}
                 p[0].code=p[1].code+p[3].code
                 p[0].place=newTemp()
@@ -955,7 +958,7 @@ def p_postfix_expression_7(p):
     ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
     global env
     p[0]=deepcopy(p[1])
-    if p[1].has_key('this'):
+    if p[1].attr.has_key('this'):
         env1=env
         if env1.prev==None:
             print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
@@ -993,13 +996,13 @@ def p_postfix_expression_7(p):
                 t=env1.get(typ)
                 if t!=None:
                     if t.type==Type('CLASS'):
-                        sym=t.env.get(p[3].attr['name'])
+                        sym=t.table.get(p[3].attr['name'])
                         if sym!=None:
                             p[0].code=p[1].code+p[3].code
                             #p[0].code+="\tsw $s2 0($s1)\n"
                             #p[0].code+="\tli $t0 4\n"
                             #p[0].code+="\tsub $s1 $s1 $t0\n"
-                            p[0].code+="\tli $ts2 "+str(p[1].offset)+"\n"
+                            p[0].code+="\tli $s2 "+str(p[1].offset)+"\n"
                             p[0].code+="\tsub $s2 "+p[1].attr['scope']+" $s2\n"
                             p[3].type=sym.type
                             p[0].offset=sym.offset
@@ -3282,6 +3285,9 @@ def p_decl_specifier_seq_1(p):
     ''' decl_specifier_seq : decl_specifier '''
     p.set_lineno(0,p.lineno(1))
     global DeclType
+    global size
+    global oldsize3
+    oldsize3 = size
     DeclType = deepcopy(p[1].type)
     p[0] = deepcopy(p[1])
     
@@ -3548,6 +3554,7 @@ def p_init_declarator(p):
     global gsize
     #p[0].code+=p[2].code
     p[0].offset = size
+    flag = 1
     if not p[1].type == Type("ERROR") or not p[2].type == Type("ERROR"):
         t = Symbol(p[1].attr["name"])
         #entering type for symbol t
@@ -3561,6 +3568,8 @@ def p_init_declarator(p):
             elif t1.type == Type("CLASS"):
                 t.type = Type(str(p[-1]))
                 p[0].type = t.type
+                p[0].code+="\tli $t0 "+str(size)+"\n"
+                p[0].code+="\tsub $s2 $fp $t0\n"
                 p[0].code+=t1.code
             else :
                 p[0].type = Type("ERROR")
@@ -3617,9 +3626,9 @@ def p_init_declarator(p):
             else:
                 t.offset = size
                 p[0].offset = size
-                print size
+                #print size
                 size = size + t.type.size()
-                print size
+                #print size
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
         #Checking for initialization
@@ -3744,7 +3753,7 @@ def p_direct_declarator_3(p):
             p[0].attr["width"] = [0]
         elif p[3].type == Type("INT") and is_primitive(p[3]) and is_integer(p[3]):
             p[0].attr["width"] = [int(p[3].data)]
-            p[0].code+=p[3].code
+            #p[0].code+=p[3].code
         elif p[3].type == Type("ERROR"):
             p[0].type = Type("ERROR")
         else:
@@ -4393,6 +4402,9 @@ def p_member_declarator_list_2(p):
 def p_mark_2(p):
     ''' mark_2 : '''
     p[0] = deepcopy(p[-2])
+    global size
+    global oldsize3
+    oldsize3 = size
 
 #member-declarator:
     #declarator pure-specifieropt
@@ -4408,7 +4420,10 @@ def p_member_declarator_1(p):
     global env
     global size
     global gsize
+    global oldsize1
+    global oldsize3
     #p[0].code+=p[2].code
+    size = oldsize3
     p[0].offset = size
     p[0].csize = 0
     if not p[1].type == Type("ERROR"):
@@ -4463,7 +4478,9 @@ def p_member_declarator_1(p):
                 p[0].code+="\tsub $sp $sp $t0\n"
                 p[0].code+="\tli $t0 "+str(size)+"\n"
                 #p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
-                p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
+                p[0].code+="\tli $t1 "+str(t.offset)+"\n"
+                p[0].code+="\tsub $t1 $s2 $t1\n"
+                p[0].code+="\tsw $t0 0($t1)\n"
                 size = size+t.type.size()
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
