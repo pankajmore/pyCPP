@@ -1009,11 +1009,6 @@ def p_postfix_expression_7(p):
                             p[0].type=p[3].type
                             p[0].attr['symbol']=sym
                             p[0].attr['obj']=1
-                            if isinstance(p[3].type.next,Type):
-                                p[3].attr['obj']=1
-                                p[0].code+="\tlw $t0"+toAddr(p[3])+"\n"
-                                p[0].code+="\tsub $t0 $s2 $t0\n"
-                                p[0].code+="\tsw $t0 "+toAddr(p[3])+"\n"
                         else:
                             p[0]=errorAttr(p[0])
                             print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
@@ -4477,7 +4472,10 @@ def p_member_declarator_1(p):
                 p[0].code+="\tli $t0 4 \n"
                 p[0].code+="\tsub $sp $sp $t0\n"
                 p[0].code+="\tli $t0 "+str(size)+"\n"
-                #p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                
+                #Code Changed Here for absolute address of array
+                p[0].code+="\tsub $t0 $s2 $t0\n"
+            
                 p[0].code+="\tli $t1 "+str(t.offset)+"\n"
                 p[0].code+="\tsub $t1 $s2 $t1\n"
                 p[0].code+="\tsw $t0 0($t1)\n"
