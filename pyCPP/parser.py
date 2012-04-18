@@ -13,7 +13,7 @@ success = True
 size=0
 oldsize=0
 oldsize1 = 0
-dec_type = None
+function_symbol = None
 gsize = 4
 global_end = 0
 class Type(object):
@@ -21,6 +21,7 @@ class Type(object):
         self.next = next
         self.name = next
         self.dim = 1
+        self.baseSize=4
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -44,6 +45,7 @@ class Type(object):
         if isinstance(self.next,Type):
             return self.dim*self.next.size()
         else:
+<<<<<<< HEAD
             if self in [Type("FLOAT"),Type("INT"),Type("CHAR"),Type("BOOL")]:
                 return 4
             elif self in [Type("VOID")]:
@@ -51,6 +53,9 @@ class Type(object):
             else :
                 cl = env.get(str(self.next))
                 return cl.offset
+=======
+            return self.baseSize
+>>>>>>> 875931074370a3cdb2ca117e3dde9bd4423a0d4b
 
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
@@ -102,9 +107,9 @@ def newLabel():
 
 def toAddr(p,q=None):
     global env
-    if q=='$gp':
+    if q==' $gp':
         return " -"+str(p.offset)+"($gp)"
-    elif q=='$fp':
+    elif q==' $fp':
         return " -"+str(p.offset)+"($fp)"
     env1=env 
     if p.attr.has_key('symbol'):
@@ -299,6 +304,7 @@ def p_new_scope(p):
     global size
     global oldsize
     global oldsize1
+    global function_symbol
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
 
@@ -331,20 +337,22 @@ def p_new_scope(p):
 
         if t is not None: # function declartion already seen
 #HACK : p[-4] might be buggy?
-            t.table = env.table # For keeping a pointer to the function symboltable
-            if dec_type is not None:
-                if dec_type is Type("VOID"): # it must be a typeless declaration , assume VOID
-                    if t.type != Type('VOID'):
-                        print ("\nFunction's type must be void since its declaration had no type\n")
-                        p[0].type = Type("ERROR")
-                else:
-                    if t.type != dec_type:
-                        print ("\nFunction's type not consistent between declaration and definition\n")
-                        p[0].type = Type("ERROR")
+            print "seen"
+            t.table = env.table # For keeping a pointer to the function SymbolTable
+            function_symbol = t
+            if p[-4].type is Type("VOID"): # it must be a typeless declaration , assume VOID
+                if t.type != Type('VOID'):
+                    print ("\nFunction's type must be void since its declaration had no type\n")
+                    p[0].type = Type("ERROR")
+            else:
+                if t.type != p[-4].type:
+                    print ("\nFunction's type not consistent between declaration and definition\n")
+                    p[0].type = Type("ERROR")
             if t.attr['numParameters'] != p[-3].attr['numParameters'] :
                 print ("\nFunction overloading not supported\n")
                 p[0].type = Type("ERROR")
             for i in range(t.attr['numParameters']):
+                j=t.attr['numParameters']-i
                 if not type_check(t.attr['parameterList'][i],p[-3].attr['parameterList'][i]):
                     print ("\nFunction overloading by different types not supported\n")
                     p[0].type = Type("ERROR")
@@ -354,7 +362,12 @@ def p_new_scope(p):
                 # refactor the duplicate code
                 # storing the formal parameters in table not the parameters during function declaration
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
-                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                if p[-3].attr['parameterList'][i].type == Type('FLOAT'):
+                    p[0].code+='\tl.s $f2 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\ts.s $f2 -" +str(size) + "($fp)\n"
+                else:
+                    p[0].code+='\tlw $t0 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\tsw $t0 -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 t.attr['parameterList'][i].offset = size #to retrieve during func call
                 s.offset = size
@@ -367,10 +380,16 @@ def p_new_scope(p):
                     p[0].type = Type("ERROR")
                 
         else: # function declaration has not been seen
-    
+            print "not seen"
             for i in range(p[-3].attr['numParameters']):
+                j=p[-3].attr['numParameters']-i
                 s = Symbol(p[-3].attr['parameterList'][i].attr['name'])
-                p[0].code += "\tsw $a" + str(i) + ", -" +str(size) + "($fp)\n"
+                if p[-3].attr['parameterList'][i].type == Type('FLOAT'):
+                    p[0].code+='\tl.s $f2 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\ts.s $f2 -" +str(size) + "($fp)\n"
+                else:
+                    p[0].code+='\tlw $t0 '+str(12+j*4)+'($fp)\n'
+                    p[0].code+="\tsw $t0 -" +str(size) + "($fp)\n"
                 p[-3].attr['parameterList'][i].offset = size
                 s.offset = size
                 size = size + 4
@@ -420,9 +439,9 @@ def p_function_scope(p):
         t = env.get(str(p[-1].attr["name"]))
         if t == None:
             s = Symbol(p[-1].attr['name'])
-            global dec_type
-            s.type = dec_type
+            s.type = p[-2].type
             s.attr = deepcopy(p[-1].attr)
+            function_symbol = s
             if not env.put(s):
                 print("ERROR: Identifier alread defined\n")
                 p[0].type = Type("ERROR")
@@ -443,6 +462,7 @@ def p_unset_function_scope(p):
     p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
     size=oldsize
+    function_symbol = None
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -573,6 +593,12 @@ def p_primary_expression_6(p):
             p[0].attr['symbol'] = t
             p[0].type=t.type
             p[0].offset= t.offset
+            typ=t.type
+            while(isinstance(typ,Type)):
+                typ=typ.next
+            if typ not in ['FLOAT','INT','CHAR','BOOL','ERROR']:
+                p[0].attr['scope']=find_scope2(t)
+            
             #print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
     
@@ -736,17 +762,23 @@ def p_postfix_expression_3(p):
         p[0].attr={}
         p[0].offset=size
         p[0].place=newTemp()
-        size=size+4
-        p[0].code +="\tli $t0 4\n"
-        p[0].code +="\tsub $sp $sp $t0\n"
         #t=env.get(p[0].attr['symbol'].name)
         #fsize=t.table.offset
         p[0].code+="\tjal "+p[1].place+"\n"
+        p[0].code +="\tli $t0 4\n"
+        p[0].code +="\tsub $sp $sp $t0\n"
+        size=size+4
         if p[0].type!=Type('VOID'):
-            p[0].code+='\tmove $t0 $v0\n'
+            if p[0].type==Type('FLOAT'):
+                p[0].code+='\tmov.s $f2 $f0\n'
+                p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
+            else:
+                p[0].code+='\tmove $t0 $v0\n'
+                p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
         else:
             p[0].code+='\tli $t0 0\n'
-        p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
+            p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
+            
     p.set_lineno(0,p.lineno(2))
     
 #def p_postfix_expression_4(p):
@@ -773,33 +805,48 @@ def p_postfix_expression_4(p):
             p[0]=errorAttr(p[0])
         else:
             tmp=0
-            if p[1].attr['symbol'].attr['numParameters']>4:
-                print "Error in line %s : Max 4 parameters are allowed\n" % p.lineno(2)
-                tmp=1
-            else:
-                for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
-                        print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
-                        tmp=1
-                    if tmp==1:
-                        p[0]=errorAttr(p[0]) 
+            for i in range(p[1].attr['symbol'].attr['numParameters']):
+                if p[1].attr['symbol'].attr['parameterList'][i].type!=p[3].attr['parameterList'][i].type:
+                    print "Error in line %s : Parameter %s of Function %s must be %s , given %s " %( p.lineno(2), str(i+1), p[1].attr['symbol'].name, find_type(p[1].attr['symbol'].attr['parameterList'][i]), find_type(p[3].attr['parameterList'][i]))
+                    tmp=1
+                if tmp==1:
+                    p[0]=errorAttr(p[0]) 
             if tmp==0:
                 p[1].place = p[1].attr['symbol'].attr['label']
                 p[0].attr={}
                 p[0].code=p[1].code+p[3].code
+                p[0].place=newTemp()
+                for i in range(p[1].attr['symbol'].attr['numParameters']):
+                    x=p[3].attr['parameterList'][i]
+                    if x.type==Type('FLOAT'):
+                        p[0].code+='\tl.s $f2'+toAddr(x)+"\n"
+                        p[0].code+='\ts.s $f2 -'+str(size)+'($fp)\n'
+                    else:
+                        p[0].code+='\tlw $t0'+toAddr(x)+'\n'
+                        p[0].code+='\tsw $t0 -'+str(size)+'($fp)\n'
+                    size=size+4
+                    p[0].code +="\tli $t0 4\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
+
+                p[0].code+="\tjal "+p[1].place+"\n"    
+                size=size-p[1].attr['symbol'].attr['numParameters']*4
+                p[0].code +="\tli $t0 " + str(p[1].attr['symbol'].attr['numParameters']*4)+"\n"
+                p[0].code +="\tadd $sp $sp $t0\n"
+                
+                p[0].offset=size        
                 p[0].code +="\tli $t0 4\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
-                p[0].place=newTemp()
-                p[0].offset=size
                 size=size+4
-                for i in range(p[1].attr['symbol'].attr['numParameters']):
-                    p[0].code+='\tlw $a'+str(i)+toAddr(p[3].attr['parameterList'][i])+'\n'
-                p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
-                    p[0].code+='\tmove $t0 $v0\n'
+                    if p[0].type==Type('FLOAT'):
+                        p[0].code+='\tmov.s $f2 $f0\n'
+                        p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
+                    else:
+                        p[0].code+='\tmove $t0 $v0\n'
+                        p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
                 else:
                     p[0].code+='\tli $t0 0\n'
-                p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"                
+                    p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"               
     p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
@@ -909,30 +956,36 @@ def p_postfix_expression_7(p):
         while(isinstance(typ,Type)):
             typ=typ.next
         env1=env
-        while(env1.prev!=None):
-            env1=env1.prev
-        t=env1.get(typ)
-        if t!=None:
-            if t.type==Type('CLASS'):
-                sym=t.env.get(p[3].attr['name'])
-                if sym!=None:
-                    p[0].code=p[1].code+p[3].code
-                    p[0].offset=p[1].offset+p[3].offset
-                    p[0].attr['symbol']=sym
-                    p[0].attr['scope']=p[1].attr['scope']
-                    if isinstance(p[3].type,Type):
-                        p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
-                        p[0].code+="\tsub $t0 $t0 "+p[1].offset+"\n"
-                        p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
+        if typ==Type('ERROR'):
+             p[0]=errorAttr(p[0])
+             print "Error in line %s : Object not declared \n" % p.lineno(2)                        
+        else:
+            while(env1.prev!=None):
+                env1=env1.prev
+            t=env1.get(typ)
+            if t!=None:
+                if t.type==Type('CLASS'):
+                    sym=t.env.get(p[3].attr['name'])
+                    if sym!=None:
+                        p[0].code=p[1].code+p[3].code
+                        p[3].offset=sym.offset
+                        p[3].type=sym.type
+                        p[0].offset=p[1].offset+p[3].offset
+                        p[0].attr['symbol']=sym
+                        p[0].attr['scope']=p[1].attr['scope']
+                        if isinstance(p[3].type,Type):
+                            p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
+                            p[0].code+="\tsub $t0 $t0 "+p[1].offset+"\n"
+                            p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
+                    else:
+                        p[0]=errorAttr(p[0])
+                        print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
                 else:
                     p[0]=errorAttr(p[0])
-                    print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
+                    print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
             else:
                 p[0]=errorAttr(p[0])
-                print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
-        else:
-            p[0]=errorAttr(p[0])
-            print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
+                print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
     else:
         p[0]=errorAttr(p[0])
         print "Error in line %s : Illegal operation applied to object\n" % p.lineno(2)
@@ -2983,11 +3036,20 @@ def p_jump_statement_2(p):
 
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
+    global function_symbol
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
+    p[0] = Attribute()    
+
+    if function_symbol.type != p[2].type: 
+        print ("\nReturn type of function at line no : " + str(p.lineno(1)) + " does not match its signature\n" )
+        function_symbol.type = Type("ERROR")
+
     p[0].type = Type("VOID")
     p[0].code = p[2].code
-    p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    if p[2].type == Type("FLOAT"):
+        p[0].code += "\tl.s $f0 " + toAddr(p[2]) + "\n"
+    else:
+        p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
     global function_scope
     function_scope = 0
     global size
@@ -3003,7 +3065,11 @@ def p_jump_statement_4(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].code = ""
-    p[0].type = Type("VOID") 
+    global function_symbol
+    if function_symbol.type != Type("VOID"): 
+        print ("\nReturn type of function at line no : "+ str(p.lineno(1)) + " does not match its signature\n" )
+        p[0].type = Type("ERROR")
+        function_symbol.type = Type("ERROR")
     global function_scope
     function_scope = 0
     global size
@@ -3514,7 +3580,9 @@ def p_init_declarator(p):
             else:
                 t.offset = size
                 p[0].offset = size
+                print size
                 size = size + t.type.size()
+                print size
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
         #Checking for initialization
@@ -3894,26 +3962,29 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
+def p_void_decl_specifier_1(p):
+    ''' void_decl_specifier : '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+
+
 def p_function_definition_1(p):
-    ''' function_definition : declarator function_scope function_body unset_function_scope'''
+    ''' function_definition : void_decl_specifier declarator function_scope function_body unset_function_scope'''
     global size
-    global dec_type
-    dec_type = Type("VOID")
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    p[0].code=p[2].code+p[1].code+p[3].code+p[4].code
+    p[0].code=p[3].code+p[4].code+p[5].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    global dec_type 
-    dec_type = p[1].type
-    p[0].code = p[3].code+p[2].code+p[4].code+p[5].code
+    p[0].code = p[3].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
 
