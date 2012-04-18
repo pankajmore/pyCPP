@@ -135,8 +135,12 @@ def toAddr(p,q=None):
     else:
         return " -"+str(p.offset)+"($fp)"
 
-def toAddr2(t):
+def toAddr2(t,q=None):
     global env
+    if q==' $gp':
+        return " -"+str(p.offset)+"($gp)"
+    elif q==' $fp':
+        return " -"+str(p.offset)+"($fp)"
     env1=env
     if env.prev is None:
         return " -"+str(t.offset)+"($gp)"
@@ -416,12 +420,16 @@ def p_function_scope(p):
     '''function_scope : '''
     global function_scope
     global global_end
+    global gsize
     function_scope = 1
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     if global_end==0:
         global_end = 1
-        p[0].code="\tlw $ra 0($gp)\n"
+        p[0].code ="\tli $t0 "+str(gsize)+"\n"
+        p[0].code+="\tsub $t0 $gp $t0\n"
+        p[0].code+="\tmove $s1 $t0\n"
+        p[0].code+="\tlw $ra 0($gp)\n"
         p[0].code+="\tjr $ra\n" 
     if p[-1].attr['name'] == "main":
         p[0].code += "main:\n"
@@ -592,6 +600,7 @@ def p_primary_expression_6(p):
                 typ=typ.next
             if typ not in ['FLOAT','INT','CHAR','BOOL','ERROR']:
                 p[0].attr['scope']=find_scope2(t)
+                
             
             #print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
@@ -952,7 +961,7 @@ def p_postfix_expression_7(p):
             typ=typ.next
         #print typ
         env1=env
-        if typ==Type('ERROR'):
+        if typ=='ERROR':
              p[0]=errorAttr(p[0])
              print "Error in line %s : Object not declared \n" % p.lineno(2)                        
         else:
@@ -3536,6 +3545,8 @@ def p_init_declarator(p):
             print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
             #t.type = Type("ERROR")
             p[0].type = Type("ERROR")
+        #print env.table
+        #print env.prev
         #Declaring the offset of the symbol and its size
         if p[1].attr.has_key("isFunction") :
             pass
@@ -4422,7 +4433,7 @@ def p_member_declarator_1(p):
                 p[0].code+="\tli $t0 4 \n"
                 p[0].code+="\tsub $sp $sp $t0\n"
                 p[0].code+="\tli $t0 "+str(size)+"\n"
-                p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                #p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
                 p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
                 size = size+t.type.size()
                 p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
@@ -4434,6 +4445,7 @@ def p_member_declarator_1(p):
             size = size + t.type.size()
             p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
             p[0].code +="\tsub $sp $sp $t0\n"
+            p[0].csize=size - t.offset
   
 def p_member_declarator_2(p):
     ''' member_declarator : declarator constant_initializer '''
