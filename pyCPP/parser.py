@@ -4038,7 +4038,7 @@ def p_class_specifier_1(p):
     pass
 
 def p_class_specifier_2(p):
-    ''' class_specifier : new_scope class_head LBRACE RBRACE finish_scope'''
+    ''' class_specifier : set_class_scope new_scope class_head LBRACE RBRACE finish_scope unset_class_scope'''
     p[0] = Attribute()
     p[0].type = Type(p[2].name)
     pass
