@@ -3075,7 +3075,7 @@ def p_simple_declaration_1(p):
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
-    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    #p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
     p[0].code = p[2].code
     if p[1].type == Type("ERROR") :
@@ -3114,7 +3114,7 @@ def p_simple_declaration_2(p):
         print("Error : decl_specifier " + str(p[1]) + "is not defined.")
         p[0].type = Type("ERROR")
     p[0].type = t.type
-    p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
+    #p[0].attr["init_declarator_list"] = deepcopy(p[2].attr["init_declarator_list"])
     p[0].attr["declaration"] = 1
     p[0].code = p[2].code
     #if p[1].type == Type("ERROR") :
@@ -3401,19 +3401,26 @@ def p_init_declarator_list_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].attr["init_declarator_list"] = [deepcopy(p[1])]
-    p[0].type = p[1].type
+    if p[1].type is Type("ERROR"):
+        if isinstance(p[-1],Attribute) :
+            p[0].type = p[-1].type
+        else :
+            t1 = env.get(str(p[-1]))
+            if t1 == None:
+                print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+                p[0].type = Type("ERROR")
+            elif t1.type == Type("CLASS"):
+                p[0].type = Type(str(p[-1])
+            else :
+                p[0].type = Type("ERROR")
+    else :
+        p[0].type = p[1].type
     p[0].code = p[1].code
     
 def p_init_declarator_list_2(p):
     ''' init_declarator_list : init_declarator_list COMMA mark_1 init_declarator '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
-    #for key in p[3].attr["init_declarator_list"]:
-     #   p[0].attr["init_declarator_list"].append(deepcopy(key))
-    p[0].attr["init_declarator_list"].append(deepcopy(p[4]))
-    #if p[3].type == Type("ERROR"):
-    #    p[0].type = Type("ERROR")
     p[0].code +=p[4].code
 
 #init-declarator:
@@ -3437,7 +3444,7 @@ def p_init_declarator(p):
     if not p[1].type == Type("ERROR") or not p[2].type == Type("ERROR"):
         t = Symbol(p[1].attr["name"])
         #entering type for symbol t
-        if isinstance(p[-1],Attribute) :
+        if isinstance(p[-1],Attribute) and p[-1].type!=Type("ERROR") :
             t.type = p[-1].type
             p[0].type = p[-1].type
         else :
@@ -3880,7 +3887,7 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-def p_function_definition_1(p):
+def inition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
     global size
     global dec_type
@@ -4117,13 +4124,36 @@ def p_member_specification_4(p):
     #using-declaration
     #template-declaration
 def p_member_declaration_1(p):
-    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON ''' 
+    ''' member_declaration : decl_specifier_seq member_declarator_list SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].code = p[2].code
+    p[0].csize = p[2].csize
+    if p[2].type == Type("ERROR") :
+        p[0].type = Type("ERROR") 
+
 def p_member_declaration_2(p):
     ''' member_declaration : decl_specifier_seq SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = p[1].type
+    p[0].code = ''
+    p[0].csize = 0
+    
 def p_member_declaration_3(p):
     ''' member_declaration : member_declarator_list SEMICOLON '''
 def p_member_declaration_4(p):
     ''' member_declaration : SEMICOLON '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].code = ''
+    p[0].csize = 0
+    p[0].type = None
+
 def p_member_declaration_5(p):
     ''' member_declaration : function_definition SEMICOLON '''
 def p_member_declaration_6(p):
@@ -4145,12 +4175,38 @@ def p_member_declaration_6(p):
     #member-declarator
     #member-declarator-list , member-declarator
 
-def p_member_declarator_list(p):
-    ''' member_declarator_list : member_declarator 
-                    | member_declarator_list COMMA member_declarator '''
-    pass 
+def p_member_declarator_list_1(p):
+    ''' member_declarator_list : member_declarator '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    if p[1].type is Type("ERROR"):
+        if isinstance(p[-1],Attribute) :
+            p[0].type = p[-1].type
+        else :
+            t1 = env.get(str(p[-1]))
+            if t1 == None:
+                print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+                p[0].type = Type("ERROR")
+            elif t1.type == Type("CLASS"):
+                p[0].type = Type(str(p[-1])
+            else :
+                p[0].type = Type("ERROR")
+    else :
+        p[0].type = p[1].type
+    p[0].csize = p[1].csize
+    p[0].code = p[1].code
 
+def p_member_declarator_list_2(p):
+    ''' member_declarator_list : member_declarator_list COMMA mark_2 member_declarator '''
+    p.set_lineno(0,p.lineno(2))
+    p[0] = deepcopy(p[1])
+    p[0].code+=p[4].code
+    p[0].csize+=p[4].csize
 
+def p_mark_2(p):
+    ''' mark_2 : '''
+    p[0] = deepcopy(p[-2])
 
 #member-declarator:
     #declarator pure-specifieropt
@@ -4158,7 +4214,78 @@ def p_member_declarator_list(p):
     #identifieropt : constant-expression
 def p_member_declarator_1(p):
     ''' member_declarator : declarator '''
-    pass
+    p.set_lineno(0,p.lineno(1))
+    #p[0] = Attribute()
+    #p[0] = initAttr(p[0])
+    p[0] = deepcopy(p[1])
+    #global DeclType
+    global env
+    global size
+    global gsize
+    #p[0].code+=p[2].code
+    p[0].offset = size
+    p[0].csize = 0
+    if not p[1].type == Type("ERROR"):
+        t = Symbol(p[1].attr["name"])
+        #entering type for symbol t
+        if isinstance(p[-1],Attribute) :
+            if p[-1].type == Type("ERROR"):
+                pass
+            else:
+                t.type = p[-1].type
+                p[0].type = p[-1].type
+                p[0].csize = 4
+        else :
+            t1 = env.get(str(p[-1]))
+            if t1 == None:
+                print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+            elif t1.type == Type("CLASS"):
+                t.type = Type(str(p[-1]))
+                p[0].type = t.type
+                p[0].csize = t1.csize
+            else :
+                p[0].type = Type("ERROR")
+        #t.type = deepcopy(DeclType)
+        typ = p[1].type
+        while (isinstance(typ,Type)):#pointertype
+            t.type = Type(t.type)
+            typ = typ.next
+        t.attr = deepcopy(p[1].attr)
+        if not env.put(t):
+            print("ERROR: Identifier "+t.name+" already defined. At line number : "+str(p.lineno(1)))
+            #t.type = Type("ERROR")
+            p[0].type = Type("ERROR")
+        #Declaring the offset of the symbol and its size
+        if p[1].attr.has_key("isFunction") :
+            pass
+        elif p[1].attr.has_key("isArray"):
+            if isinstance(p[1].type, Type) and p[1].type != Type("ERROR"):
+                print "ERROR!! Line number : "+ str(p.lineno(0)) + " Invalid declaration"
+                p[0].type = Type("ERROR")
+            else:
+                l = len(p[1].attr["width"])
+                while l>0:#Array type determined
+                    l=l-1
+                    t.type = Type(t.type)
+                    t.type.dim = p[1].attr["width"][l]
+                t.offset = size
+                p[0].offset = size
+                size = size+4
+                p[0].code+="\tli $t0 4 \n"
+                p[0].code+="\tsub $sp $sp $t0\n"
+                p[0].code+="\tli $t0 "+str(size)+"\n"
+                p[0].code+="\tsub $t0 "+find_scope2(t)+" $t0\n"
+                p[0].code+="\tsw $t0 "+toAddr2(t)+"\n"
+                size = size+t.type.size()
+                p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                p[0].csize = size - t.offset
+        else:
+            t.offset = size
+            p[0].offset = size
+            size = size + t.type.size()
+            p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
+            p[0].code +="\tsub $sp $sp $t0\n"
   
 def p_member_declarator_2(p):
     ''' member_declarator : declarator constant_initializer '''
