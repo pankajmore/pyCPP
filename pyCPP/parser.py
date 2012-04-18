@@ -265,7 +265,7 @@ def type_check(t,p):
     else :
         return False
 
-precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN','PRINTS'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
+precedence =  [('nonassoc', 'LIT_STR', 'INUMBER', 'DNUMBER'), ('nonassoc', 'LIT_CHAR'), ('nonassoc', 'IFX', 'PRINT', 'SCAN','MALLOC'), ('nonassoc', 'ELSE'), ('nonassoc', 'DOUBLE', 'FLOAT', 'INT', 'STRUCT', 'VOID', 'ENUM', 'CHAR', 'UNION', 'SEMICOLON'), ('left','COMMA'), ('right', 'EQ_PLUS', 'EQ_MINUS', 'EQ_TIMES', 'EQ_DIV', 'EQ_MODULO', 'ASSIGN'), ('right', 'QUESTION', 'COLON'), ('left', 'DOUBLE_PIPE'), ('left', 'DOUBLE_AMPERSAND'), ('left', 'PIPE'), ('left', 'CARET'), ('left', 'AMPERSAND'), ('left', 'IS_EQ', 'NOT_EQ'), ('left', 'LESS', 'LESS_EQ', 'GREATER', 'GREATER_EQ'), ('left', 'PLUS', 'MINUS'), ('left', 'TIMES', 'DIV', 'MODULO'), ('right', 'EXCLAMATION', 'TILDE'), ('left', 'PLUS_PLUS', 'MINUS_MINUS', 'ARROW'), ('nonassoc', 'NOPAREN'), ('right', 'LPAREN', 'LBRACKET', 'LBRACE'), ('left', 'RPAREN', 'RBRACKET', 'RBRACE'),('left','SCOPE')]
 ## }}}
 
 ########### Start ################
@@ -2296,6 +2296,10 @@ def p_assignment_expression_1(p):
     ''' assignment_expression : conditional_expression '''
     p[0] = deepcopy(p[1])
     p.set_lineno(0,p.lineno(1))
+def p_assignment_expression_3(p):
+    ''' assignment_expression : malloc_statement '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1]) 
 
 
 def check_implicit_1(p,q):
@@ -2306,6 +2310,9 @@ def check_implicit_1(p,q):
     elif p.type == Type('FLOAT') and (q.type== Type('INT') or q.type== Type('CHAR')):
         return True
     elif p.type == Type('INT') and  q.type== Type('CHAR'):
+        return True
+    elif isinstance(p.type.next,Type) and q.type == Type(Type("VOID")):
+        q.type = p.type 
         return True
     else:
         return False
@@ -2361,6 +2368,8 @@ def p_assignment_expression_2(p):
         else:
             if p[1].type!=Type('ERROR') and p[3].type!=Type('ERROR'):
                 print 'Error in line %s : Incompatible assignment operation. Cannot assign %s to %s ' % (p.lineno(2),find_type(p[3]),find_type(p[1])) 
+            else:
+                pass
             p[0]=errorAttr(p[0])
             p[1].type=Type('ERROR')
             
@@ -2636,10 +2645,6 @@ def p_statement_8(p):
 
 def p_statement_9(p):
     ''' statement : scan_statement '''
-    p.set_lineno(0,p.lineno(1))
-    p[0] = deepcopy(p[1]) 
-def p_statement_10(p):
-    ''' statement : prints_statement '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1]) 
 
@@ -3011,20 +3016,35 @@ def p_print_statement(p):
         #print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
         p[0].type = Type("ERROR")
 
-def p_prints_statement(p):
-    ''' prints_statement : PRINTS LPAREN  LIT_STR RPAREN SEMICOLON'''
+def p_malloc_statement(p):
+    ''' malloc_statement : MALLOC LPAREN  postfix_expression RPAREN'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = Type("VOID")
-    t = newLabel()
-    global print_string
-    print_string[t]=p[3]
-    p[0].code="\tla $a0 "+t+"\n"
-    p[0].code+="\tli $v0 4 \n"
-    p[0].code+="\tsyscall \n"
+    p[0].code=p[3].code
+    p[0].type = Type(Type("VOID"))
+    global size
+    p[0].offset=size
+    size = size + 4
+    p[0].place = newTemp()
+    p[0].attr={}
+    p[0].code +="\tli $t0 4\n"
+    p[0].code +="\tsub $sp $sp $t0\n"
+    #t = env.get(str(p[3]))
+    #if t == None :
+    #    print "ERROR!! Line number : " + str(p.lineno(0))+ " Identifier "+str(p[3])+" not declared."
+    #    p[0].type = Type("ERROR")
+    #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
+    if p[3].type == Type("INT"):
+            p[0].code+="\tlw $a0 "+toAddr(p[3])+"\n"
+            p[0].code+="\tli $v0 9\n"
+            p[0].code+="\tsyscall \n"
+            p[0].code+="\tsw $v0"+toAddr(p[0])+"\n"
+    else :
+        #print "ERROR!! Line number : "+str(p.lineno(0))+ " Illegal reference to print statement"
+        print "Give integer size in malloc at "+str(p.lineno(0))
+        p[0].type = Type("ERROR")
 
-        
 
 #for-init-statement:
     #expression-statement
