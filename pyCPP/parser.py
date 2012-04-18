@@ -35,10 +35,10 @@ class Type(object):
             return result
         return not result
     def __repr__(self):
-	if isinstance(self.next,Type):
-        	return "*" + str(self.next)
-	else:
-		return str(self.next)
+        if isinstance(self.next,Type):
+            return "*" + str(self.next)
+        else:
+            return str(self.next)
     def size(self):
         if isinstance(self.next,Type):
             return self.dim*self.next.size()
@@ -544,12 +544,12 @@ def p_primary_expression_6(p):
     t = env.get(p[1].attr['name'])
     if t==None:
         p[0].type = Type("ERROR")
-	print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(1), p[1].attr['name'])
+        print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(1), p[1].attr['name'])
     else :
         p[0].attr['symbol'] = t
-	p[0].type=t.type
-	p[0].offset= t.offset
-	#print "Identifier reduced : ", str(t.name),str(t.type)
+        p[0].type=t.type
+        p[0].offset= t.offset
+        #print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
     
 #id-expression:
