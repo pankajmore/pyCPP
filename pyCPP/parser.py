@@ -552,7 +552,7 @@ def p_primary_expression_1(p):
   
 def p_primary_expression_2(p):
     ''' primary_expression : THIS '''
-    global currentObj
+    global currentObj 
     p[0].attr['symbol']=currentObj
     p[0].type=currentObj.type
     p[0].offset=currentObj.offset;
@@ -3221,7 +3221,7 @@ def p_simple_declaration_3(p):
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["declaration"] = 1
-    p[0].code = ''
+    p[0].code = p[1].code
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
         
@@ -3331,6 +3331,7 @@ def p_type_specifier_2(p):
                         #| elaborated_type_specifier '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    p[0].code = p[1].fcode
  
 ## HELPER 
 
@@ -3526,6 +3527,7 @@ def p_init_declarator(p):
             elif t1.type == Type("CLASS"):
                 t.type = Type(str(p[-1]))
                 p[0].type = t.type
+                p[0].code+=t1.code
             else :
                 p[0].type = Type("ERROR")
         #t.type = deepcopy(DeclType)
@@ -4124,6 +4126,7 @@ def p_class_specifier_1(p):
     p[0] = initAttr(p[0])
     p[0].type = Type(p[3].attr['name'])
     p[0].code = p[2].code+p[5].code+p[7].code
+    p[0].fcode = p[5].fcode
     if p[3].type != Type("ERROR"):
         cl = env.get(p[3].attr['name'])
         cl.offset = p[5].csize
@@ -4142,6 +4145,7 @@ def p_class_specifier_2(p):
     p[0] = initAttr(p[0])
     p[0].type = Type(p[3].attr['name'])
     p[0].code = p[2].code+p[6].code
+    p[0].fcode = ''
     if p[3].type != Type("ERROR"):
         cl = env.get(p[3].attr['name'])
         cl.offset = 0
@@ -4210,7 +4214,15 @@ def p_error(p):
 def p_member_specification_1(p):
     '''member_specification : member_declaration '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = deepcopy(p[1])
+    if p[1].type != Type("ERROR"):
+        p[0] = deepcopy(p[1])
+    else :
+        p[0] = Attribute()
+        p[0] = initAttr(p[0])
+        p[0].code = ''
+        p[0].csize = 0
+        p[0].type = Type("VOID")
+        p[0].fcode = ''
   
 def p_member_specification_2(p):
     ''' member_specification : member_declaration member_specification '''
@@ -4219,6 +4231,7 @@ def p_member_specification_2(p):
     if p[1].type != Type("ERROR"):
         p[0].code+=p[1].code
         p[0].csize+=p[1].csize
+        p[0].fcode+=p[1].fcode
   
 def p_member_specification_3(p):
     ''' member_specification : access_specifier COLON member_specification '''
@@ -4242,6 +4255,7 @@ def p_member_declaration_1(p):
     p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].csize = p[2].csize
+    p[0].fcode = ''
     if p[2].type == Type("ERROR") :
         p[0].type = Type("ERROR") 
 
@@ -4253,6 +4267,7 @@ def p_member_declaration_2(p):
     p[0].type = Type("VOID")
     p[0].code = ''
     p[0].csize = 0
+    p[0].fcode = ''
     
 def p_member_declaration_3(p):
     ''' member_declaration : member_declarator_list SEMICOLON '''
@@ -4264,11 +4279,22 @@ def p_member_declaration_4(p):
     p[0].code = ''
     p[0].csize = 0
     p[0].type = Type("VOID")
+    p[0].fcode = ''
 
 def p_member_declaration_5(p):
     ''' member_declaration : function_definition SEMICOLON '''
 def p_member_declaration_6(p):
     ''' member_declaration : function_definition '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].code = ''
+    p[0].csize = 0
+    p[0].type = Type("VOID")
+    if p[1].type != Type("ERROR"):
+        p[0].fcode = p[1].code
+    else:
+        p[0].fcode = ''    
 
 
 ##def p_member_declaration(p):
