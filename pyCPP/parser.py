@@ -112,7 +112,12 @@ def newLabel():
 
 
 def toAddr(p,q=None):
-    global env
+    global env1
+
+    if p.attr.has_key('obj'):
+        if p.attr['obj'] == 1:
+            return " -"+str(p.offset)+"($s2)"
+
     if q==' $gp':
         return " -"+str(p.offset)+"($gp)"
     elif q==' $fp':
