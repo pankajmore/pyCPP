@@ -4055,9 +4055,16 @@ def p_class_specifier_1(p):
 
 def p_class_specifier_2(p):
     ''' class_specifier : set_class_scope new_scope class_head LBRACE RBRACE finish_scope unset_class_scope'''
+    p.set_lineno(0,p.lineno(3))
+    global env
     p[0] = Attribute()
-    p[0].type = Type(p[2].name)
-    pass
+    p[0] = initAttr(p[0])
+    p[0].type = Type(p[2].attr['name'])
+    p[0].code = p[2].code+p[6].code
+    if p[2].type != Type("ERROR"):
+        cl = env.get(p[2].attr['name'])
+        cl.offset = 0
+        cl.code = p[0].code
   
 #class-head:
     #class-key identifieropt base-clauseopt
