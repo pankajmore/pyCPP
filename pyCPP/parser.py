@@ -321,6 +321,9 @@ def p_new_scope(p):
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
+        if dec_type == Type("ERROR"):
+            p[-3].type = Type("ERROR")
+
 
         if t is not None: # function declartion already seen
 #HACK : p[-4] might be buggy?
@@ -2977,10 +2980,21 @@ def p_jump_statement_2(p):
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = Attribute()
-    p[0].type = Type("VOID")
+    p[0] = Attribute()    
+
+    if dec_type == p[2].type: 
+        p[0].type = p[2].type
+    else:
+        print ("\nReturn type of function " + str(p[0].lineno(0)) + "does not match its signature\n" )
+        p[0].type = Type("ERROR")
+        dec_type = Type("ERROR")
+
+    #p[0].type = Type("VOID")
     p[0].code = p[2].code
-    p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
+    if p[2].type == Type("FLOAT"):
+        p[0].code += "\tl.s $f0 " + toAddr(p[2]) + "\n"
+    else:
+        p[0].code+="\tlw $v0 "+toAddr(p[2])+"\n"
     global function_scope
     function_scope = 0
     global size
@@ -2996,7 +3010,13 @@ def p_jump_statement_4(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].code = ""
-    p[0].type = Type("VOID") 
+    global dec_type
+    if dec_type == Type("VOID"): 
+        p[0].type = Type("VOID") 
+    else:
+        print ("\nReturn type of function + " str(p[0].lineno(0) + "does not match its signature\n" )
+        p[0].type = Type("ERROR")
+        dec_type = Type("ERROR")
     global function_scope
     function_scope = 0
     global size
