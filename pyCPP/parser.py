@@ -3887,7 +3887,7 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
-def inition_1(p):
+def p_function_definition_1(p):
     ''' function_definition : declarator function_scope function_body unset_function_scope'''
     global size
     global dec_type
@@ -4102,12 +4102,16 @@ def p_error(p):
     #access-specifier : member-specificationopt
 def p_member_specification_1(p):
     '''member_specification : member_declaration '''
-
-    pass
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[1])
   
 def p_member_specification_2(p):
     ''' member_specification : member_declaration member_specification '''
-    pass
+    p.set_lineno(0,p.lineno(1))
+    p[0] = deepcopy(p[2])
+    if p[1].type != Type("ERROR"):
+        p[0].code+=p[1].code
+        p[0].csize+=p[1].csize
   
 def p_member_specification_3(p):
     ''' member_specification : access_specifier COLON member_specification '''
@@ -4128,7 +4132,7 @@ def p_member_declaration_1(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = p[1].type
+    p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].csize = p[2].csize
     if p[2].type == Type("ERROR") :
@@ -4139,7 +4143,7 @@ def p_member_declaration_2(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = p[1].type
+    p[0].type = Type("VOID")
     p[0].code = ''
     p[0].csize = 0
     
@@ -4152,7 +4156,7 @@ def p_member_declaration_4(p):
     p[0] = initAttr(p[0])
     p[0].code = ''
     p[0].csize = 0
-    p[0].type = None
+    p[0].type = Type("VOID")
 
 def p_member_declaration_5(p):
     ''' member_declaration : function_definition SEMICOLON '''
