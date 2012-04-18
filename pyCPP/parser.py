@@ -303,8 +303,7 @@ def p_new_scope(p):
 #create a symbol for the class name in prev Environment
         oldsize1 = size
         size = 0
-
-
+        
     if function_scope == 1:
         oldsize=size
         size=0
@@ -821,7 +820,7 @@ def p_postfix_expression_4(p):
                 size=size-p[1].attr['symbol'].attr['numParameters']*4
                 p[0].code +="\tli $t0 " + str(p[1].attr['symbol'].attr['numParameters']*4)+"\n"
                 p[0].code +="\tadd $sp $sp $t0\n"
-                
+
                 p[0].offset=size        
                 p[0].code +="\tli $t0 4\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
