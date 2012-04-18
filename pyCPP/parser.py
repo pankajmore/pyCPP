@@ -21,6 +21,7 @@ class Type(object):
         self.next = next
         self.name = next
         self.dim = 1
+        self.baseSize=4
     def __eq__(self,other):
         if isinstance(other,Type):
             if (isinstance(self.next,Type) == isinstance(other.next,Type)):
@@ -43,7 +44,7 @@ class Type(object):
         if isinstance(self.next,Type):
             return self.dim*self.next.size()
         else:
-            return 4
+            return self.baseSize
 
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
@@ -95,9 +96,9 @@ def newLabel():
 
 def toAddr(p,q=None):
     global env
-    if q=='$gp':
+    if q==' $gp':
         return " -"+str(p.offset)+"($gp)"
-    elif q=='$fp':
+    elif q==' $fp':
         return " -"+str(p.offset)+"($fp)"
     env1=env 
     if p.attr.has_key('symbol'):
@@ -566,6 +567,12 @@ def p_primary_expression_6(p):
             p[0].attr['symbol'] = t
             p[0].type=t.type
             p[0].offset= t.offset
+            typ=t.type
+            while(isinstance(typ,Type)):
+                typ=typ.next
+            if typ not in ['FLOAT','INT','CHAR','BOOL','ERROR']:
+                p[0].attr['scope']=find_scope2(t)
+            
             #print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
     
@@ -902,30 +909,36 @@ def p_postfix_expression_7(p):
         while(isinstance(typ,Type)):
             typ=typ.next
         env1=env
-        while(env1.prev!=None):
-            env1=env1.prev
-        t=env1.get(typ)
-        if t!=None:
-            if t.type==Type('CLASS'):
-                sym=t.env.get(p[3].attr['name'])
-                if sym!=None:
-                    p[0].code=p[1].code+p[3].code
-                    p[0].offset=p[1].offset+p[3].offset
-                    p[0].attr['symbol']=sym
-                    p[0].attr['scope']=p[1].attr['scope']
-                    if isinstance(p[3].type,Type):
-                        p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
-                        p[0].code+="\tsub $t0 $t0 "+p[1].offset+"\n"
-                        p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
+        if typ==Type('ERROR'):
+             p[0]=errorAttr(p[0])
+             print "Error in line %s : Object not declared \n" % p.lineno(2)                        
+        else:
+            while(env1.prev!=None):
+                env1=env1.prev
+            t=env1.get(typ)
+            if t!=None:
+                if t.type==Type('CLASS'):
+                    sym=t.env.get(p[3].attr['name'])
+                    if sym!=None:
+                        p[0].code=p[1].code+p[3].code
+                        p[3].offset=sym.offset
+                        p[3].type=sym.type
+                        p[0].offset=p[1].offset+p[3].offset
+                        p[0].attr['symbol']=sym
+                        p[0].attr['scope']=p[1].attr['scope']
+                        if isinstance(p[3].type,Type):
+                            p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
+                            p[0].code+="\tsub $t0 $t0 "+p[1].offset+"\n"
+                            p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
+                    else:
+                        p[0]=errorAttr(p[0])
+                        print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
                 else:
                     p[0]=errorAttr(p[0])
-                    print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
+                    print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
             else:
                 p[0]=errorAttr(p[0])
-                print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
-        else:
-            p[0]=errorAttr(p[0])
-            print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
+                print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
     else:
         p[0]=errorAttr(p[0])
         print "Error in line %s : Illegal operation applied to object\n" % p.lineno(2)
