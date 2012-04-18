@@ -327,15 +327,13 @@ def p_new_scope(p):
     global function_symbol
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
-
     p[0]  = Attribute()
 
     if class_scope == 1:
 #create a symbol for the class name in prev Environment
         oldsize1 = size
         size = 0
-
-
+        
     if function_scope == 1:
         oldsize=size
         size=0
@@ -568,11 +566,8 @@ def p_primary_expression_1(p):
   
 def p_primary_expression_2(p):
     ''' primary_expression : THIS '''
-    global currentObj 
-    p[0].attr['symbol']=currentObj
-    p[0].type=currentObj.type
-    p[0].offset=currentObj.offset;
-    p[0].attr['scope']=p[1].attr['scope']
+    p[0]=Attribute()
+    p[0].attr['this'] = 1
     p.set_lineno(0,p.lineno(1))
 
 ##def p_primary_expression_3(p):
@@ -593,24 +588,20 @@ def p_primary_expression_6(p):
     ''' primary_expression : id_expression  '''
     p[0]=deepcopy(p[1])
     global env
-    if p[-1]=='DOT':
-        p[0]=deepcopy(p[1])
-    else:
-        p[0] = Attribute()
-        t = env.get(p[1].attr['name'])
-        if t==None:
-            p[0].type = Type("ERROR")
-            print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(1), p[1].attr['name'])
-        else :
-            p[0].attr['symbol'] = t
-            p[0].type=t.type
-            p[0].offset= t.offset
-            typ=t.type
-            while(isinstance(typ,Type)):
-                typ=typ.next
-            if typ not in ['FLOAT','INT','CHAR','BOOL','ERROR']:
-                p[0].attr['scope']=find_scope2(t)
-                
+    p[0] = Attribute()
+    t = env.get(p[1].attr['name'])
+    if t==None:
+        p[0].type = Type("ERROR")
+        print "Error in line %s : Identifier %s not defined in this scope" %(p.lineno(1), p[1].attr['name'])
+    else :
+        p[0].attr['symbol'] = t
+        p[0].type=t.type
+        p[0].offset= t.offset
+        typ=t.type
+        while(isinstance(typ,Type)):
+            typ=typ.next
+        if typ not in ['FLOAT','INT','CHAR','BOOL','ERROR']:
+            p[0].attr['scope']=find_scope2(t)
             
             #print "Identifier reduced : ", str(t.name),str(t.type)
     p.set_lineno(0,p.lineno(1))
@@ -845,7 +836,7 @@ def p_postfix_expression_4(p):
                 size=size-p[1].attr['symbol'].attr['numParameters']*4
                 p[0].code +="\tli $t0 " + str(p[1].attr['symbol'].attr['numParameters']*4)+"\n"
                 p[0].code +="\tadd $sp $sp $t0\n"
-                
+
                 p[0].offset=size        
                 p[0].code +="\tli $t0 4\n"
                 p[0].code +="\tsub $sp $sp $t0\n"
@@ -963,49 +954,77 @@ def p_postfix_expression_6(p):
 def p_postfix_expression_7(p):
     ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
     global env
-    global currentObj
-    p[0] = deepcopy(p[1])
-    if p[3].attr.has_key('name'):
-        typ=p[1].type
-        while(isinstance(typ,Type)):
-            typ=typ.next
-        #print typ
+    p[0]=deepcopy(p[1])
+    if p[1].has_key('this'):
         env1=env
-        if typ=='ERROR':
-             p[0]=errorAttr(p[0])
-             print "Error in line %s : Object not declared \n" % p.lineno(2)                        
+        if env1.prev==None:
+            print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
+        while(env1.prev.prev!=None):
+            env1=env1.prev
+        sym=env1.get(p[3].attr['name'])
+        if sym!=None:
+            p[0].code=p[1].code+p[3].code
+            p[3].type=sym.type
+            p[0].offset=sym.offset
+            p[0].type=p[3].type
+            p[0].attr['symbol']=sym
+            p[0].attr['obj']=1
+            if isinstance(p[3].type.next,Type):
+                p[3].attr['obj']=1
+                p[0].code+="\tlw $t0"+toAddr(p[3])+"\n"
+                p[0].code+="\tsub $t0 $s2 $t0\n"
+                p[0].code+="\tsw $t0 "+toAddr(p[3])+"\n"
         else:
-            while(env1.prev!=None):
-                env1=env1.prev
-            t=env1.get(typ)
-            if t!=None:
-                if t.type==Type('CLASS'):
-                    sym=t.table.get(p[3].attr['name'])
-                    #print t.table
-                    if sym!=None:
-                        p[0].code=p[1].code+p[3].code
-                        p[3].offset=sym.offset
-                        p[0].type=sym.type
-                        p[0].offset=p[1].offset+p[3].offset
-                        p[0].attr['symbol']=sym
-                        p[0].attr['scope']=p[1].attr['scope']
-                        if isinstance(p[3].type,Type):
-                            p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
-                            p[0].code+="\tsub $t0 $t0 "+str(p[1].offset)+"\n"
-                            p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
+            p[0]=errorAttr(p[0])
+            print "Error in line %s : %s does not belong to this class" % (p.lineno(2), p[3].attr['name'])
+            
+    else:    
+        if p[3].attr.has_key('name'):
+            typ=p[1].type
+            while(isinstance(typ,Type)):
+                typ=typ.next
+            env1=env
+            if typ==Type('ERROR'):
+                 p[0]=errorAttr(p[0])
+                 print "Error in line %s : Object not declared \n" % p.lineno(2)                        
+            else:
+                while(env1.prev!=None):
+                    env1=env1.prev
+                t=env1.get(typ)
+                if t!=None:
+                    if t.type==Type('CLASS'):
+                        sym=t.env.get(p[3].attr['name'])
+                        if sym!=None:
+                            p[0].code=p[1].code+p[3].code
+                            #p[0].code+="\tsw $s2 0($s1)\n"
+                            #p[0].code+="\tli $t0 4\n"
+                            #p[0].code+="\tsub $s1 $s1 $t0\n"
+                            p[0].code+="\tli $ts2 "+str(p[1].offset)+"\n"
+                            p[0].code+="\tsub $s2 "+p[1].attr['scope']+" $s2\n"
+                            p[3].type=sym.type
+                            p[0].offset=sym.offset
+                            p[0].type=p[3].type
+                            p[0].attr['symbol']=sym
+                            p[0].attr['obj']=1
+                            if isinstance(p[3].type.next,Type):
+                                p[3].attr['obj']=1
+                                p[0].code+="\tlw $t0"+toAddr(p[3])+"\n"
+                                p[0].code+="\tsub $t0 $s2 $t0\n"
+                                p[0].code+="\tsw $t0 "+toAddr(p[3])+"\n"
+                        else:
+                            p[0]=errorAttr(p[0])
+                            print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
                     else:
                         p[0]=errorAttr(p[0])
-                        print "Error in line %s : %s does not belong to class %s\n" % (p.lineno(2), p[3].attr['name'], typ)
+                        print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
                 else:
                     p[0]=errorAttr(p[0])
-                    print "Error in line %s : . operator cannot be applied to %s\n" % (p.lineno(2), p[1].type)
-            else:
-                p[0]=errorAttr(p[0])
-                print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
-    else:
-        p[0]=errorAttr(p[0])
-        print "Error in line %s : Illegal operation applied to object\n" % p.lineno(2)
-    p.set_lineno(0,p.lineno(2))
+                    print "Error in line %s : Invalid object. No class exists for this object \n" % p.lineno(2)            
+        else:
+            p[0]=errorAttr(p[0])
+            print "Error in line %s : Illegal operation applied to object\n" % p.lineno(2)
+
+
     
 ##def p_postfix_expression_5(p):
 ##    ''' postfix_expression : TYPENAME SCOPE nested_name_specifier IDENTIFIER LPAREN expression_list_opt RPAREN 
