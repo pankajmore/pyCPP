@@ -25,6 +25,7 @@ oldsize1 = 0
 function_symbol = None
 gsize = 4
 global_end = 0
+env2 = None
 class Type(object):
     def __init__(self,next):
         self.next = next
@@ -330,7 +331,6 @@ def p_new_scope(p):
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
-
         if t is not None: # function definition for non-main functions
 #HACK : p[-4] might be buggy?
             t.table = env.table # For keeping a pointer to the function SymbolTable
@@ -400,7 +400,7 @@ def p_finish_scope(p):
     p[0] = Attribute()
     # p[0].code = env.table.endlabel + ":\n"
     # no finish scope is needed actually
-    #PopScope()
+    PopScope()
 
 def p_set_class_scope(p):
     '''set_class_scope : '''
@@ -550,7 +550,7 @@ def p_primary_expression_1(p):
   
 def p_primary_expression_2(p):
     ''' primary_expression : THIS '''
-    global currentObj
+    global currentObj 
     p[0].attr['symbol']=currentObj
     p[0].type=currentObj.type
     p[0].offset=currentObj.offset;
@@ -945,10 +945,12 @@ def p_postfix_expression_7(p):
     ''' postfix_expression : postfix_expression DOT id_expression %prec IFX'''
     global env
     global currentObj
+    p[0] = deepcopy(p[1])
     if p[3].attr.has_key('name'):
         typ=p[1].type
         while(isinstance(typ,Type)):
             typ=typ.next
+        #print typ
         env1=env
         if typ==Type('ERROR'):
              p[0]=errorAttr(p[0])
@@ -959,17 +961,18 @@ def p_postfix_expression_7(p):
             t=env1.get(typ)
             if t!=None:
                 if t.type==Type('CLASS'):
-                    sym=t.env.get(p[3].attr['name'])
+                    sym=t.table.get(p[3].attr['name'])
+                    #print t.table
                     if sym!=None:
                         p[0].code=p[1].code+p[3].code
                         p[3].offset=sym.offset
-                        p[3].type=sym.type
+                        p[0].type=sym.type
                         p[0].offset=p[1].offset+p[3].offset
                         p[0].attr['symbol']=sym
                         p[0].attr['scope']=p[1].attr['scope']
                         if isinstance(p[3].type,Type):
                             p[0].code+="\tlw $t0"+toAddr(p[0],p[1].attr['scope'])+"\n"
-                            p[0].code+="\tsub $t0 $t0 "+p[1].offset+"\n"
+                            p[0].code+="\tsub $t0 $t0 "+str(p[1].offset)+"\n"
                             p[0].code+="\tsw $t0 "+toAddr(p[0],p[1].attr['scope'])+"\n"
                     else:
                         p[0]=errorAttr(p[0])
@@ -3214,7 +3217,7 @@ def p_simple_declaration_3(p):
     p[0] = initAttr(p[0])
     p[0].type = p[1].type
     p[0].attr["declaration"] = 1
-    p[0].code = ''
+    p[0].code = p[1].code
     if p[1].type == Type("ERROR") :
         p[0].type = Type("ERROR")
         
@@ -3324,6 +3327,7 @@ def p_type_specifier_2(p):
                         #| elaborated_type_specifier '''
     p.set_lineno(0,p.lineno(1))
     p[0] = deepcopy(p[1])
+    p[0].code = p[1].fcode
  
 ## HELPER 
 
@@ -3519,6 +3523,7 @@ def p_init_declarator(p):
             elif t1.type == Type("CLASS"):
                 t.type = Type(str(p[-1]))
                 p[0].type = t.type
+                p[0].code+=t1.code
             else :
                 p[0].type = Type("ERROR")
         #t.type = deepcopy(DeclType)
@@ -4125,14 +4130,19 @@ def p_class_specifier_1(p):
     ''' class_specifier : set_class_scope new_scope class_head LBRACE member_specification RBRACE finish_scope unset_class_scope'''
     p.set_lineno(0,p.lineno(3))
     global env
+    global env2
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = Type(p[2].attr['name'])
+    p[0].type = Type(p[3].attr['name'])
     p[0].code = p[2].code+p[5].code+p[7].code
-    if p[2].type != Type("ERROR"):
-        cl = env.get(p[2].attr['name'])
+    p[0].fcode = p[5].fcode
+    if p[3].type != Type("ERROR"):
+        cl = env.get(p[3].attr['name'])
         cl.offset = p[5].csize
         cl.code = p[0].code
+        #print cl.table
+        cl.table = env2.table
+    #print env2.table
     
         
 
@@ -4142,10 +4152,11 @@ def p_class_specifier_2(p):
     global env
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    p[0].type = Type(p[2].attr['name'])
+    p[0].type = Type(p[3].attr['name'])
     p[0].code = p[2].code+p[6].code
-    if p[2].type != Type("ERROR"):
-        cl = env.get(p[2].attr['name'])
+    p[0].fcode = ''
+    if p[3].type != Type("ERROR"):
+        cl = env.get(p[3].attr['name'])
         cl.offset = 0
         cl.code = p[0].code
   
@@ -4157,6 +4168,7 @@ def p_class_head(p):
     ''' class_head : class_key IDENTIFIER base_clause_opt '''
     p.set_lineno(0,p.lineno(1))
     global env
+    global env2
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     p[0].attr['name']=str(p[2])
@@ -4167,7 +4179,10 @@ def p_class_head(p):
     #temp = SymbolTable()
     #for s in cl.attr["inherits"]:
         #temp = temp.combine(s)
-    cl.table = env.table 
+    cl.table = env.table
+    env2 = env
+    #print cl.table
+    #print env.prev 
     if not env.prev.put(cl):
         print "ERROR!! Line number : "+str(p.lineno(0))+" Identifier \'"+str(p[2])+"\' already declared."
         p[0].type = Type("ERROR")
@@ -4208,7 +4223,15 @@ def p_error(p):
 def p_member_specification_1(p):
     '''member_specification : member_declaration '''
     p.set_lineno(0,p.lineno(1))
-    p[0] = deepcopy(p[1])
+    if p[1].type != Type("ERROR"):
+        p[0] = deepcopy(p[1])
+    else :
+        p[0] = Attribute()
+        p[0] = initAttr(p[0])
+        p[0].code = ''
+        p[0].csize = 0
+        p[0].type = Type("VOID")
+        p[0].fcode = ''
   
 def p_member_specification_2(p):
     ''' member_specification : member_declaration member_specification '''
@@ -4217,6 +4240,7 @@ def p_member_specification_2(p):
     if p[1].type != Type("ERROR"):
         p[0].code+=p[1].code
         p[0].csize+=p[1].csize
+        p[0].fcode+=p[1].fcode
   
 def p_member_specification_3(p):
     ''' member_specification : access_specifier COLON member_specification '''
@@ -4240,6 +4264,7 @@ def p_member_declaration_1(p):
     p[0].type = Type("VOID")
     p[0].code = p[2].code
     p[0].csize = p[2].csize
+    p[0].fcode = ''
     if p[2].type == Type("ERROR") :
         p[0].type = Type("ERROR") 
 
@@ -4251,6 +4276,7 @@ def p_member_declaration_2(p):
     p[0].type = Type("VOID")
     p[0].code = ''
     p[0].csize = 0
+    p[0].fcode = ''
     
 def p_member_declaration_3(p):
     ''' member_declaration : member_declarator_list SEMICOLON '''
@@ -4262,11 +4288,22 @@ def p_member_declaration_4(p):
     p[0].code = ''
     p[0].csize = 0
     p[0].type = Type("VOID")
+    p[0].fcode = ''
 
 def p_member_declaration_5(p):
     ''' member_declaration : function_definition SEMICOLON '''
 def p_member_declaration_6(p):
     ''' member_declaration : function_definition '''
+    p.set_lineno(0,p.lineno(1))
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].code = ''
+    p[0].csize = 0
+    p[0].type = Type("VOID")
+    if p[1].type != Type("ERROR"):
+        p[0].fcode = p[1].code
+    else:
+        p[0].fcode = ''    
 
 
 ##def p_member_declaration(p):
@@ -4351,7 +4388,7 @@ def p_member_declarator_1(p):
             elif t1.type == Type("CLASS"):
                 t.type = Type(str(p[-1]))
                 p[0].type = t.type
-                p[0].csize = t1.csize
+                p[0].csize = t1.offset
             else :
                 p[0].type = Type("ERROR")
         #t.type = deepcopy(DeclType)
@@ -4365,6 +4402,8 @@ def p_member_declarator_1(p):
             #t.type = Type("ERROR")
             p[0].type = Type("ERROR")
         #Declaring the offset of the symbol and its size
+        #print env.prev
+        #print env.table
         if p[1].attr.has_key("isFunction") :
             pass
         elif p[1].attr.has_key("isArray"):
