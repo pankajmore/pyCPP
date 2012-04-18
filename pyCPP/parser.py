@@ -142,6 +142,11 @@ def toAddr(p,q=None):
 
 def toAddr2(t,q=None):
     global env
+
+    if t.attr.has_key('obj'):
+        if t.attr['obj'] == 1:
+            return " -"+str(t.offset)+"($s2)"
+
     if q==' $gp':
         return " -"+str(p.offset)+"($gp)"
     elif q==' $fp':
