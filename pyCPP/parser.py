@@ -817,11 +817,11 @@ def p_postfix_expression_5(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tadd.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tadd.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
     elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
@@ -867,11 +867,11 @@ def p_postfix_expression_6(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tsub.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tsub.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
     elif is_primitive(p[1]) and isinstance(p[1].type,Type)and isinstance(p[1].type.next,Type):
         p[0].place=newTemp()
@@ -1023,11 +1023,11 @@ def p_unary_expression_2(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tadd.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tadd.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
         
     elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
@@ -1076,11 +1076,11 @@ def p_unary_expression_3(p):
         p[0].code=p[1].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tl.s $f0 "+toAddr(p[1])+"\n"
-        p[0].code+="\tli.s $f1 "+"1.0"+"\n"
-        p[0].code+="\tsub.s $f0 $f0 $f1\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[0])+"\n"
-        p[0].code+="\ts.s $f0 "+toAddr(p[1])+"\n"
+        p[0].code+="\tl.s $f2 "+toAddr(p[1])+"\n"
+        p[0].code+="\tli.s $f3 "+"1.0"+"\n"
+        p[0].code+="\tsub.s $f2 $f2 $f3\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[0])+"\n"
+        p[0].code+="\ts.s $f2 "+toAddr(p[1])+"\n"
 
 
     elif is_primitive(p[2]) and isinstance(p[2].type,Type)and isinstance(p[2].type.next,Type):
@@ -2898,8 +2898,8 @@ def p_print_statement(p):
     #elif t.type in [Type("FLOAT"),Type("INT"),Type("CHAR")] :
     if not p[3].type == Type("ERROR"):
         if p[3].type == Type("FLOAT"):
-            p[0].code+="\tl.s $f0 "+toAddr(p[3])+"\n"
-            p[0].code+="\tmov.s $f12 $f0 \n"
+            p[0].code+="\tl.s $f2 "+toAddr(p[3])+"\n"
+            p[0].code+="\tmov.s $f12 $f2 \n"
             p[0].code+="\tli $v0 2 \n"
             p[0].code+="\tsyscall \n"
         elif p[3].type == Type(Type("CHAR")):
