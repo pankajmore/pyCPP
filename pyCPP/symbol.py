@@ -36,11 +36,11 @@ class SymbolTable(object):
         self.startlabel = None
         self.endlabel = None
         self.fredundantscope = 0
-        for key in keywords :
-            symbol = Symbol(key)
-            symbol.keyword = True
-            symbol.type = 'Keyword'
-            self.put(key,symbol)
+        #for key in keywords :
+        #    symbol = Symbol(key)
+        #    symbol.keyword = True
+        #    symbol.type = 'Keyword'
+        #    self.put(key,symbol)
             
     def put(self,name,symbol):
         if name in self.symbols:
