@@ -40,10 +40,17 @@ class Type(object):
         else:
             return str(self.next)
     def size(self):
+        global env
         if isinstance(self.next,Type):
             return self.dim*self.next.size()
         else:
-            return 4
+            if self in [Type("FLOAT"),Type("INT"),Type("CHAR"),Type("BOOL")]:
+                return 4
+            elif self in [Type("VOID")]:
+                return 0
+            else :
+                cl = env.get(str(self.next))
+                return cl.offset
 
 
 Sizes={'FLOAT':4, 'INT':4, 'CHAR':1, 'BOOL':1}
