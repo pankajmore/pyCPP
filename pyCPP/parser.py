@@ -424,7 +424,7 @@ def p_function_scope(p):
         if t == None:
             s = Symbol(p[-1].attr['name'])
             global dec_type
-            s.type = dec_type
+            s.type = p[-2].type
             s.attr = deepcopy(p[-1].attr)
             if not env.put(s):
                 print("ERROR: Identifier alread defined\n")
@@ -753,7 +753,7 @@ def p_postfix_expression_3(p):
         p[0].code+="\tjal "+p[1].place+"\n"
         if p[0].type!=Type('VOID'):
             if p[0].type==Type('FLOAT'):
-                p[0].code+='\tmove.s $f2 $f0\n"
+                p[0].code+="\tmove.s $f2 $f0\n"
                 p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
             else:
                 p[0].code+='\tmove $t0 $v0\n'
@@ -817,7 +817,7 @@ def p_postfix_expression_4(p):
                 p[0].code+="\tjal "+p[1].place+"\n"
                 if p[0].type!=Type('VOID'):
                     if p[0].type==Type('FLOAT'):
-                        p[0].code+='\tmove.s $f2 $f0\n"
+                        p[0].code+="\tmove.s $f2 $f0\n"
                         p[0].code+="\ts.s $f2 " + toAddr(p[0])+"\n"
                     else:
                         p[0].code+='\tmove $t0 $v0\n'
@@ -3935,25 +3935,28 @@ def p_parameter_declaration_4(p):
     #decl-specifier-seqopt declarator ctor-initializeropt function-body
     #decl-specifier-seqopt declarator function-try-block
 
+def p_void_decl_specifier_1(p):
+    ''' void_decl_specifier : '''
+    p[0] = Attribute()
+    p[0] = initAttr(p[0])
+    p[0].type = Type("VOID")
+
+
 def p_function_definition_1(p):
-    ''' function_definition : declarator function_scope function_body unset_function_scope'''
+    ''' function_definition : void_decl_specifier declarator function_scope function_body unset_function_scope'''
     global size
-    global dec_type
-    dec_type = Type("VOID")
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
     #p[0].specifier = 1
     #code generation
-    p[0].code=p[2].code+p[1].code+p[3].code+p[4].code
+    p[0].code=p[3].code+p[2].code+p[4].code+p[5].code
 
 def p_function_definition_2(p):
     ''' function_definition : decl_specifier_seq  declarator function_scope function_body unset_function_scope'''
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0] = initAttr(p[0])
-    global dec_type 
-    dec_type = p[1].type
     p[0].code = p[3].code+p[2].code+p[4].code+p[5].code
     #p[0].specifier = 1
     #code generation
