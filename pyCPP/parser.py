@@ -809,10 +809,10 @@ def p_postfix_expression_4(p):
                     x=p[3].attr['parameterList'][i]
                     if x.type==Type('FLOAT'):
                         p[0].code+='\tl.s $f2'+toAddr(x)+"\n"
-                        p[0].code+='\ts.s $f2 -'+str(size)+'($fp)\n'
+                        p[0].code+='\ts.s $f2 0($sp)\n'
                     else:
                         p[0].code+='\tlw $t0'+toAddr(x)+'\n'
-                        p[0].code+='\tsw $t0 -'+str(size)+'($fp)\n'
+                        p[0].code+='\tsw $t0 0($sp)\n'
                     size=size+4
                     p[0].code +="\tli $t0 4\n"
                     p[0].code +="\tsub $sp $sp $t0\n"
