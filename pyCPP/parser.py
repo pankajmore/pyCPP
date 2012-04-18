@@ -13,7 +13,7 @@ success = True
 size=0
 oldsize=0
 oldsize1 = 0
-dec_type = None
+function_symbol = None
 gsize = 4
 global_end = 0
 class Type(object):
@@ -293,6 +293,7 @@ def p_new_scope(p):
     global size
     global oldsize
     global oldsize1
+    global function_symbol
     env.table.startlabel = newLabel()
     env.table.endlabel = newLabel()
 
@@ -322,22 +323,19 @@ def p_new_scope(p):
         t = env.prev.get(p[-3].attr['name'])
         function_scope=0
 
-        if dec_type == Type("ERROR"):
-            p[-3].type = Type("ERROR")
-
 
         if t is not None: # function declartion already seen
 #HACK : p[-4] might be buggy?
-            t.table = env.table # For keeping a pointer to the function symboltable
-            if dec_type is not None:
-                if dec_type is Type("VOID"): # it must be a typeless declaration , assume VOID
-                    if t.type != Type('VOID'):
-                        print ("\nFunction's type must be void since its declaration had no type\n")
-                        p[0].type = Type("ERROR")
-                else:
-                    if t.type != dec_type:
-                        print ("\nFunction's type not consistent between declaration and definition\n")
-                        p[0].type = Type("ERROR")
+            t.table = env.table # For keeping a pointer to the function SymbolTable
+            function_symbol = t
+            if p[-4].type is Type("VOID"): # it must be a typeless declaration , assume VOID
+                if t.type != Type('VOID'):
+                    print ("\nFunction's type must be void since its declaration had no type\n")
+                    p[0].type = Type("ERROR")
+            else:
+                if t.type != p[-4].type:
+                    print ("\nFunction's type not consistent between declaration and definition\n")
+                    p[0].type = Type("ERROR")
             if t.attr['numParameters'] != p[-3].attr['numParameters'] :
                 print ("\nFunction overloading not supported\n")
                 p[0].type = Type("ERROR")
@@ -423,9 +421,9 @@ def p_function_scope(p):
         t = env.get(str(p[-1].attr["name"]))
         if t == None:
             s = Symbol(p[-1].attr['name'])
-            global dec_type
             s.type = p[-2].type
             s.attr = deepcopy(p[-1].attr)
+            function_symbol = s
             if not env.put(s):
                 print("ERROR: Identifier alread defined\n")
                 p[0].type = Type("ERROR")
@@ -446,6 +444,7 @@ def p_unset_function_scope(p):
     p[0].code+="\tlw $fp 8($fp)\n"
     p[0].code+="\tjr $ra\n"
     size=oldsize
+    function_symbol = None
 
 def p_declaration_seq_1(p):
     ''' declaration_seq : declaration '''
@@ -3014,19 +3013,15 @@ def p_jump_statement_2(p):
 
 def p_jump_statement_3(p):
     ''' jump_statement : RETURN expression SEMICOLON '''
-    global dec_type
-    print dec_type
+    global function_symbol
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()    
 
-    if dec_type == p[2].type: 
-        p[0].type = p[2].type
-    else:
+    if function_symbol.type != p[2].type: 
         print ("\nReturn type of function at line no : " + str(p.lineno(1)) + " does not match its signature\n" )
-        p[0].type = Type("ERROR")
-        dec_type = Type("ERROR")
+        function_symbol.type = Type("ERROR")
 
-    #p[0].type = Type("VOID")
+    p[0].type = Type("VOID")
     p[0].code = p[2].code
     if p[2].type == Type("FLOAT"):
         p[0].code += "\tl.s $f0 " + toAddr(p[2]) + "\n"
@@ -3047,13 +3042,11 @@ def p_jump_statement_4(p):
     p.set_lineno(0,p.lineno(1))
     p[0] = Attribute()
     p[0].code = ""
-    global dec_type
-    if dec_type == Type("VOID"): 
-        p[0].type = Type("VOID") 
-    else:
+    global function_symbol
+    if function_symbol.type != Type("VOID"): 
         print ("\nReturn type of function at line no : "+ str(p.lineno(1)) + " does not match its signature\n" )
         p[0].type = Type("ERROR")
-        dec_type = Type("ERROR")
+        function_symbol.type = Type("ERROR")
     global function_scope
     function_scope = 0
     global size

@@ -1,6 +1,4 @@
-int func(int a , char b);
-
-int func(int a , char b)
+int func(char a , char b)
 {
     return a;
 }
