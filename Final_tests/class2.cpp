@@ -41,14 +41,14 @@ int main()
     a2.update(15,25);
     b1.c = 55;
     b2.d = 90;
-    print("a1 : ");
+    print("a1 - ");
     print(a1.a);
     print(" ");
     print(a1.b);
     print(" ");
     print(a1.sum);
     print("\n");
-    print("b1 : ");
+    print("b1 - ");
     print(b1.c);
     print(" ");
     print(b1.d);
