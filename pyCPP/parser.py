@@ -1564,9 +1564,11 @@ def p_cast_expression_2(p):
             p[0].code +="\tli $t0 4\n"
             p[0].code +="\tsub $sp $sp $t0\n"
             p[0].code+="\tlw $t0"+toAddr(p[4])+"\n"
-            p[0].code+="\tandi $t0 $t0 256\n"
+            p[0].code+="\tli $t1 256\n"
+            p[0].code+="\tdiv $t0 $t1\n"
+            p[0].code+="\tmfhi $t0\n"
             p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
-        elif p[2].type == Type('CHAR') and (p[4].type=='FLOAT') and is_primitive(p[4])and is_primitive(p[0]):
+        elif p[2].type == Type('CHAR') and (p[4].type==Type('FLOAT')) and is_primitive(p[4])and is_primitive(p[0]):
             p[0].type=Type('CHAR')
             p[0].offset=size
             size+=4
@@ -1578,10 +1580,12 @@ def p_cast_expression_2(p):
             p[0].code+="\tl.s $f2"+toAddr(p[4])+"\n"
             p[0].code+="\tcvt.w.s $f2 $f2 \n"
             p[0].code+="\tmfc1 $t0 $f2 \n"
-            p[0].code+="\tandi $t0 $t0 256\n"
+            p[0].code+="\tli $t1 256\n"
+            p[0].code+="\tdiv $t0 $t1\n"
+            p[0].code+="\tmfhi $t0\n"
             p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
 
-        elif isinstance(p[2].type,Type) and isinstance(p[4].type,Type):
+        elif isinstance(p[2].type.next,Type) and isinstance(p[4].type.next,Type):
             if p[2].type.next==Type('VOID') or  p[4].type.next==Type('VOID'):
                 x=1
             if x<0:
@@ -1600,7 +1604,7 @@ def p_cast_expression_2(p):
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR') and p[4].type!=Type('ERROR'):
-                print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type([2]))
+                print "Error in line %s : Illegal Type conversion from %s to %s " %(p.lineno(1),find_type(p[4]),find_type(p[2]))
     p.set_lineno(0,p.lineno(1))
 
 #multiplicative-expression:
@@ -1623,7 +1627,9 @@ def castFloat(t,v,register):
         code+="\tcvt.s.w "+ register +" $f8 \n"
     elif t== Type("CHAR"):
         code+="\tlw $t0"+toAddr(v)+"\n"
-        code+="\tandi $t0 $t0 256\n"
+        code+="\tli $t1 256\n"
+        code+="\tdiv $t0 $t1\n"
+        code+="\tmfhi $t0\n"
         code+="\tmtc1 $t0 $f8 \n"
         code+="\tcvt.s.w "+ register +" $f8 \n"
     elif t==Type("FLOAT"):
@@ -3009,7 +3015,6 @@ def p_print_statement(p):
             p[0].code+="\tli $v0 2 \n"
             p[0].code+="\tsyscall \n"
         elif p[3].type == Type("CHAR"):
-            print("CHAR")
             p[0].code="\tlw $a0 "+toAddr(p[3])+"\n"
             p[0].code+="\tli $v0 11 \n"
             p[0].code+="\tsyscall \n"
