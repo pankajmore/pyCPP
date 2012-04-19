@@ -3650,10 +3650,11 @@ def p_init_declarator(p):
                 t.offset = size
                 p[0].offset = size
                 #print size
-                size = size + t.type.size()
+                if t.type!=None:
+                    size = size + t.type.size()
                 #print size
-                p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
-                p[0].code +="\tsub $sp $sp $t0\n"
+                    p[0].code +="\tli $t0 "+str(t.type.size())+"\n"
+                    p[0].code +="\tsub $sp $sp $t0\n"
         #Checking for initialization
         if p[2] == None :
             pass
@@ -4285,7 +4286,6 @@ def p_class_key_2(p):
 def p_error(p):
     global success
     success = False
-    print("Whoa. We're hosed")
     print("Syntax error at token " + str(p))
     #print("Syntax error at token " + str() + " of value " + str(p.value) + " at line number " + str(p.lineno))
 
@@ -4404,7 +4404,7 @@ def p_member_declarator_list_1(p):
         else :
             t1 = env.get(str(p[-1]))
             if t1 == None:
-                print("ERROR : Type " + str(p[-1]) + "doesnot exist. At line number : " + str(p.lineno(-1)))
+                print("ERROR : Type " + str(p[-1]) + " does not exist. At line number : " + str(p.lineno(1)))
                 p[0].type = Type("ERROR")
             elif t1.type == Type("CLASS"):
                 p[0].type = Type(str(p[-1]))
@@ -4756,7 +4756,7 @@ try:
     f1 = open(sys.argv[1])
     yacc.parse(f1.read(),debug=0)
     if success:
-        print 'Compilation Successful with No Error !!!'
+        pass
     else:
         print "Syntax error while parsing"
 except IOError:
