@@ -751,12 +751,14 @@ def p_postfix_expression_2(p):
   
 def p_postfix_expression_3(p):
     ''' postfix_expression : postfix_expression LPAREN RPAREN '''
+    p.set_lineno(0,p.lineno(2))
     global size
     global MaxFunctionLength
     global env
     p[0]=deepcopy(p[1])
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
-        print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
+        if p[1].type != Type("ERROR"):
+            print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
         if p[0].type!=Type('ERROR'):
@@ -785,7 +787,6 @@ def p_postfix_expression_3(p):
             p[0].code+='\tli $t0 0\n'
             p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"
             
-    p.set_lineno(0,p.lineno(2))
     
 #def p_postfix_expression_4(p):
     #''' postfix_expression : simple_type_specifier LPAREN expression_list_opt RPAREN '''
@@ -796,10 +797,12 @@ def p_postfix_expression_4(p):
     ''' postfix_expression : postfix_expression LPAREN  expression_list RPAREN '''
     #Default arguments not supported as of now
     #Implicit type conversion not supported as of now
+    p.set_lineno(0,p.lineno(2))
     p[0]=deepcopy(p[1])
     global size
     if not (p[1].attr.has_key('symbol') and p[1].attr['symbol'].attr.has_key('isFunction')):
-        print "Error in line %s : Cannot use () on non-function %s " % (p.lineno(2),p[1].attr['symbol'].name)
+        if p[1].type!=Type("ERROR"):
+            print "Error in line %s : Cannot use () on non-function %s" % (p.lineno(2),p[1].attr['symbol'].name)
         p[0]=errorAttr(p[0])
     elif p[0].type ==Type('CLASS') or p[0].type == Type('STRUCT') or p[0].type==Type('ERROR'):
         if p[0].type!=Type('ERROR'):
@@ -854,7 +857,6 @@ def p_postfix_expression_4(p):
                 else:
                     p[0].code+='\tli $t0 0\n'
                     p[0].code+="\tsw $t0 " + toAddr(p[0])+"\n"               
-    p.set_lineno(0,p.lineno(2))
 
 def p_postfix_expression_5(p):
     ''' postfix_expression : postfix_expression PLUS_PLUS '''
