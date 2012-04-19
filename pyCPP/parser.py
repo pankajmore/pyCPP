@@ -1316,11 +1316,18 @@ def p_unary_expression_4(p):
             p[0].place=newTemp()
             p[0].attr={}
             p[0].code=p[2].code
-            p[0].code +="\tli $t0 4\n"
-            p[0].code +="\tsub $sp $sp $t0\n"
-            p[0].code+="\tli $t0 "+str(p[2].offset)+"\n"
-	    p[0].code+="\tsub $t0 "+find_scope(p[2])+" $t0\n"
-            p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
+
+            if hasattr(p[2],'offset1'):
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                p[0].code += "\tlw $t1, -" + str(p[2].offset1) + "($fp)\n"
+                p[0].code+="\tsw $t1"+toAddr(p[0])+"\n"
+            else:
+                p[0].code +="\tli $t0 4\n"
+                p[0].code +="\tsub $sp $sp $t0\n"
+                p[0].code+="\tli $t0 "+str(p[2].offset)+"\n"
+                p[0].code+="\tsub $t0 "+find_scope(p[2])+" $t0\n"
+                p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
         else:
             p[0]=errorAttr(p[0])
             if p[2].type!=Type('ERROR'):
@@ -1334,17 +1341,17 @@ def p_unary_expression_4(p):
 def p_unary_expression_5(p):
     ''' unary_expression : SIZEOF unary_expression '''
     p[0]=deepcopy(p[2])
-    typ=find_recursively(p[2].type)    
-    if is_primitive(p[2]) and typ in ['INT','FLOAT','CHAR','BOOL']:
-        p[0].type='INT'
+    global size
+    if is_primitive(p[2]) and p[2].type!=Type('CLASS'):
+        p[0].type=Type('INT')
         p[0].place=newTemp()
         p[0].attr={}
         p[0].offset=size
         size+=4
-        p[0].code=p[1].code
+        p[0].code=p[2].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tli $t0"+str(p[1].type.size())+"\n"
+        p[0].code+="\tli $t0 "+str(p[2].type.size())+"\n"
         p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
     else:
         p[0]=errorAttr(p[0])
@@ -1354,11 +1361,10 @@ def p_unary_expression_5(p):
 
 def p_unary_expression_6(p):
     ''' unary_expression : SIZEOF LPAREN type_id RPAREN '''
-    p[0]=Attribute()
-    global size
-    typ=find_recursively(p[3].type)    
-    if is_primitive(p[3]) and typ in ['INT','FLOAT','CHAR','BOOL']:
-        p[0].type='INT'
+    p[0]=deepcopy(p[3])
+    global size 
+    if is_primitive(p[3]) and p[3].type!=Type('CLASS'):
+        p[0].type=Type('INT')
         p[0].place=newTemp()
         p[0].attr={}
         p[0].offset=size
@@ -1366,7 +1372,7 @@ def p_unary_expression_6(p):
         p[0].code=p[3].code
         p[0].code +="\tli $t0 4\n"
         p[0].code +="\tsub $sp $sp $t0\n"
-        p[0].code+="\tli $t0"+str(p[3].type.size())+"\n"
+        p[0].code+="\tli $t0 "+str(p[3].type.size())+"\n"
         p[0].code+="\tsw $t0"+toAddr(p[0])+"\n"
     else:
         p[0]=errorAttr(p[0])
