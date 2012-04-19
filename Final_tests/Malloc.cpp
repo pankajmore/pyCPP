@@ -5,9 +5,9 @@ int b,c;
 int i,j;
 print("Enter size of 2d matrix\n");
 scan(b);
-a = malloc((4 * b));
+a = malloc((sizeof(*a) * b));
 for(i=0;i<b;i++)
-    a[i] = malloc((4*b));
+    a[i] = malloc((sizeof(**a) *b));
 
 for(i=0;i<b;i++)
     for(j=0;j<b;j++)
