@@ -1,37 +1,25 @@
 int partition(int a[],int s,int l)
 {
     int b,i,temp,j;
-    b = a[s];
-    j =s;
-    l = l-1;
-    for(i=0;s<l;i++)
-    {
-        if(a[s]<=b)
-            s=s+1;
-        if(a[l]>b)
-            l=l-1;
-        if((a[s]>b)&&(a[l]<=b))
+    j = (s+l)/2;
+    b = a[j];
+    j = s;
+    while(s < l){
+        while(a[s] < b) s++;
+        while(a[l] > b) l--;
+
+        if ( s < l && a[s] != a[l] )
         {
             temp = a[s];
             a[s] = a[l];
             a[l] = temp;
-            s=s+1;
-            l = l-1;
+        }
+        else
+        {
+            return l;
         }
     }
-    if(a[s]>b)
-    {
-        a[j] = a[s-1];
-        a[s-1] = b;
-        j = s-1;
-        return j;
-    }
-    else
-    {
-        a[j] = a[s];
-        a[s] = b;
-        return s;
-    }
+    return l;
 }
 void quicksort(int a[],int s,int l)
 {
@@ -43,7 +31,7 @@ void quicksort(int a[],int s,int l)
     {
         int c,i;
         c = partition(a,s,l);
-        quicksort(a,s,c);
+        quicksort(a,s,c-1);
         quicksort(a,c+1,l);
         
     }
@@ -53,17 +41,17 @@ int main()
 {
     int *a;
     int size,b;
-    print("Enter size of array : ");
+    print("Enter size of array - ");
     scan(size);
     a = malloc((4*size));
     int i;
     for(i=0;i<size;i++)
     {
-        print("Enter the next element in array : ");
+        print("Enter the next element in array - ");
         scan(b);
         a[i]=b;
     }
-    quicksort(a,0,size);
+    quicksort(a,0,size-1);
     for(i=0;i<size;i++)
     {
         print(a[i]);
