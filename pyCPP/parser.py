@@ -3009,7 +3009,6 @@ def p_print_statement(p):
             p[0].code+="\tli $v0 2 \n"
             p[0].code+="\tsyscall \n"
         elif p[3].type == Type("CHAR"):
-            print("CHAR")
             p[0].code="\tlw $a0 "+toAddr(p[3])+"\n"
             p[0].code+="\tli $v0 11 \n"
             p[0].code+="\tsyscall \n"
