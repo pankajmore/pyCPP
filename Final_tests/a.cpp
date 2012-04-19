@@ -1,7 +1,7 @@
 void matrixmult(int **a,int **b,int **temp,int c)
 {
     int i,j,k,x,y;
-    print("\nMatrix A :\n\n");
+    print("\nMatrix A -\n\n");
     for(x=0;x<c;x++)
     {       
         for(y=0;y<c;y++)
@@ -13,7 +13,7 @@ void matrixmult(int **a,int **b,int **temp,int c)
         }
         print("\n");
     }
-    print("\nMatrix B :\n\n");
+    print("\nMatrix B -\n\n");
     for(x=0;x<c;x++)
     {       
         for(y=0;y<c;y++)
@@ -34,7 +34,7 @@ void matrixmult(int **a,int **b,int **temp,int c)
             **(temp+i*2+j) = **(temp+i*2+j)+  **(a+i*2+k) * **(b+2*k+j);
             }
         }
-    print("\nProduct Matrix :\n\n");
+    print("\nProduct Matrix -\n\n");
 }
 
 int main()
